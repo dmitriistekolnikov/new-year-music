@@ -1,9 +1,9 @@
-// === ТОЧКА ВХОДА: ИНИЦИАЛИЗАЦИЯ ВСЕХ МОДУЛЕЙ ===
+// === ТОЧКА ВХОДА ===
 
-document.addEventListener('DOMContentLoaded', () => {
-    console.log('🎄 НовыйГодЧат загружается...');
+document.addEventListener('DOMContentLoaded', async () => {
+    console.log(' НовыйГодЧат загружается...');
     
-    // Инициализация всех модулей
+    // Инициализация эффектов
     initSnow();
     initGarland();
     initPlayer();
@@ -14,7 +14,21 @@ document.addEventListener('DOMContentLoaded', () => {
     initThemeSwitcher();
     initTimer();
     
-    // Заглушки для кнопок
+    // Проверка БД
+    const isConnected = await db.checkConnection();
+    if (isConnected) {
+        console.log('✅ База данных подключена');
+        
+        // Проверка сессии
+        const hasSession = await db.checkSession();
+        if (hasSession) {
+            console.log('✅ Сессия активна:', db.currentNick);
+        }
+    } else {
+        console.log('⚠️ База данных недоступна');
+    }
+    
+    // Заглушки
     document.getElementById('header-login-btn').addEventListener('click', () => {
         console.log('🔑 Клик по входу');
     });
@@ -23,5 +37,5 @@ document.addEventListener('DOMContentLoaded', () => {
         console.log('📸 Загрузка фото');
     });
     
-    console.log('✨ Все эффекты активированы!');
+    console.log('✨ Все системы активны!');
 });
