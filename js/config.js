@@ -16,22 +16,26 @@ const TRACKS = [
 ];
 
 const PREDICTIONS = [
-    " В новом году тебя ждет невероятный успех!",
+    "🎄 В новом году тебя ждет невероятный успех!",
     "❄️ Твое самое заветное желание сбудется!",
-    "🎁 Тебя ждет приятный сюрприз уже в январе!",
+    " Тебя ждет приятный сюрприз уже в январе!",
     "✨ Код будет компилироваться с первого раза!",
     "🎅 Дед Мороз уже выехал к тебе с подарками!",
     " В этом году ты покорешь новую вершину!",
-    "🌟 Удача будет на твоей стороне каждый день!"
+    "💫 Удача будет на твоей стороне каждый день!"
 ];
 
 const THEMES = ['', 'theme-party', 'theme-winter'];
 
 const PARTICLE_COLORS = ['#fbbf24', '#ef4444', '#22c55e', '#ffffff', '#38bdf8', '#f472b6'];
 
-const SNOWFLAKES_CHARS = ['❅', '✼', '', '✻', '❄', '•'];
+const SNOWFLAKES_CHARS = ['❅', '✼', '❆', '✻', '❄', '•'];
 
 const BULB_COLORS = ['#ef4444', '#22c55e', '#38bdf8', '#fbbf24', '#f472b6'];
 
-// Базовый URL для медиа (GitHub raw)
-const MEDIA_BASE_URL = 'https://raw.githubusercontent.com/dmitriistekolnikov/new-year-music/main';
+// Базовый URL для медиа (через наш Воркер-прокси, а не напрямую с GitHub)
+const MEDIA_BASE_URL = '/music';
+
+function getTrackUrl(filename) {
+    return `${MEDIA_BASE_URL}/${filename}`;
+}
