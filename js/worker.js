@@ -13,13 +13,8 @@ export default {
             return new Response(null, { headers });
         }
         
-        // === API ENDPOINTS ===
-        if (path.startsWith('/api/')) {
-            return handleApi(request, env, path, headers);
-        }
-        
-        // === СТАТИКА ===
-        return handleStatic(request, env, path, headers);
+        // === ТОЛЬКО API ===
+        return handleApi(request, env, path, headers);
     }
 };
 
@@ -94,55 +89,4 @@ async function handleApi(request, env, path, headers) {
             headers: { ...headers, 'Content-Type': 'application/json' }
         });
     }
-}
-
-async function handleStatic(request, env, path, headers) {
-    // Корень - index.html
-    if (path === '/' || path === '') {
-        const index = await env.__STATIC_CONTENT__.get('index.html');
-        return new Response(index, {
-            headers: { ...headers, 'Content-Type': 'text/html;charset=UTF-8' }
-        });
-    }
-    
-    // CSS файлы
-    if (path.endsWith('.css')) {
-        const content = await env.__STATIC_CONTENT__.get(path.slice(1));
-        return new Response(content, {
-            headers: { ...headers, 'Content-Type': 'text/css;charset=UTF-8' }
-        });
-    }
-    
-    // JS файлы
-    if (path.endsWith('.js')) {
-        const content = await env.__STATIC_CONTENT__.get(path.slice(1));
-        return new Response(content, {
-            headers: { ...headers, 'Content-Type': 'application/javascript;charset=UTF-8' }
-        });
-    }
-    
-    // Картинки/музыка
-    if (path.match(/\.(jpg|jpeg|png|gif|mp3|webp)$/)) {
-        const content = await env.__STATIC_CONTENT__.get(path.slice(1));
-        const contentType = getContentType(path);
-        return new Response(content, {
-            headers: { ...headers, 'Content-Type': contentType }
-        });
-    }
-    
-    return new Response(JSON.stringify({ error: 'Not found' }), { 
-        status: 404, 
-        headers: { ...headers, 'Content-Type': 'application/json' } 
-    });
-}
-
-function getContentType(path) {
-    if (path.endsWith('.html')) return 'text/html;charset=UTF-8';
-    if (path.endsWith('.css')) return 'text/css;charset=UTF-8';
-    if (path.endsWith('.js')) return 'application/javascript;charset=UTF-8';
-    if (path.match(/\.(jpg|jpeg)$/)) return 'image/jpeg';
-    if (path.endsWith('.png')) return 'image/png';
-    if (path.endsWith('.gif')) return 'image/gif';
-    if (path.endsWith('.mp3')) return 'audio/mpeg';
-    return 'application/octet-stream';
 }
