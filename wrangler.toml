@@ -1,14 +1,11 @@
-name = "new-year-chat"
+name = "new-year-music"
 main = "js/worker.js"
 compatibility_date = "2024-01-01"
 
-# Привяжи свою D1 базу данных
 [[d1_databases]]
 binding = "DB"
-database_name = "new-year-music"  # Или имя твоей БД как в Cloudflare
-database_id = "a3414e8d-4730-4912-ab49-720ef25eb73f"  # Твой ID базы
+database_name = "new-year-music"
+database_id = "a3414e8d-4730-4912-ab49-720ef25eb73f"
 
-# Если нужно статическое содержимое (HTML, CSS, JS)
 [site]
 bucket = "./"
-include = ["index.html", "css", "js", "music", "stickers"]
