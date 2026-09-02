@@ -38,10 +38,8 @@ function initGift() {
         const centerX = rect.left + rect.width / 2;
         const centerY = rect.top + rect.height / 2;
         
-        // Конфетти из подарка
         createClickParticles(centerX, centerY, 30, ['#fbbf24', '#ef4444', '#ffffff']);
         
-        // Предсказание
         toast.textContent = PREDICTIONS[Math.floor(Math.random() * PREDICTIONS.length)];
         toast.classList.add('show');
         
@@ -52,60 +50,6 @@ function initGift() {
     });
 }
 
-// 4. ПИСЬМО ДЕДУ МОРОЗУ
-function initLetter() {
-    let isLoggedIn = false;
-    
-    document.getElementById('chat-login-btn').addEventListener('click', function() {
-        isLoggedIn = true;
-        this.style.display = 'none';
-        document.getElementById('locked-msg').style.display = 'none';
-        document.getElementById('letter-area').style.display = 'flex';
-    });
-    
-    document.getElementById('send-letter-btn').addEventListener('click', function(e) {
-        const input = document.getElementById('letter-text');
-        if (!input.value.trim()) return;
-        
-        const envelope = document.createElement('div');
-        envelope.className = 'flying-envelope';
-        envelope.textContent = '️';
-        
-        const rect = input.getBoundingClientRect();
-        envelope.style.left = rect.left + 'px';
-        envelope.style.top = rect.top + 'px';
-        
-        document.body.appendChild(envelope);
-        input.value = '';
-        
-        setTimeout(() => envelope.remove(), 1500);
-    });
-}
-
-// 5. ПЕРЕКЛЮЧАТЕЛЬ ТЕМ
-function initThemeSwitcher() {
-    let currentTheme = 0;
-    document.getElementById('theme-btn').addEventListener('click', () => {
-        currentTheme = (currentTheme + 1) % THEMES.length;
-        document.body.className = THEMES[currentTheme];
-    });
-}
-
-// 6. ТАЙМЕР ОБРАТНОГО ОТСЧЁТА
-function initTimer() {
-    function update() {
-        const now = new Date();
-        const nextYear = new Date(now.getFullYear() + 1, 0, 1);
-        const diff = nextYear - now;
-        
-        document.getElementById('days').textContent = Math.floor(diff / (1000 * 60 * 60 * 24));
-        document.getElementById('hours').textContent = Math.floor((diff / (1000 * 60 * 60)) % 24).toString().padStart(2, '0');
-        document.getElementById('minutes').textContent = Math.floor((diff / 1000 / 60) % 60).toString().padStart(2, '0');
-        document.getElementById('seconds').textContent = Math.floor((diff / 1000) % 60).toString().padStart(2, '0');
-    }
-    update();
-    setInterval(update, 1000);
-}
 // 4. ЧАТ С АНТИ-МАТОМ
 function initLetter() {
     let isLoggedIn = false;
@@ -113,49 +57,54 @@ function initLetter() {
     const sendBtn = document.getElementById('send-letter-btn');
     const chatContainer = document.getElementById('chat-messages');
     
-    // Загрузка сообщений при загрузке
     loadChatMessages();
     
     // Кнопка входа
     document.getElementById('chat-login-btn').addEventListener('click', async function() {
-        const nick = prompt('Введи свой ник:');
+        const nick = prompt('Введи свой ник (минимум 2 символа):');
         if (!nick || nick.trim().length < 2) {
             alert('Ник должен быть минимум 2 символа!');
             return;
         }
         
-        // Проверка ника на мат
         const nickCheck = antiMat.check(nick);
         if (nickCheck.isBanned) {
             alert('Ник содержит запрещенные слова!');
             return;
         }
         
-        const result = await db.login(nick.trim());
-        if (result) {
-            isLoggedIn = true;
-            this.style.display = 'none';
-            document.getElementById('locked-msg').style.display = 'none';
-            document.getElementById('letter-area').style.display = 'flex';
+        console.log('Попытка входа под ником:', nick.trim());
+        
+        try {
+            const result = await db.login(nick.trim());
+            console.log('Результат логина:', result);
             
-            // Обновляем статус
-            const statusBadge = document.getElementById('chat-status-badge');
-            if (statusBadge) {
-                statusBadge.className = 'status-badge';
-                statusBadge.style.background = 'rgba(34, 197, 94, 0.2)';
-                statusBadge.style.color = 'var(--accent-green)';
-                statusBadge.innerHTML = '<span class="status-dot" style="background: var(--accent-green);"></span> online';
+            if (result) {
+                isLoggedIn = true;
+                this.style.display = 'none';
+                document.getElementById('locked-msg').style.display = 'none';
+                document.getElementById('letter-area').style.display = 'flex';
+                
+                const statusBadge = document.getElementById('chat-status-badge');
+                if (statusBadge) {
+                    statusBadge.className = 'status-badge';
+                    statusBadge.style.background = 'rgba(34, 197, 94, 0.2)';
+                    statusBadge.style.color = 'var(--accent-green)';
+                    statusBadge.innerHTML = '<span class="status-dot" style="background: var(--accent-green);"></span> online';
+                }
+                
+                appendMessageToChat({
+                    nick: '🎅 Система',
+                    text: `${nick} присоединился к чату!`,
+                    system: 1,
+                    time: Date.now()
+                });
+            } else {
+                alert('Ошибка входа: сервер не вернул данные. Проверь консоль (F12) для деталей.');
             }
-            
-            // Системное сообщение о входе
-            appendMessageToChat({
-                nick: '🎅 Система',
-                text: `${nick} присоединился к чату!`,
-                system: 1,
-                time: Date.now()
-            });
-        } else {
-            alert('Ошибка входа. Попробуй другой ник.');
+        } catch (error) {
+            console.error('КРИТИЧЕСКАЯ ОШИБКА ЛОГИНА:', error);
+            alert('Ошибка входа: ' + error.message + '\n\nПроверь консоль браузера (F12) для полной информации.');
         }
     });
     
@@ -166,7 +115,6 @@ function initLetter() {
         const text = chatInput.value.trim();
         if (!text) return;
         
-        // Проверка на мат
         const check = antiMat.check(text);
         if (check.isBanned) {
             alert(`Сообщение содержит запрещенное слово!`);
@@ -178,7 +126,6 @@ function initLetter() {
         const result = await db.sendMessage(nick, text);
         
         if (result) {
-            // Добавляем сообщение в чат
             appendMessageToChat({
                 nick: nick,
                 text: text,
@@ -188,7 +135,6 @@ function initLetter() {
             
             chatInput.value = '';
             
-            // Анимация отправки
             createClickParticles(
                 sendBtn.getBoundingClientRect().left + 20,
                 sendBtn.getBoundingClientRect().top,
@@ -200,7 +146,6 @@ function initLetter() {
         }
     });
     
-    // Отправка по Enter
     chatInput.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') {
             sendBtn.click();
@@ -208,7 +153,6 @@ function initLetter() {
     });
 }
 
-// Загрузка сообщений из БД
 async function loadChatMessages() {
     const messages = await db.getMessages(50);
     const chatContainer = document.getElementById('chat-messages');
@@ -221,7 +165,6 @@ async function loadChatMessages() {
     }
 }
 
-// Добавление сообщения в интерфейс
 function appendMessageToChat(msg) {
     const chatContainer = document.getElementById('chat-messages');
     const msgDiv = document.createElement('div');
@@ -253,13 +196,11 @@ function appendMessageToChat(msg) {
         <div style="color: var(--text-primary); word-wrap: break-word;">${msg.text}</div>
     `;
     
-    // Если есть стикер
     if (msg.sticker) {
-        const stickerUrl = `https://raw.githubusercontent.com/dmitriistekolnikov/new-year-music/main/stickers/${msg.sticker}`;
+        const stickerUrl = `/stickers/${msg.sticker}`;
         content += `<img src="${stickerUrl}" style="max-width: 150px; border-radius: 8px; margin-top: 8px;">`;
     }
     
-    // Если есть фото
     if (msg.photo) {
         content += `<img src="${msg.photo}" style="max-width: 100%; border-radius: 8px; margin-top: 8px;">`;
     }
@@ -269,7 +210,6 @@ function appendMessageToChat(msg) {
     chatContainer.scrollTop = chatContainer.scrollHeight;
 }
 
-// Анимация появления
 const style = document.createElement('style');
 style.textContent = `
     @keyframes fadeIn {
@@ -278,3 +218,28 @@ style.textContent = `
     }
 `;
 document.head.appendChild(style);
+
+// 5. ПЕРЕКЛЮЧАТЕЛЬ ТЕМ
+function initThemeSwitcher() {
+    let currentTheme = 0;
+    document.getElementById('theme-btn').addEventListener('click', () => {
+        currentTheme = (currentTheme + 1) % THEMES.length;
+        document.body.className = THEMES[currentTheme];
+    });
+}
+
+// 6. ТАЙМЕР ОБРАТНОГО ОТСЧЁТА
+function initTimer() {
+    function update() {
+        const now = new Date();
+        const nextYear = new Date(now.getFullYear() + 1, 0, 1);
+        const diff = nextYear - now;
+        
+        document.getElementById('days').textContent = Math.floor(diff / (1000 * 60 * 60 * 24));
+        document.getElementById('hours').textContent = Math.floor((diff / (1000 * 60 * 60)) % 24).toString().padStart(2, '0');
+        document.getElementById('minutes').textContent = Math.floor((diff / 1000 / 60) % 60).toString().padStart(2, '0');
+        document.getElementById('seconds').textContent = Math.floor((diff / 1000) % 60).toString().padStart(2, '0');
+    }
+    update();
+    setInterval(update, 1000);
+}
