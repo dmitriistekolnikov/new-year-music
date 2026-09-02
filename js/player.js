@@ -5,10 +5,6 @@ let isPlaying = false;
 const audio = new Audio();
 audio.volume = 0.7;
 
-function getTrackUrl(filename) {
-    return `${MEDIA_BASE_URL}/music/${encodeURIComponent(filename)}`;
-}
-
 function buildPlaylist() {
     const list = document.getElementById('playlist-bangs');
     TRACKS.forEach((track, i) => {
@@ -35,10 +31,14 @@ function selectTrack(index) {
     document.getElementById('track-mini').textContent = track.title;
     document.getElementById('artist-mini').textContent = track.artist;
     
-    audio.src = getTrackUrl(track.file);
+    const trackUrl = getTrackUrl(track.file);
+    console.log('Загрузка трека:', trackUrl);
+    audio.src = trackUrl;
+    
     if (isPlaying) {
         audio.play().catch(err => {
-            console.log('Ошибка воспроизведения:', err);
+            console.error('Ошибка воспроизведения:', err);
+            alert('Не удалось воспроизвести трек. Попробуй нажать Play ещё раз.');
         });
     }
 }
@@ -49,8 +49,15 @@ function togglePlay() {
     btn.textContent = isPlaying ? '⏸' : '▶';
     
     if (isPlaying) {
-        if (!audio.src) selectTrack(currentTrackIndex);
-        audio.play().catch(err => console.log('Play error:', err));
+        if (!audio.src || audio.src === window.location.href) {
+            selectTrack(currentTrackIndex);
+        } else {
+            audio.play().catch(err => {
+                console.error('Ошибка воспроизведения:', err);
+                isPlaying = false;
+                btn.textContent = '▶';
+            });
+        }
     } else {
         audio.pause();
     }
@@ -91,6 +98,12 @@ function initPlayer() {
     
     // Автопереключение при окончании трека
     audio.addEventListener('ended', nextTrack);
+    
+    // Обработка ошибок загрузки
+    audio.addEventListener('error', (e) => {
+        console.error('Ошибка загрузки аудио:', e);
+        alert('Не удалось загрузить трек. Попробуй другой.');
+    });
     
     // Обновление прогресс-бара
     audio.addEventListener('timeupdate', () => {
