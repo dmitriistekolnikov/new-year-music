@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎄 НовыйГодЧат</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <div class="garland" id="garland"></div>
+    <div class="bg-orb orb-1"></div>
+    <div class="bg-orb orb-2"></div>
+    <div class="snowflakes" id="snow-container"></div>
+
+    <div class="player-bangs" id="player-bangs">
+        <div class="player-bangs-header" id="player-bangs-header">
+            <div class="now-playing-mini">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <div class="eq-container" id="eq-container" style="display: flex; gap: 2px; height: 15px; align-items: flex-end;"></div>
+                    <div>
+                        <span class="track-mini" id="track-mini">Christmas Phonk</span>
+                        <span class="artist-mini" id="artist-mini">wi$$$uri</span>
+                    </div>
+                </div>
+            </div>
+            <div class="controls-mini">
+                <button id="prev-btn-mini">⏮</button>
+                <button class="play-btn-mini" id="play-btn-mini">▶</button>
+                <button id="next-btn-mini">⏭</button>
+                <span class="expand-indicator">▼</span>
+            </div>
+        </div>
+        <div class="player-bangs-body">
+            <div class="progress-bar-mini">
+                <span id="current-time-mini">0:00</span>
+                <div class="progress-track-mini"><div class="progress-fill-mini" id="progress-fill-mini"></div></div>
+                <span id="total-time-mini">3:45</span>
+            </div>
+            <ul class="playlist-bangs" id="playlist-bangs"></ul>
+        </div>
+    </div>
+
+    <div class="container">
+        <header>
+            <h1 class="main-title">🎄 НовыйГодЧат</h1>
+            <div style="display: flex; gap: 10px;">
+                <button class="btn" id="theme-btn" style="background: rgba(255,255,255,0.1); color: white; box-shadow: none;"></button>
+                <button class="btn" id="header-login-btn">🔑 Вход</button>
+            </div>
+        </header>
+
+        <main>
+            <section class="glass-card freeze-target">
+                <h2 style="text-align: center; margin-bottom: 8px;">🎄 До Нового Года 🎄</h2>
+                <p style="text-align: center; color: var(--text-secondary); margin-bottom: 20px; font-size: 0.9rem;">Волшебство совсем близко...</p>
+                <div class="countdown-timer">
+                    <div class="time-block"><span class="number" id="days">0</span><span class="label">Дней</span></div>
+                    <div class="time-block"><span class="number" id="hours">0</span><span class="label">Часов</span></div>
+                    <div class="time-block"><span class="number" id="minutes">0</span><span class="label">Минут</span></div>
+                    <div class="time-block"><span class="number" id="seconds">0</span><span class="label">Секунд</span></div>
+                </div>
+            </section>
+
+            <section class="glass-card freeze-target">
+                <h2 style="text-align: center; margin-bottom: 16px;"> С Новым Годом! 🎉</h2>
+                <div class="chat-status">
+                    <span style="font-weight: 600;">💬 Новогодний чат</span>
+                    <span class="status-badge status-offline"><span class="status-dot"></span> offline</span>
+                </div>
+                <div class="chat-messages" id="chat-messages">
+                    <p style="text-align: center; color: var(--text-secondary); margin-top: 100px; font-style: italic;">Здесь будет новогоднее настроение...<br>Войди, чтобы начать общение!</p>
+                </div>
+                
+                <div class="chat-input-area" id="chat-input-area">
+                    <div class="locked-message" id="locked-msg">🔒 Войди, чтобы писать в чат</div>
+                    <div class="letter-input-area" id="letter-area" style="display: none;">
+                        <input type="text" class="letter-input" id="letter-text" placeholder="Напиши желание Деду Морозу...">
+                        <button class="btn" id="send-letter-btn">✉️</button>
+                    </div>
+                    <button class="btn" id="chat-login-btn" style="width: 100%; justify-content: center;">🔑 Войти в чат</button>
+                    <div class="photo-upload" id="photo-upload">📸 Нажми или перетащи, чтобы отправить фото</div>
+                </div>
+            </section>
+        </main>
+
+        <footer style="text-align: center; padding: 30px 20px; color: var(--text-secondary); font-size: 0.9rem; opacity: 0.7;">
+            <p>❅ ✼ ❆ ✻ ❄ С Новым 2027 Годом! ❄ ✻ ❆ ✼ ❅</p>
+        </footer>
+    </div>
+
+    <div class="magic-gift" id="magic-gift">
+        <div class="gift-lid"></div>
+        <div class="gift-box"></div>
+    </div>
+    <div class="prediction-toast" id="prediction-toast"></div>
+
+    <script src="js/config.js"></script>
+    <script src="js/particles.js"></script>
+    <script src="js/snow.js"></script>
+    <script src="js/player.js"></script>
+    <script src="js/effects.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>
