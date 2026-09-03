@@ -1,14 +1,10 @@
-// === МОДУЛЬ РАБОТЫ С CLOUDFLARE D1 БАЗОЙ ===
-
 class Database {
     constructor() {
-        // Используем константу из config.js, с фоллбеком на относительный путь
-        this.API_URL = typeof API_URL !== 'undefined' ? API_URL : '/api';
+        this.API_URL = 'https://newyear.dimastekolnikov1.workers.dev/api';
         this.sessionId = localStorage.getItem('sessionId') || null;
         this.currentNick = localStorage.getItem('currentNick') || null;
     }
 
-    // === ПОЛУЧИТЬ СООБЩЕНИЯ ===
     async getMessages(limit = 50) {
         try {
             const response = await fetch(`${this.API_URL}/messages?limit=${limit}`);
@@ -21,19 +17,12 @@ class Database {
         }
     }
 
-    // === ОТПРАВИТЬ СООБЩЕНИЕ ===
     async sendMessage(nick, text, sticker = null, photo = null) {
         try {
             const response = await fetch(`${this.API_URL}/messages`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    nick,
-                    text,
-                    sticker,
-                    photo
-                    // Время больше не передается с клиента (безопасность)
-                })
+                body: JSON.stringify({ nick, text, sticker, photo, time: Date.now() })
             });
             if (!response.ok) throw new Error('Failed to send message');
             return await response.json();
@@ -43,7 +32,6 @@ class Database {
         }
     }
 
-    // === АВТОРИЗАЦИЯ (создание сессии) ===
     async login(nick) {
         try {
             const response = await fetch(`${this.API_URL}/auth/login`, {
@@ -66,7 +54,6 @@ class Database {
         }
     }
 
-    // === ПРОВЕРКА СЕССИИ ===
     async checkSession() {
         if (!this.sessionId) return false;
         
@@ -83,7 +70,6 @@ class Database {
         }
     }
 
-    // === ПРОВЕРКА ПОДКЛЮЧЕНИЯ ===
     async checkConnection() {
         try {
             const response = await fetch(`${this.API_URL}/health`);
