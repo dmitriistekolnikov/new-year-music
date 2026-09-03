@@ -40,3 +40,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     console.log('✨ Все системы активны!');
 });
+
+// В конце DOMContentLoaded, после всех init:
+initBottomPanel();
