@@ -15,12 +15,10 @@ export default {
         }
         
         try {
-            // Health check
             if (path === '/api/health') {
                 return new Response(JSON.stringify({ status: 'ok' }), { headers });
             }
             
-            // Получить сообщения
             if (path === '/api/messages' && request.method === 'GET') {
                 const limit = parseInt(url.searchParams.get('limit') || '50');
                 const messages = await env.DB.prepare(
@@ -30,11 +28,8 @@ export default {
                 return new Response(JSON.stringify({ messages: messages.results }), { headers });
             }
             
-            // Отправить сообщение
             if (path === '/api/messages' && request.method === 'POST') {
                 const body = await request.json();
-                
-                // ИСПРАВЛЕНИЕ: Используем серверное время вместо переданного клиентом
                 const serverTime = Date.now();
                 
                 await env.DB.prepare(
@@ -43,7 +38,7 @@ export default {
                     body.nick, 
                     body.text, 
                     body.system || 0, 
-                    serverTime, // Безопасное серверное время
+                    serverTime,
                     body.sticker || null, 
                     body.photo || null
                 ).run();
@@ -51,11 +46,10 @@ export default {
                 return new Response(JSON.stringify({ success: true }), { headers });
             }
             
-            // Логин (создание сессии)
             if (path === '/api/auth/login' && request.method === 'POST') {
                 const body = await request.json();
                 const sessionId = crypto.randomUUID();
-                const expiresAt = Date.now() + (24 * 60 * 60 * 1000); // 24 часа
+                const expiresAt = Date.now() + (24 * 60 * 60 * 1000);
                 
                 await env.DB.prepare(
                     'INSERT INTO sessions (session_id, nick, expires_at) VALUES (?, ?, ?)'
@@ -67,16 +61,13 @@ export default {
                 }), { headers });
             }
             
-            // Проверка сессии
             if (path === '/api/auth/check' && request.method === 'POST') {
                 const body = await request.json();
                 const session = await env.DB.prepare(
                     'SELECT * FROM sessions WHERE session_id = ? AND expires_at > ?'
                 ).bind(body.session_id, Date.now()).first();
                 
-                return new Response(JSON.stringify({ 
-                    valid: !!session 
-                }), { headers });
+                return new Response(JSON.stringify({ valid: !!session }), { headers });
             }
             
             return new Response(JSON.stringify({ error: 'Not found' }), { 
