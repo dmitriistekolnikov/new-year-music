@@ -2,11 +2,13 @@
 
 class Database {
     constructor() {
-        this.API_URL = '/api';
+        // Используем константу из config.js, с фоллбеком на относительный путь
+        this.API_URL = typeof API_URL !== 'undefined' ? API_URL : '/api';
         this.sessionId = localStorage.getItem('sessionId') || null;
         this.currentNick = localStorage.getItem('currentNick') || null;
     }
 
+    // === ПОЛУЧИТЬ СООБЩЕНИЯ ===
     async getMessages(limit = 50) {
         try {
             const response = await fetch(`${this.API_URL}/messages?limit=${limit}`);
@@ -19,6 +21,7 @@ class Database {
         }
     }
 
+    // === ОТПРАВИТЬ СООБЩЕНИЕ ===
     async sendMessage(nick, text, sticker = null, photo = null) {
         try {
             const response = await fetch(`${this.API_URL}/messages`, {
@@ -28,8 +31,8 @@ class Database {
                     nick,
                     text,
                     sticker,
-                    photo,
-                    time: Date.now()
+                    photo
+                    // Время больше не передается с клиента (безопасность)
                 })
             });
             if (!response.ok) throw new Error('Failed to send message');
@@ -40,6 +43,7 @@ class Database {
         }
     }
 
+    // === АВТОРИЗАЦИЯ (создание сессии) ===
     async login(nick) {
         try {
             const response = await fetch(`${this.API_URL}/auth/login`, {
@@ -62,6 +66,7 @@ class Database {
         }
     }
 
+    // === ПРОВЕРКА СЕССИИ ===
     async checkSession() {
         if (!this.sessionId) return false;
         
@@ -78,6 +83,7 @@ class Database {
         }
     }
 
+    // === ПРОВЕРКА ПОДКЛЮЧЕНИЯ ===
     async checkConnection() {
         try {
             const response = await fetch(`${this.API_URL}/health`);
