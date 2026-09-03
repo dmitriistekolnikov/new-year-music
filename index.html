@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>🎄 НовыйГодЧат</title>
     <link rel="stylesheet" href="css/styles.css">
-    <!-- Добавлена библиотека для чтения метаданных MP3 -->
+    <!-- Библиотека для чтения метаданных MP3 -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jsmediatags/3.9.5/jsmediatags.min.js"></script>
 </head>
 <body>
@@ -20,8 +20,8 @@
                 <div style="display: flex; align-items: center; gap: 8px;">
                     <div class="eq-container" id="eq-container" style="display: flex; gap: 2px; height: 15px; align-items: flex-end;"></div>
                     <div>
-                        <span class="track-mini" id="track-mini">Christmas Phonk</span>
-                        <span class="artist-mini" id="artist-mini">wi$$$uri</span>
+                        <span class="track-mini" id="track-mini">Загрузка...</span>
+                        <span class="artist-mini" id="artist-mini">Подождите</span>
                     </div>
                 </div>
             </div>
@@ -36,7 +36,7 @@
             <div class="progress-bar-mini">
                 <span id="current-time-mini">0:00</span>
                 <div class="progress-track-mini"><div class="progress-fill-mini" id="progress-fill-mini"></div></div>
-                <span id="total-time-mini">3:45</span>
+                <span id="total-time-mini">0:00</span>
             </div>
             <ul class="playlist-bangs" id="playlist-bangs"></ul>
         </div>
@@ -46,7 +46,8 @@
         <header>
             <h1 class="main-title">🎄 НовыйГодЧат</h1>
             <div style="display: flex; gap: 10px;">
-                <button class="btn" id="theme-btn" style="background: rgba(255,255,255,0.1); color: white; box-shadow: none;">🎨</button>
+                <!-- ИСПРАВЛЕНО: Добавлен текст и !important для гарантии видимости -->
+                <button class="btn" id="theme-btn" style="background: rgba(255,255,255,0.1); color: #fff !important; box-shadow: none; font-size: 1rem;">🎨 Тема</button>
                 <button class="btn" id="header-login-btn">🔑 Вход</button>
             </div>
         </header>
@@ -67,7 +68,6 @@
                 <h2 style="text-align: center; margin-bottom: 16px;"> С Новым Годом! 🎉</h2>
                 <div class="chat-status">
                     <span style="font-weight: 600;">💬 Новогодний чат</span>
-                    <!-- Добавлен id="chat-status-badge" для корректной работы JS -->
                     <span id="chat-status-badge" class="status-badge status-offline"><span class="status-dot"></span> offline</span>
                 </div>
                 <div class="chat-messages" id="chat-messages">
