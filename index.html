@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>🎄 НовыйГодЧат</title>
     <link rel="stylesheet" href="css/styles.css">
+    <!-- Добавлена библиотека для чтения метаданных MP3 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jsmediatags/3.9.5/jsmediatags.min.js"></script>
 </head>
 <body>
     <div class="garland" id="garland"></div>
@@ -44,7 +46,7 @@
         <header>
             <h1 class="main-title">🎄 НовыйГодЧат</h1>
             <div style="display: flex; gap: 10px;">
-                <button class="btn" id="theme-btn" style="background: rgba(255,255,255,0.1); color: white; box-shadow: none;"></button>
+                <button class="btn" id="theme-btn" style="background: rgba(255,255,255,0.1); color: white; box-shadow: none;">🎨</button>
                 <button class="btn" id="header-login-btn">🔑 Вход</button>
             </div>
         </header>
@@ -65,7 +67,8 @@
                 <h2 style="text-align: center; margin-bottom: 16px;"> С Новым Годом! 🎉</h2>
                 <div class="chat-status">
                     <span style="font-weight: 600;">💬 Новогодний чат</span>
-                    <span class="status-badge status-offline"><span class="status-dot"></span> offline</span>
+                    <!-- Добавлен id="chat-status-badge" для корректной работы JS -->
+                    <span id="chat-status-badge" class="status-badge status-offline"><span class="status-dot"></span> offline</span>
                 </div>
                 <div class="chat-messages" id="chat-messages">
                     <p style="text-align: center; color: var(--text-secondary); margin-top: 100px; font-style: italic;">Здесь будет новогоднее настроение...<br>Войди, чтобы начать общение!</p>
@@ -94,7 +97,6 @@
     </div>
     <div class="prediction-toast" id="prediction-toast"></div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jsmediatags/3.9.5/jsmediatags.min.js"></script>
     <script src="js/config.js"></script>
     <script src="js/antimat.js"></script>
     <script src="js/database.js"></script>
