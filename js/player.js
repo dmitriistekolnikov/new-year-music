@@ -1,5 +1,3 @@
-// === ПЛЕЕР С ПАРАЛЛЕЛЬНОЙ ЗАГРУЗКОЙ И ОБРАБОТЧИКОМ ОШИБОК ===
-
 let currentTrackIndex = 0;
 let isPlaying = false;
 let isTracksLoaded = false;
@@ -11,11 +9,7 @@ const DEFAULT_COVER = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy5
 async function readMetadata(fileNumber) {
     return new Promise((resolve) => {
         const url = getTrackUrl(fileNumber);
-        
-        // Если библиотека не загрузилась, сразу отдаем запасной вариант
-        if (typeof jsmediatags === 'undefined') {
-            return resolve(getFallbackTrack(fileNumber));
-        }
+        if (typeof jsmediatags === 'undefined') return resolve(getFallbackTrack(fileNumber));
 
         jsmediatags.read(url, {
             onSuccess: function(tag) {
@@ -31,8 +25,7 @@ async function readMetadata(fileNumber) {
                 }
                 resolve({ id: fileNumber - 1, title: tags.title || `Трек ${fileNumber}`, artist: tags.artist || 'Неизвестный', cover: coverUrl, url: url });
             },
-            onError: function(error) {
-                console.warn(`Не удалось прочитать теги ${fileNumber}.mp3. Использую запасной вариант.`);
+            onError: function() {
                 resolve(getFallbackTrack(fileNumber));
             }
         });
@@ -50,7 +43,6 @@ async function loadTracks() {
     trackTitleEl.textContent = "Загрузка музыки...";
     artistEl.textContent = "Подождите";
 
-    // Параллельная загрузка всех треков для скорости
     const promises = [];
     for (let i = 1; i <= TRACKS_COUNT; i++) {
         promises.push(readMetadata(i).catch(() => getFallbackTrack(i)));
@@ -59,16 +51,13 @@ async function loadTracks() {
     try {
         TRACKS = await Promise.all(promises);
         isTracksLoaded = true;
-        
         trackTitleEl.textContent = TRACKS[0].title;
         artistEl.textContent = TRACKS[0].artist;
-        
         buildPlaylist();
         selectTrack(0, false);
         console.log('✅ Музыка загружена:', TRACKS.length, 'треков');
     } catch (error) {
         console.error('❌ Ошибка загрузки плейлиста:', error);
-        trackTitleEl.textContent = "Ошибка";
     }
 }
 
@@ -78,13 +67,11 @@ function buildPlaylist() {
     TRACKS.forEach((track, i) => {
         const li = document.createElement('li');
         li.dataset.index = i;
-        li.innerHTML = `
-            <img src="${track.cover}" style="width: 40px; height: 40px; border-radius: 8px; object-fit: cover;" onerror="this.src='${DEFAULT_COVER}'">
+        li.innerHTML = `<img src="${track.cover}" style="width: 40px; height: 40px; border-radius: 8px; object-fit: cover;" onerror="this.src='${DEFAULT_COVER}'">
             <div style="flex: 1; overflow: hidden;">
                 <div style="font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${track.title}</div>
                 <div style="font-size: 0.8rem; color: var(--text-secondary);">${track.artist}</div>
-            </div>
-        `;
+            </div>`;
         if (i === currentTrackIndex) li.classList.add('active');
         li.addEventListener('click', (e) => { e.stopPropagation(); selectTrack(i, true); });
         list.appendChild(li);
@@ -174,4 +161,4 @@ function initEqualizer() {
         requestAnimationFrame(animate);
     }
     requestAnimationFrame(animate);
-        }
+}
