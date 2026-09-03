@@ -458,3 +458,58 @@ function initLetter() {
     
     chatInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') sendBtn.click(); });
 }
+// === ИНИЦИАЛИЗАЦИЯ НИЖНЕЙ ПАНЕЛИ ===
+function initBottomPanel() {
+    const panel = document.getElementById('bottom-panel');
+    const header = document.getElementById('bottom-panel-header');
+    
+    if (!panel || !header) return;
+    
+    header.addEventListener('click', () => {
+        panel.classList.toggle('expanded');
+    });
+    
+    // Кнопка Фото
+    document.getElementById('btn-photo').addEventListener('click', () => {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = 'image/*';
+        input.onchange = (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                const img = document.createElement('img');
+                img.src = ev.target.result;
+                img.style.cssText = 'max-width: 90vw; max-height: 90vh; border-radius: 12px; box-shadow: 0 8px 32px rgba(0,0,0,0.5);';
+                const overlay = document.createElement('div');
+                overlay.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); display: flex; align-items: center; justify-content: center; z-index: 9999; cursor: pointer;';
+                overlay.appendChild(img);
+                overlay.onclick = () => overlay.remove();
+                document.body.appendChild(overlay);
+            };
+            reader.readAsDataURL(file);
+        };
+        input.click();
+    });
+    
+    // Кнопка Пазл
+    document.getElementById('btn-puzzle').addEventListener('click', () => {
+        if (typeof initPuzzle === 'function') initPuzzle();
+    });
+    
+    // Кнопка Свечи
+    document.getElementById('btn-candles').addEventListener('click', () => {
+        if (typeof initCandles === 'function') initCandles();
+    });
+    
+    // Кнопка Часы
+    document.getElementById('btn-clock').addEventListener('click', () => {
+        if (typeof initCuckooClock === 'function') initCuckooClock();
+    });
+    
+    // Кнопка Ёлка
+    document.getElementById('btn-tree').addEventListener('click', () => {
+        if (typeof initTreeCounter === 'function') initTreeCounter();
+    });
+}
