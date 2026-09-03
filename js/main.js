@@ -1,19 +1,17 @@
-// === ТОЧКА ВХОДА ===
-
 document.addEventListener('DOMContentLoaded', async () => {
     console.log('🎄 НовыйГодЧат загружается...');
     
     // 1. Базовые эффекты
-    initSnow();
+    if (typeof initSnow === 'function') initSnow();
     initGarland();
     initFreeze();
     initThemeSwitcher();
     initTimer();
     
-    // 2. Плеер и эквалайзер
+    // 2. Плеер и эквалайзер (Чёлка)
     initPlayer();
     initEqualizer();
-    initReflection(); // Отражение плеера
+    initReflection();
     
     // 3. Интерактив и чат
     initGift();
