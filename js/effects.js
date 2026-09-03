@@ -1,6 +1,7 @@
-// === СТАРЫЕ ЭФФЕКТЫ ===
+// === БАЗОВЫЕ ЭФФЕКТЫ ===
 function initGarland() {
     const garland = document.getElementById('garland');
+    if (!garland) return;
     const count = Math.floor(window.innerWidth / 25);
     for (let i = 0; i < count; i++) {
         const bulb = document.createElement('div');
@@ -25,10 +26,14 @@ function initFreeze() {
 function initGift() {
     const gift = document.getElementById('magic-gift');
     const toast = document.getElementById('prediction-toast');
+    if (!gift || !toast) return;
+    
     gift.addEventListener('click', (e) => {
         e.stopPropagation();
         gift.classList.add('opened');
-        if (typeof createClickParticles === 'function') createClickParticles(gift.getBoundingClientRect().left + 30, gift.getBoundingClientRect().top + 30, 30, ['#fbbf24', '#ef4444', '#ffffff']);
+        if (typeof createClickParticles === 'function') {
+            createClickParticles(gift.getBoundingClientRect().left + 30, gift.getBoundingClientRect().top + 30, 30, ['#fbbf24', '#ef4444', '#ffffff']);
+        }
         toast.textContent = PREDICTIONS[Math.floor(Math.random() * PREDICTIONS.length)];
         toast.classList.add('show');
         setTimeout(() => { gift.classList.remove('opened'); toast.classList.remove('show'); }, 3000);
@@ -36,13 +41,13 @@ function initGift() {
 }
 
 function initThemeSwitcher() {
-    let currentTheme = 0;
     const btn = document.getElementById('theme-btn');
+    if (!btn) return;
+    let currentTheme = 0;
     btn.addEventListener('click', () => {
         currentTheme = (currentTheme + 1) % THEMES.length;
         document.body.className = THEMES[currentTheme];
     });
-    // Исправлено превращение кнопки: меняем эмодзи, а не стираем текст
     btn.addEventListener('mouseenter', () => { btn.innerHTML = '⛄ Тема'; });
     btn.addEventListener('mouseleave', () => { btn.innerHTML = '🎨 Тема'; });
 }
@@ -52,17 +57,20 @@ function initTimer() {
         const now = new Date();
         const nextYear = new Date(now.getFullYear() + 1, 0, 1);
         const diff = nextYear - now;
-        document.getElementById('days').textContent = Math.floor(diff / (1000 * 60 * 60 * 24));
-        document.getElementById('hours').textContent = Math.floor((diff / (1000 * 60 * 60)) % 24).toString().padStart(2, '0');
-        document.getElementById('minutes').textContent = Math.floor((diff / 1000 / 60) % 60).toString().padStart(2, '0');
-        document.getElementById('seconds').textContent = Math.floor((diff / 1000) % 60).toString().padStart(2, '0');
+        const d = document.getElementById('days');
+        const h = document.getElementById('hours');
+        const m = document.getElementById('minutes');
+        const s = document.getElementById('seconds');
+        if (d) d.textContent = Math.floor(diff / (1000 * 60 * 60 * 24));
+        if (h) h.textContent = Math.floor((diff / (1000 * 60 * 60)) % 24).toString().padStart(2, '0');
+        if (m) m.textContent = Math.floor((diff / 1000 / 60) % 60).toString().padStart(2, '0');
+        if (s) s.textContent = Math.floor((diff / 1000) % 60).toString().padStart(2, '0');
     }
     update();
     setInterval(update, 1000);
 }
 
-// === НОВЫЕ ЭФФЕКТЫ (Оптимизированные) ===
-
+// === НОВЫЕ ЭФФЕКТЫ ===
 function initCandles() {
     const container = document.createElement('div');
     container.id = 'candles-container';
@@ -115,7 +123,6 @@ function initPhotoFrame() {
         if (!file) return;
         const reader = new FileReader();
         reader.onload = (ev) => {
-            // Очищаем, но оставляем кнопку закрытия
             Array.from(frame.children).forEach(child => { if (child !== closeBtn) frame.removeChild(child); });
             const img = document.createElement('img');
             img.src = ev.target.result;
@@ -148,10 +155,8 @@ function initCuckooClock() {
     const clock = document.createElement('div');
     clock.id = 'cuckoo-clock';
     clock.style.cssText = 'position: fixed; top: 100px; left: 20px; width: 120px; height: 120px; background: radial-gradient(circle, #fbbf24, #f59e0b); border-radius: 50%; border: 8px solid #8b4513; box-shadow: 0 8px 20px rgba(0,0,0,0.3); z-index: 100; cursor: pointer; display: flex; align-items: center; justify-content: center;';
-    
     const face = document.createElement('div');
     face.style.cssText = 'position: relative; width: 100%; height: 100%;';
-    
     const hourHand = document.createElement('div');
     hourHand.style.cssText = 'position: absolute; top: 50%; left: 50%; width: 4px; height: 35px; background: #0f172a; transform-origin: bottom center; border-radius: 2px;';
     const minHand = document.createElement('div');
@@ -184,7 +189,7 @@ function initCuckooClock() {
 }
 
 function initPuzzle() {
-    const imageUrl = '/i-_1_.png'; // Убедись, что этот файл есть в корне!
+    const imageUrl = '/i-_1_.png'; 
     const puzzleContainer = document.createElement('div');
     puzzleContainer.id = 'puzzle-container';
     puzzleContainer.style.cssText = 'position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 300px; height: 300px; background: rgba(0,0,0,0.9); border-radius: 16px; padding: 20px; display: none; flex-direction: column; align-items: center; z-index: 1001; border: 1px solid var(--glass-border);';
@@ -239,15 +244,13 @@ function initPuzzle() {
 }
 
 function initCustomCursor() {
-    // Отключаем на мобильных, там это вызывает баги
     if ('ontouchstart' in window) return;
-    
     const cursor = document.createElement('div');
     cursor.id = 'custom-cursor';
     cursor.innerHTML = '❄️';
     cursor.style.cssText = 'position: fixed; pointer-events: none; font-size: 1.5rem; z-index: 9999; transition: transform 0.1s;';
     document.body.appendChild(cursor);
-    document.body.style.cursor = 'none'; // Скрываем стандартный курсор
+    document.body.style.cursor = 'none';
 
     document.addEventListener('mousemove', (e) => {
         cursor.style.left = e.clientX + 'px';
@@ -294,7 +297,7 @@ function initSparkWaterfall() {
     const now = new Date();
     const newYear = new Date(now.getFullYear() + 1, 0, 1);
     const diffDays = (newYear - now) / (1000 * 60 * 60 * 24);
-    if (diffDays > 7) return; // Только за 7 дней до НГ
+    if (diffDays > 7) return; 
     
     const canvas = document.createElement('canvas');
     canvas.id = 'waterfall-canvas';
@@ -356,13 +359,59 @@ function initNameFirework() {
     });
 }
 
-// Функция-обертка для инициализации чата (из предыдущих исправлений)
+// === ФУНКЦИИ ЧАТА (ТЕПЕРЬ ОНИ НА МЕСТЕ!) ===
+async function loadChatMessages() {
+    const messages = await db.getMessages(50);
+    const chatContainer = document.getElementById('chat-messages');
+    if (!chatContainer) return;
+    
+    if (messages.length > 0) {
+        chatContainer.innerHTML = '';
+        messages.reverse().forEach(msg => {
+            appendMessageToChat(msg);
+        });
+    }
+}
+
+function appendMessageToChat(msg) {
+    const chatContainer = document.getElementById('chat-messages');
+    if (!chatContainer) return;
+    
+    const msgDiv = document.createElement('div');
+    const isSystem = msg.system === 1;
+    const time = new Date(msg.time).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+    
+    msgDiv.style.cssText = `padding: 10px; margin-bottom: 8px; background: ${isSystem ? 'rgba(251, 191, 36, 0.1)' : 'rgba(255,255,255,0.05)'}; border-radius: 8px; border-left: 3px solid ${isSystem ? 'var(--accent-gold)' : 'var(--accent-green)'}; animation: fadeIn 0.3s ease;`;
+    
+    let content = `<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+        <span style="font-weight: bold; color: ${isSystem ? 'var(--accent-gold)' : 'var(--accent-green)'};">${msg.nick}</span>
+        <span style="font-size: 0.75rem; color: var(--text-secondary);">${time}</span>
+    </div>
+    <div style="color: var(--text-primary); word-wrap: break-word;">${msg.text}</div>`;
+    
+    if (msg.sticker) {
+        content += `<img src="https://raw.githubusercontent.com/dmitriistekolnikov/new-year-music/main/stickers/${msg.sticker}" style="max-width: 150px; border-radius: 8px; margin-top: 8px;">`;
+    }
+    if (msg.photo) {
+        content += `<img src="${msg.photo}" style="max-width: 100%; border-radius: 8px; margin-top: 8px;">`;
+    }
+    
+    msgDiv.innerHTML = content;
+    chatContainer.appendChild(msgDiv);
+    chatContainer.scrollTop = chatContainer.scrollHeight;
+}
+
+// Добавляем стиль анимации чата
+const chatStyle = document.createElement('style');
+chatStyle.textContent = `@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }`;
+document.head.appendChild(chatStyle);
+
 function initLetter() {
     let isLoggedIn = false;
     const chatInput = document.getElementById('letter-text');
     const sendBtn = document.getElementById('send-letter-btn');
     
-    if (typeof loadChatMessages === 'function') loadChatMessages();
+    loadChatMessages();
     
     document.getElementById('chat-login-btn').addEventListener('click', async function() {
         const nick = prompt('Введи свой ник:');
@@ -383,9 +432,7 @@ function initLetter() {
                 statusBadge.style.color = 'var(--accent-green)';
                 statusBadge.innerHTML = '<span class="status-dot" style="background: var(--accent-green);"></span> online';
             }
-            if (typeof appendMessageToChat === 'function') {
-                appendMessageToChat({ nick: '🎅 Система', text: `${nick} присоединился к чату!`, system: 1, time: Date.now() });
-            }
+            appendMessageToChat({ nick: '🎅 Система', text: `${nick} присоединился к чату!`, system: 1, time: Date.now() });
         } else {
             alert('Ошибка входа.');
         }
@@ -399,13 +446,15 @@ function initLetter() {
         
         const result = await db.sendMessage(db.currentNick, text);
         if (result) {
-            if (typeof appendMessageToChat === 'function') appendMessageToChat({ nick: db.currentNick, text: text, system: 0, time: Date.now() });
+            appendMessageToChat({ nick: db.currentNick, text: text, system: 0, time: Date.now() });
             chatInput.value = '';
-            if (typeof createClickParticles === 'function') createClickParticles(sendBtn.getBoundingClientRect().left + 20, sendBtn.getBoundingClientRect().top, 15, ['#22c55e', '#fbbf24']);
+            if (typeof createClickParticles === 'function') {
+                createClickParticles(sendBtn.getBoundingClientRect().left + 20, sendBtn.getBoundingClientRect().top, 15, ['#22c55e', '#fbbf24']);
+            }
         } else {
             alert('Ошибка отправки');
         }
     });
     
     chatInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') sendBtn.click(); });
-                                                                         }
+}
