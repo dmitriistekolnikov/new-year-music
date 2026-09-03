@@ -1,31 +1,39 @@
-// === ПЛЕЕР С ЧТЕНИЕМ МЕТАДАННЫХ MP3 ===
+// === ПЛЕЕР С ЧТЕНИЕМ МЕТАДАННЫХ MP3 И ЗАПАСНЫМ ВАРИАНТОМ ===
 
 let currentTrackIndex = 0;
 let isPlaying = false;
+let isTracksLoaded = false;
 const audio = new Audio();
 audio.volume = 0.7;
 
-// Обложка по умолчанию (если в файле нет)
 const DEFAULT_COVER = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyMDAiIGhlaWdodD0iMjAwIj48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iIzFhMWExYSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LXNpemU9IjgwIiBmaWxsPSIjZmJiZjI0IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkeT0iLjNlbSI+8J+OgDwvdGV4dD48L3N2Zz4=';
 
-// Чтение метаданных MP3 через jsmediatags
 async function readMetadata(fileNumber) {
     return new Promise((resolve) => {
         const url = getTrackUrl(fileNumber);
         
+        // Если jsmediatags не загрузился или ошибка сети, сразу возвращаем запасной вариант
+        if (typeof jsmediatags === 'undefined') {
+            console.warn(`jsmediatags не найден, используем запасной трек ${fileNumber}`);
+            return resolve(getFallbackTrack(fileNumber));
+        }
+
         jsmediatags.read(url, {
             onSuccess: function(tag) {
                 const tags = tag.tags;
-                
-                // Извлекаем обложку
                 let coverUrl = DEFAULT_COVER;
+                
                 if (tags.picture) {
-                    const { data, format } = tags.picture;
-                    let base64String = '';
-                    for (let i = 0; i < data.length; i++) {
-                        base64String += String.fromCharCode(data[i]);
+                    try {
+                        const { data, format } = tags.picture;
+                        let base64String = '';
+                        for (let i = 0; i < data.length; i++) {
+                            base64String += String.fromCharCode(data[i]);
+                        }
+                        coverUrl = `data:${format};base64,${window.btoa(base64String)}`;
+                    } catch (e) {
+                        console.warn(`Ошибка обработки обложки трека ${fileNumber}:`, e);
                     }
-                    coverUrl = `data:${format};base64,${window.btoa(base64String)}`;
                 }
                 
                 resolve({
@@ -38,40 +46,57 @@ async function readMetadata(fileNumber) {
                 });
             },
             onError: function(error) {
-                console.warn(`Не удалось прочитать метаданные ${fileNumber}.mp3:`, error);
-                resolve({
-                    id: fileNumber - 1,
-                    title: `Трек ${fileNumber}`,
-                    artist: 'Неизвестный исполнитель',
-                    album: '',
-                    cover: DEFAULT_COVER,
-                    url: url
-                });
+                console.warn(`Не удалось прочитать метаданные ${fileNumber}.mp3 (возможно, CORS или файл не найден). Использую запасной вариант.`, error.type);
+                resolve(getFallbackTrack(fileNumber));
             }
         });
     });
 }
 
-// Загрузка всех треков и построение плейлиста
+function getFallbackTrack(fileNumber) {
+    const fallback = FALLBACK_TRACKS[fileNumber - 1] || { title: `Трек ${fileNumber}`, artist: 'Неизвестный исполнитель' };
+    return {
+        id: fileNumber - 1,
+        title: fallback.title,
+        artist: fallback.artist,
+        album: '',
+        cover: DEFAULT_COVER,
+        url: getTrackUrl(fileNumber)
+    };
+}
+
 async function loadTracks() {
+    const trackTitleEl = document.getElementById('track-mini');
+    const artistEl = document.getElementById('artist-mini');
+    trackTitleEl.textContent = "Загрузка музыки...";
+    artistEl.textContent = "Подождите";
+
     const tracks = [];
     for (let i = 1; i <= TRACKS_COUNT; i++) {
         const track = await readMetadata(i);
         tracks.push(track);
     }
+    
     TRACKS = tracks;
+    isTracksLoaded = true;
+    
+    trackTitleEl.textContent = TRACKS[0].title;
+    artistEl.textContent = TRACKS[0].artist;
+    
     buildPlaylist();
+    selectTrack(0, false); // Выбираем первый трек, но не играем
+    console.log('✅ Плейлист успешно загружен:', TRACKS.length, 'треков');
 }
 
 function buildPlaylist() {
     const list = document.getElementById('playlist-bangs');
-    list.innerHTML = ''; // Очищаем
+    list.innerHTML = '';
     
     TRACKS.forEach((track, i) => {
         const li = document.createElement('li');
         li.dataset.index = i;
         li.innerHTML = `
-            <img src="${track.cover}" style="width: 40px; height: 40px; border-radius: 8px; object-fit: cover;">
+            <img src="${track.cover}" style="width: 40px; height: 40px; border-radius: 8px; object-fit: cover;" onerror="this.src='${DEFAULT_COVER}'">
             <div style="flex: 1; overflow: hidden;">
                 <div style="font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${track.title}</div>
                 <div style="font-size: 0.8rem; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${track.artist}</div>
@@ -81,13 +106,15 @@ function buildPlaylist() {
         if (i === currentTrackIndex) li.classList.add('active');
         li.addEventListener('click', (e) => {
             e.stopPropagation();
-            selectTrack(i);
+            selectTrack(i, true);
         });
         list.appendChild(li);
     });
 }
 
-function selectTrack(index) {
+function selectTrack(index, shouldPlay = false) {
+    if (!isTracksLoaded || !TRACKS[index]) return;
+    
     currentTrackIndex = index;
     const track = TRACKS[index];
     
@@ -98,29 +125,30 @@ function selectTrack(index) {
     document.getElementById('track-mini').textContent = track.title;
     document.getElementById('artist-mini').textContent = track.artist;
     
-    // Обновляем обложку в мини-плеере (если есть место)
-    const trackMini = document.getElementById('track-mini');
-    trackMini.style.backgroundImage = `url(${track.cover})`;
-    trackMini.style.backgroundSize = 'cover';
-    
-    console.log('Загрузка трека:', track.url);
+    console.log('Загрузка аудио:', track.url);
     audio.src = track.url;
     
-    if (isPlaying) {
+    if (shouldPlay) {
+        isPlaying = true;
+        document.getElementById('play-btn-mini').textContent = '⏸';
         audio.play().catch(err => {
-            console.error('Ошибка воспроизведения:', err);
+            console.error('Ошибка воспроизведения (браузер мог заблокировать автоплей):', err);
+            isPlaying = false;
+            document.getElementById('play-btn-mini').textContent = '▶';
         });
     }
 }
 
 function togglePlay() {
+    if (!isTracksLoaded) return;
+
     isPlaying = !isPlaying;
     const btn = document.getElementById('play-btn-mini');
     btn.textContent = isPlaying ? '⏸' : '▶';
     
     if (isPlaying) {
-        if (!audio.src || audio.src === window.location.href) {
-            selectTrack(currentTrackIndex);
+        if (!audio.src || audio.readyState === 0) {
+            selectTrack(currentTrackIndex, true);
         } else {
             audio.play().catch(err => {
                 console.error('Ошибка воспроизведения:', err);
@@ -134,62 +162,67 @@ function togglePlay() {
 }
 
 function nextTrack() {
+    if (!isTracksLoaded) return;
     const next = (currentTrackIndex + 1) % TRACKS.length;
-    selectTrack(next);
+    selectTrack(next, true);
 }
 
 function prevTrack() {
+    if (!isTracksLoaded) return;
     const prev = (currentTrackIndex - 1 + TRACKS.length) % TRACKS.length;
-    selectTrack(prev);
+    selectTrack(prev, true);
 }
 
 function initPlayer() {
-    // Сначала загружаем метаданные, потом инициализируем плеер
-    loadTracks().then(() => {
-        document.getElementById('player-bangs-header').addEventListener('click', (e) => {
-            if (e.target.closest('.controls-mini')) return;
-            document.getElementById('player-bangs').classList.toggle('expanded');
-        });
-        
-        document.getElementById('play-btn-mini').addEventListener('click', (e) => {
-            e.stopPropagation();
-            togglePlay();
-        });
-        
-        document.getElementById('next-btn-mini').addEventListener('click', (e) => {
-            e.stopPropagation();
-            nextTrack();
-        });
-        
-        document.getElementById('prev-btn-mini').addEventListener('click', (e) => {
-            e.stopPropagation();
-            prevTrack();
-        });
-        
-        audio.addEventListener('ended', nextTrack);
-        
-        audio.addEventListener('error', (e) => {
-            console.error('Ошибка загрузки аудио:', e);
-        });
-        
-        audio.addEventListener('timeupdate', () => {
-            if (audio.duration) {
-                const progress = (audio.currentTime / audio.duration) * 100;
-                document.getElementById('progress-fill-mini').style.width = progress + '%';
-                document.getElementById('current-time-mini').textContent = formatTime(audio.currentTime);
-                document.getElementById('total-time-mini').textContent = formatTime(audio.duration);
-            }
-        });
-        
-        document.querySelector('.progress-track-mini').addEventListener('click', (e) => {
-            const rect = e.currentTarget.getBoundingClientRect();
-            const percent = (e.clientX - rect.left) / rect.width;
-            if (audio.duration) audio.currentTime = percent * audio.duration;
-        });
+    loadTracks(); // Запускаем загрузку сразу
+
+    document.getElementById('player-bangs-header').addEventListener('click', (e) => {
+        if (e.target.closest('.controls-mini')) return;
+        document.getElementById('player-bangs').classList.toggle('expanded');
+    });
+    
+    document.getElementById('play-btn-mini').addEventListener('click', (e) => {
+        e.stopPropagation();
+        togglePlay();
+    });
+    
+    document.getElementById('next-btn-mini').addEventListener('click', (e) => {
+        e.stopPropagation();
+        nextTrack();
+    });
+    
+    document.getElementById('prev-btn-mini').addEventListener('click', (e) => {
+        e.stopPropagation();
+        prevTrack();
+    });
+    
+    audio.addEventListener('ended', nextTrack);
+    
+    audio.addEventListener('error', (e) => {
+        console.error('❌ Ошибка загрузки аудиофайла. Проверь, лежат ли файлы 1.mp3, 2.mp3 и т.д. в папке /music/', e);
+        document.getElementById('track-mini').textContent = "Ошибка загрузки";
+    });
+    
+    audio.addEventListener('timeupdate', () => {
+        if (audio.duration && !isNaN(audio.duration)) {
+            const progress = (audio.currentTime / audio.duration) * 100;
+            document.getElementById('progress-fill-mini').style.width = progress + '%';
+            document.getElementById('current-time-mini').textContent = formatTime(audio.currentTime);
+            document.getElementById('total-time-mini').textContent = formatTime(audio.duration);
+        }
+    });
+    
+    document.querySelector('.progress-track-mini').addEventListener('click', (e) => {
+        const rect = e.currentTarget.getBoundingClientRect();
+        const percent = (e.clientX - rect.left) / rect.width;
+        if (audio.duration && !isNaN(audio.duration)) {
+            audio.currentTime = percent * audio.duration;
+        }
     });
 }
 
 function formatTime(seconds) {
+    if (isNaN(seconds)) return "0:00";
     const m = Math.floor(seconds / 60);
     const s = Math.floor(seconds % 60);
     return `${m}:${s.toString().padStart(2, '0')}`;
@@ -198,6 +231,8 @@ function formatTime(seconds) {
 // === ЭКВАЛАЙЗЕР ===
 function initEqualizer() {
     const container = document.getElementById('eq-container');
+    if (!container) return;
+    
     const bars = [];
     for (let i = 0; i < 5; i++) {
         const bar = document.createElement('div');
