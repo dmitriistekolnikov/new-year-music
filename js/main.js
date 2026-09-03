@@ -1,41 +1,44 @@
 // === ТОЧКА ВХОДА ===
 
 document.addEventListener('DOMContentLoaded', async () => {
-    console.log(' НовыйГодЧат загружается...');
+    console.log('🎄 НовыйГодЧат загружается...');
     
-    // Инициализация эффектов
+    // 1. Базовые эффекты
     initSnow();
     initGarland();
-    initPlayer();
-    initEqualizer();
     initFreeze();
-    initGift();
-    initLetter();
     initThemeSwitcher();
     initTimer();
     
-    // Проверка БД
+    // 2. Плеер и эквалайзер
+    initPlayer();
+    initEqualizer();
+    initReflection(); // Отражение плеера
+    
+    // 3. Интерактив и чат
+    initGift();
+    initLetter();
+    
+    // 4. Новые крутые эффекты
+    initCandles();
+    initPhotoFrame();
+    initCuckooClock();
+    initPuzzle();
+    initCustomCursor();
+    initParallax();
+    initTreeCounter();
+    initSparkWaterfall();
+    initNameFirework();
+    
+    // 5. Проверка БД
     const isConnected = await db.checkConnection();
     if (isConnected) {
         console.log('✅ База данных подключена');
-        
-        // Проверка сессии
         const hasSession = await db.checkSession();
-        if (hasSession) {
-            console.log('✅ Сессия активна:', db.currentNick);
-        }
+        if (hasSession) console.log('✅ Сессия активна:', db.currentNick);
     } else {
-        console.log('⚠️ База данных недоступна');
+        console.log('⚠️ База данных недоступна (работаем в демо-режиме)');
     }
-    
-    // Заглушки
-    document.getElementById('header-login-btn').addEventListener('click', () => {
-        console.log('🔑 Клик по входу');
-    });
-    
-    document.getElementById('photo-upload').addEventListener('click', () => {
-        console.log('📸 Загрузка фото');
-    });
     
     console.log('✨ Все системы активны!');
 });
