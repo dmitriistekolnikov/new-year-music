@@ -10,7 +10,7 @@ function initGarland() {
         bulb.className = 'bulb';
         bulb.style.backgroundColor = BULB_COLORS[i % BULB_COLORS.length];
         bulb.style.color = BULB_COLORS[i % BULB_COLORS.length];
-        bulb.style.animationDelay = `${i * 0.1}s`;
+        bulb.style.animationDelay = `${i * 0.15}s`;
         garland.appendChild(bulb);
     }
 }
@@ -63,7 +63,6 @@ function initLetter() {
     
     loadChatMessages();
     
-    // Кнопка входа
     document.getElementById('chat-login-btn').addEventListener('click', async function() {
         const nick = prompt('Введи свой ник (минимум 2 символа):');
         if (!nick || nick.trim().length < 2) {
@@ -77,12 +76,8 @@ function initLetter() {
             return;
         }
         
-        console.log('Попытка входа под ником:', nick.trim());
-        
         try {
             const result = await db.login(nick.trim());
-            console.log('Результат логина:', result);
-            
             if (result) {
                 isLoggedIn = true;
                 this.style.display = 'none';
@@ -104,15 +99,14 @@ function initLetter() {
                     time: Date.now()
                 });
             } else {
-                alert('Ошибка входа: сервер не вернул данные. Проверь консоль (F12) для деталей.');
+                alert('Ошибка входа: сервер не вернул данные.');
             }
         } catch (error) {
             console.error('КРИТИЧЕСКАЯ ОШИБКА ЛОГИНА:', error);
-            alert('Ошибка входа: ' + error.message + '\n\nПроверь консоль браузера (F12) для полной информации.');
+            alert('Ошибка входа: ' + error.message);
         }
     });
     
-    // Отправка сообщения
     sendBtn.addEventListener('click', async function() {
         if (!isLoggedIn) return;
         
@@ -223,7 +217,6 @@ function initThemeSwitcher() {
         localStorage.setItem('theme', THEMES[currentTheme]);
     });
     
-    // Восстановление темы
     const saved = localStorage.getItem('theme');
     if (saved) {
         document.body.className = saved;
@@ -291,7 +284,7 @@ function initTreeCounter() {
     let count = 0;
     const counter = document.createElement('div');
     counter.id = 'tree-counter';
-    counter.innerHTML = ' 0';
+    counter.innerHTML = '🎄 0';
     document.body.appendChild(counter);
     
     counter.addEventListener('click', () => {
@@ -423,128 +416,7 @@ function initNameFirework() {
     });
 }
 
-// === 19. ФОТО-ЗОНА С РАМКОЙ ===
-function initPhotoFrame() {
-    const frame = document.createElement('div');
-    frame.id = 'photo-frame';
-    frame.style.cssText = `
-        position: fixed;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        width: 300px;
-        height: 300px;
-        border: 15px solid transparent;
-        border-image: repeating-linear-gradient(45deg, #8b0000, #2d5a27, #1e3a5f, #c9a227) 30;
-        background: rgba(0,0,0,0.8);
-        display: none;
-        align-items: center;
-        justify-content: center;
-        z-index: 1000;
-        cursor: pointer;
-    `;
-    
-    const closeBtn = document.createElement('button');
-    closeBtn.textContent = '✕';
-    closeBtn.style.cssText = `
-        position: absolute;
-        top: -40px;
-        right: 0;
-        background: #8b0000;
-        color: white;
-        border: none;
-        width: 30px;
-        height: 30px;
-        border-radius: 50%;
-        cursor: pointer;
-        font-size: 1.2rem;
-    `;
-    closeBtn.onclick = (e) => {
-        e.stopPropagation();
-        frame.style.display = 'none';
-    };
-    frame.appendChild(closeBtn);
-    
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = 'image/*';
-    input.style.display = 'none';
-    
-    input.addEventListener('change', function(e) {
-        const file = e.target.files[0];
-        if (!file) return;
-        
-        const reader = new FileReader();
-        reader.onload = (ev) => {
-            frame.innerHTML = '';
-            frame.appendChild(closeBtn);
-            
-            const img = document.createElement('img');
-            img.src = ev.target.result;
-            img.style.cssText = `
-                max-width: 100%;
-                max-height: 100%;
-                object-fit: contain;
-            `;
-            frame.appendChild(img);
-            frame.style.display = 'flex';
-        };
-        reader.readAsDataURL(file);
-    });
-    
-    frame.addEventListener('click', (e) => {
-        if (e.target === frame) input.click();
-    });
-    
-    document.body.appendChild(frame);
-    
-    // Кнопка для открытия
-    const btn = document.createElement('button');
-    btn.textContent = '📸 Фото';
-    btn.style.cssText = `
-        position: fixed;
-        bottom: 100px;
-        right: 20px;
-        background: #c9a227;
-        color: #0a0a0f;
-        border: none;
-        padding: 10px 15px;
-        border-radius: 12px;
-        cursor: pointer;
-        font-weight: bold;
-        z-index: 100;
-    `;
-    btn.onclick = () => input.click();
-    document.body.appendChild(btn);
-}
-
-// === 21. ЗЕРКАЛЬНОЕ ОТРАЖЕНИЕ ===
-function initReflection() {
-    // Исправлено: ищем правильный селектор плеера, так как .music-section может не существовать
-    const player = document.querySelector('.player-bangs') || document.querySelector('.music-section');
-    if (!player) return;
-    
-    const reflection = player.cloneNode(true);
-    reflection.id = 'player-reflection';
-    reflection.style.cssText = `
-        position: fixed;
-        bottom: 0;
-        left: 50%;
-        transform: translateX(-50%) scaleY(-1);
-        opacity: 0.15;
-        pointer-events: none;
-        filter: blur(2px);
-        mask-image: linear-gradient(to bottom, rgba(0,0,0,0.5), transparent);
-        -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,0.5), transparent);
-        width: 90%;
-        max-width: 800px;
-        z-index: 0;
-    `;
-    
-    document.body.appendChild(reflection);
-}
-
-// === 32. НОВОГОДНИЙ ПАЗЛ ===
+// === 32. НОВОГОДНИЙ ПАЗЛ (ИСПРАВЛЕН) ===
 function initPuzzle() {
     const imageUrl = '/i-_1_.png';
     
@@ -597,6 +469,8 @@ function initPuzzle() {
     `;
     
     const pieces = [];
+    let selectedPiece = null;
+    
     for (let r = 0; r < 3; r++) {
         for (let c = 0; c < 3; c++) {
             const piece = document.createElement('div');
@@ -608,17 +482,43 @@ function initPuzzle() {
                 background-position: ${-c * 90}px ${-r * 90}px;
                 border: 2px solid #c9a227;
                 cursor: pointer;
-                transition: transform 0.2s;
+                transition: all 0.2s;
+                border-radius: 4px;
             `;
             piece.dataset.row = r;
             piece.dataset.col = c;
+            piece.dataset.originalRow = r;
+            piece.dataset.originalCol = c;
             
             piece.addEventListener('click', function() {
-                const idx = pieces.indexOf(this);
-                if (idx > 0 && Math.random() > 0.5) {
-                    const temp = pieces[idx - 1].style.backgroundPosition;
-                    pieces[idx - 1].style.backgroundPosition = this.style.backgroundPosition;
-                    this.style.backgroundPosition = temp;
+                if (selectedPiece === null) {
+                    selectedPiece = this;
+                    this.style.border = '3px solid #ffffff';
+                    this.style.transform = 'scale(1.05)';
+                } else if (selectedPiece === this) {
+                    this.style.border = '2px solid #c9a227';
+                    this.style.transform = 'scale(1)';
+                    selectedPiece = null;
+                } else {
+                    // Меняем позиции двух кусочков
+                    const tempPos = this.style.backgroundPosition;
+                    const tempRow = this.dataset.row;
+                    const tempCol = this.dataset.col;
+                    
+                    this.style.backgroundPosition = selectedPiece.style.backgroundPosition;
+                    this.dataset.row = selectedPiece.dataset.row;
+                    this.dataset.col = selectedPiece.dataset.col;
+                    
+                    selectedPiece.style.backgroundPosition = tempPos;
+                    selectedPiece.dataset.row = tempRow;
+                    selectedPiece.dataset.col = tempCol;
+                    
+                    selectedPiece.style.border = '2px solid #c9a227';
+                    selectedPiece.style.transform = 'scale(1)';
+                    selectedPiece = null;
+                    
+                    // Проверяем, собран ли пазл
+                    checkPuzzleComplete();
                 }
             });
             
@@ -628,11 +528,43 @@ function initPuzzle() {
     }
     
     // Перемешиваем
-    pieces.forEach(piece => {
-        const randomRow = Math.floor(Math.random() * 3);
-        const randomCol = Math.floor(Math.random() * 3);
-        piece.style.backgroundPosition = `${-randomCol * 90}px ${-randomRow * 90}px`;
-    });
+    function shufflePuzzle() {
+        const positions = [];
+        for (let r = 0; r < 3; r++) {
+            for (let c = 0; c < 3; c++) {
+                positions.push({ r, c });
+            }
+        }
+        // Fisher-Yates shuffle
+        for (let i = positions.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [positions[i], positions[j]] = [positions[j], positions[i]];
+        }
+        
+        pieces.forEach((piece, idx) => {
+            const pos = positions[idx];
+            piece.style.backgroundPosition = `${-pos.c * 90}px ${-pos.r * 90}px`;
+            piece.dataset.row = pos.r;
+            piece.dataset.col = pos.c;
+        });
+    }
+    
+    shufflePuzzle();
+    
+    function checkPuzzleComplete() {
+        const isComplete = pieces.every(piece => {
+            return piece.dataset.row === piece.dataset.originalRow && 
+                   piece.dataset.col === piece.dataset.originalCol;
+        });
+        
+        if (isComplete) {
+            setTimeout(() => {
+                alert('🎉 Поздравляем! Пазл собран!');
+                createClickParticles(window.innerWidth / 2, window.innerHeight / 2, 50, ['#c9a227', '#8b0000', '#2d5a27']);
+                puzzleContainer.style.display = 'none';
+            }, 300);
+        }
+    }
     
     puzzleContainer.appendChild(grid);
     document.body.appendChild(puzzleContainer);
@@ -654,44 +586,6 @@ function initPuzzle() {
     `;
     btn.onclick = () => puzzleContainer.style.display = 'flex';
     document.body.appendChild(btn);
-}
-
-// === НОВЫЕ: СВЕЧИ И ЧАСЫ (чтобы HTML/CSS элементы ожили) ===
-function initCandles() {
-    const container = document.getElementById('candles-bg');
-    if (!container) return;
-    for (let i = 0; i < 3; i++) {
-        const candle = document.createElement('div');
-        candle.className = 'candle';
-        candle.innerHTML = '<div class="flame"></div>';
-        candle.style.animationDelay = `${i * 0.3}s`;
-        container.appendChild(candle);
-    }
-}
-
-function initClock() {
-    const clock = document.getElementById('clock-bg');
-    if (!clock) return;
-    
-    const hourHand = document.createElement('div');
-    hourHand.className = 'clock-hand hour';
-    const minuteHand = document.createElement('div');
-    minuteHand.className = 'clock-hand minute';
-    
-    clock.appendChild(hourHand);
-    clock.appendChild(minuteHand);
-
-    function updateClock() {
-        const now = new Date();
-        const h = now.getHours() % 12;
-        const m = now.getMinutes();
-        const hDeg = (h * 30) + (m * 0.5);
-        const mDeg = m * 6;
-        hourHand.style.transform = `rotate(${hDeg}deg)`;
-        minuteHand.style.transform = `rotate(${mDeg}deg)`;
-    }
-    updateClock();
-    setInterval(updateClock, 1000);
 }
 
 // === СТИЛИ ДЛЯ АНИМАЦИЙ ===
