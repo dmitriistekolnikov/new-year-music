@@ -1,7 +1,11 @@
-// === ТОЧКА ВХОДА: ИНИЦИАЛИЗАЦИЯ ВСЕХ МОДУЛЕЙ ===
+// === ТОЧКА ВХОДА ===
 
 document.addEventListener('DOMContentLoaded', async () => {
     console.log('🎄 НовыйГодЧат загружается...');
+    
+    // === ФОН ОТ ВРЕМЕНИ ПОЛЬЗОВАТЕЛЯ ===
+    updateBackgroundByTime();
+    setInterval(updateBackgroundByTime, 60000); // Обновляем каждую минуту
     
     // === БАЗОВЫЕ ЭФФЕКТЫ ===
     initSnow();
@@ -30,11 +34,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (isConnected) {
         console.log('✅ База данных подключена');
         
-        // Проверяем сохраненную сессию
         const hasSession = await db.checkSession();
         if (hasSession) {
             console.log('✅ Сессия активна:', db.currentNick);
-            // Автоматически показываем интерфейс чата
             const loginBtn = document.getElementById('chat-login-btn');
             const lockedMsg = document.getElementById('locked-msg');
             const letterArea = document.getElementById('letter-area');
@@ -46,12 +48,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         console.log('⚠️ База данных недоступна. Чат работает в офлайн-режиме.');
     }
     
-    // === ЗАГЛУШКИ ДЛЯ КНОПОК ===
+    // === ЗАГЛУШКИ ===
     const headerLoginBtn = document.getElementById('header-login-btn');
     if (headerLoginBtn) {
         headerLoginBtn.addEventListener('click', () => {
-            console.log('🔑 Клик по входу в шапке');
-            // Можно добавить модальное окно или редирект
+            console.log(' Клик по входу в шапке');
         });
     }
     
@@ -59,14 +60,44 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (photoUpload) {
         photoUpload.addEventListener('click', () => {
             console.log('📸 Загрузка фото');
-            // Можно добавить input type="file"
         });
     }
     
     console.log('✨ Все системы активны!');
-    console.log('📊 Загружено треков:', TRACKS_COUNT);
-    console.log('🎨 Доступно тем:', THEMES.length);
 });
+
+// === ФОН ОТ ВРЕМЕНИ ПОЛЬЗОВАТЕЛЯ ===
+function updateBackgroundByTime() {
+    const now = new Date();
+    const hour = now.getHours();
+    
+    const root = document.documentElement;
+    
+    // Ночь (0-6): тёмно-синий/фиолетовый
+    // Утро (6-12): светлеет
+    // День (12-18): светлый
+    // Вечер (18-24): темнеет
+    
+    if (hour >= 0 && hour < 6) {
+        // Ночь - тёмный
+        root.style.setProperty('--bg-dark', '#0a0a0f');
+        document.body.style.background = `linear-gradient(135deg, #0a0a0f 0%, #151525 50%, #0a0a0f 100%)`;
+    } else if (hour >= 6 && hour < 12) {
+        // Утро - светлеет
+        const brightness = (hour - 6) / 6;
+        root.style.setProperty('--bg-dark', `hsl(240, 20%, ${10 + brightness * 20}%)`);
+        document.body.style.background = `linear-gradient(135deg, hsl(240, 20%, ${5 + brightness * 15}%) 0%, hsl(240, 20%, ${15 + brightness * 20}%) 50%, hsl(240, 20%, ${5 + brightness * 15}%) 100%)`;
+    } else if (hour >= 12 && hour < 18) {
+        // День - светлый
+        root.style.setProperty('--bg-dark', '#1a1a2e');
+        document.body.style.background = `linear-gradient(135deg, #1a1a2e 0%, #2a2a4e 50%, #1a1a2e 100%)`;
+    } else {
+        // Вечер - темнеет
+        const darkness = (hour - 18) / 6;
+        root.style.setProperty('--bg-dark', `hsl(240, 20%, ${30 - darkness * 20}%)`);
+        document.body.style.background = `linear-gradient(135deg, hsl(240, 20%, ${25 - darkness * 15}%) 0%, hsl(240, 20%, ${35 - darkness * 20}%) 50%, hsl(240, 20%, ${25 - darkness * 15}%) 100%)`;
+    }
+}
 
 // === ОБРАБОТКА ОШИБОК ===
 window.addEventListener('error', (e) => {
