@@ -58,12 +58,28 @@ function initLetter() {
     const chatInput = document.getElementById('letter-text');
     const sendBtn = document.getElementById('send-letter-btn');
     const chatContainer = document.getElementById('chat-messages');
+    const loginBtn = document.getElementById('chat-login-btn');
+    const lockedMsg = document.getElementById('locked-msg');
+    const letterArea = document.getElementById('letter-area');
     
-    if (!chatInput || !sendBtn || !chatContainer) return;
+    console.log('initLetter: элементы найдены:', {
+        chatInput: !!chatInput,
+        sendBtn: !!sendBtn,
+        chatContainer: !!chatContainer,
+        loginBtn: !!loginBtn,
+        lockedMsg: !!lockedMsg,
+        letterArea: !!letterArea
+    });
+    
+    if (!chatInput || !sendBtn || !chatContainer || !loginBtn) {
+        console.error('initLetter: не найдены обязательные элементы!');
+        return;
+    }
     
     loadChatMessages();
     
-    document.getElementById('chat-login-btn').addEventListener('click', async function() {
+    loginBtn.addEventListener('click', async function() {
+        console.log('Клик по кнопке входа');
         const nick = prompt('Введи свой ник (минимум 2 символа):');
         if (!nick || nick.trim().length < 2) {
             alert('Ник должен быть минимум 2 символа!');
@@ -82,11 +98,14 @@ function initLetter() {
             const result = await db.login(nick.trim());
             console.log('Результат логина:', result);
             
-            if (result) {
+            if (result && result.session_id) {
                 isLoggedIn = true;
-                this.style.display = 'none';
-                document.getElementById('locked-msg').style.display = 'none';
-                document.getElementById('letter-area').style.display = 'flex';
+                loginBtn.style.display = 'none';
+                if (lockedMsg) lockedMsg.style.display = 'none';
+                if (letterArea) {
+                    letterArea.style.display = 'flex';
+                    console.log('letterArea показан');
+                }
                 
                 const statusBadge = document.getElementById('chat-status-badge');
                 if (statusBadge) {
@@ -102,20 +121,30 @@ function initLetter() {
                     system: 1,
                     time: Date.now()
                 });
+                
+                console.log('Вход выполнен успешно');
             } else {
-                alert('Ошибка входа: сервер не вернул данные. Проверь консоль (F12) для деталей.');
+                alert('Ошибка входа: сервер не вернул session_id. Проверь консоль (F12).');
+                console.error('Результат логина без session_id:', result);
             }
         } catch (error) {
             console.error('КРИТИЧЕСКАЯ ОШИБКА ЛОГИНА:', error);
-            alert('Ошибка входа: ' + error.message + '\n\nПроверь консоль браузера (F12) для полной информации.');
+            alert('Ошибка входа: ' + error.message + '\n\nПроверь консоль (F12).');
         }
     });
     
     sendBtn.addEventListener('click', async function() {
-        if (!isLoggedIn) return;
+        console.log('Клик по кнопке отправки, isLoggedIn:', isLoggedIn);
+        if (!isLoggedIn) {
+            console.warn('Пользователь не залогинен');
+            return;
+        }
         
         const text = chatInput.value.trim();
-        if (!text) return;
+        if (!text) {
+            console.warn('Пустое сообщение');
+            return;
+        }
         
         const check = antiMat.check(text);
         if (check.isBanned) {
@@ -125,9 +154,12 @@ function initLetter() {
         }
         
         const nick = db.currentNick;
-        const result = await db.sendMessage(nick, text);
+        console.log('Отправка сообщения от', nick, ':', text);
         
-        if (result) {
+        const result = await db.sendMessage(nick, text);
+        console.log('Результат отправки:', result);
+        
+        if (result && result.success) {
             appendMessageToChat({
                 nick: nick,
                 text: text,
@@ -143,8 +175,10 @@ function initLetter() {
                 15,
                 ['#2d5a27', '#c9a227']
             );
+            console.log('Сообщение отправлено и отображено');
         } else {
-            alert('Ошибка отправки сообщения');
+            alert('Ошибка отправки сообщения. Проверь консоль (F12).');
+            console.error('Ошибка отправки:', result);
         }
     });
     
@@ -397,7 +431,7 @@ function initNameFirework() {
     });
 }
 
-// === 32. НОВОГОДНИЙ ПАЗЛ (ИСПРАВЛЕН — кликаешь 2 кусочка, они меняются) ===
+// === 32. НОВОГОДНИЙ ПАЗЛ ===
 function initPuzzle() {
     const imageUrl = '/i-_1_.png';
     
@@ -408,7 +442,7 @@ function initPuzzle() {
         top: 50%;
         left: 50%;
         transform: translate(-50%, -50%);
-        width: 320px;
+        width: 300px;
         background: rgba(10, 10, 15, 0.95);
         border-radius: 16px;
         padding: 20px;
@@ -416,8 +450,7 @@ function initPuzzle() {
         flex-direction: column;
         align-items: center;
         z-index: 1001;
-        border: 2px solid #c9a227;
-        box-shadow: 0 0 40px rgba(201, 162, 39, 0.3);
+        border: 1px solid var(--glass-border);
     `;
     
     const closeBtn = document.createElement('button');
@@ -433,125 +466,115 @@ function initPuzzle() {
         cursor: pointer;
         margin-bottom: 10px;
     `;
-    closeBtn.onclick = () => {
-        puzzleContainer.style.display = 'none';
-        selectedPiece = null;
-    };
+    closeBtn.onclick = () => puzzleContainer.style.display = 'none';
     puzzleContainer.appendChild(closeBtn);
     
     const title = document.createElement('h3');
-    title.textContent = '🎄 Собери новогоднюю картинку!';
-    title.style.cssText = 'color: #c9a227; margin-bottom: 5px; text-align: center;';
+    title.textContent = '🧩 Собери картинку!';
+    title.style.cssText = 'color: #c9a227; margin-bottom: 10px;';
     puzzleContainer.appendChild(title);
-    
-    const hint = document.createElement('p');
-    hint.textContent = 'Кликни на 2 кусочка, чтобы поменять их местами';
-    hint.style.cssText = 'color: #888; font-size: 0.75rem; margin-bottom: 10px; text-align: center;';
-    puzzleContainer.appendChild(hint);
     
     const grid = document.createElement('div');
     grid.style.cssText = `
         display: grid;
         grid-template-columns: repeat(3, 1fr);
-        gap: 4px;
-        width: 276px;
-        height: 276px;
-        background: rgba(201, 162, 39, 0.2);
-        padding: 2px;
-        border-radius: 8px;
+        gap: 5px;
+        width: 270px;
+        height: 270px;
     `;
     
     const pieces = [];
     let selectedPiece = null;
     
-    // Создаём кусочки с правильными позициями
-    const originalPositions = [];
     for (let r = 0; r < 3; r++) {
         for (let c = 0; c < 3; c++) {
-            originalPositions.push({ r, c });
+            const piece = document.createElement('div');
+            piece.style.cssText = `
+                width: 90px;
+                height: 90px;
+                background-image: url(${imageUrl});
+                background-size: 270px 270px;
+                background-position: ${-c * 90}px ${-r * 90}px;
+                border: 2px solid #c9a227;
+                cursor: pointer;
+                transition: all 0.2s;
+                border-radius: 4px;
+            `;
+            piece.dataset.row = r;
+            piece.dataset.col = c;
+            piece.dataset.originalRow = r;
+            piece.dataset.originalCol = c;
+            
+            piece.addEventListener('click', function() {
+                if (selectedPiece === null) {
+                    selectedPiece = this;
+                    this.style.border = '3px solid #ffffff';
+                    this.style.transform = 'scale(1.05)';
+                } else if (selectedPiece === this) {
+                    this.style.border = '2px solid #c9a227';
+                    this.style.transform = 'scale(1)';
+                    selectedPiece = null;
+                } else {
+                    const tempPos = this.style.backgroundPosition;
+                    const tempRow = this.dataset.row;
+                    const tempCol = this.dataset.col;
+                    
+                    this.style.backgroundPosition = selectedPiece.style.backgroundPosition;
+                    this.dataset.row = selectedPiece.dataset.row;
+                    this.dataset.col = selectedPiece.dataset.col;
+                    
+                    selectedPiece.style.backgroundPosition = tempPos;
+                    selectedPiece.dataset.row = tempRow;
+                    selectedPiece.dataset.col = tempCol;
+                    
+                    selectedPiece.style.border = '2px solid #c9a227';
+                    selectedPiece.style.transform = 'scale(1)';
+                    selectedPiece = null;
+                    
+                    checkPuzzleComplete();
+                }
+            });
+            
+            pieces.push(piece);
+            grid.appendChild(piece);
         }
     }
     
-    // Перемешиваем через Fisher-Yates
-    const shuffled = [...originalPositions];
-    for (let i = shuffled.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    function shufflePuzzle() {
+        const positions = [];
+        for (let r = 0; r < 3; r++) {
+            for (let c = 0; c < 3; c++) {
+                positions.push({ r, c });
+            }
+        }
+        for (let i = positions.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [positions[i], positions[j]] = [positions[j], positions[i]];
+        }
+        
+        pieces.forEach((piece, idx) => {
+            const pos = positions[idx];
+            piece.style.backgroundPosition = `${-pos.c * 90}px ${-pos.r * 90}px`;
+            piece.dataset.row = pos.r;
+            piece.dataset.col = pos.c;
+        });
     }
     
-    for (let idx = 0; idx < 9; idx++) {
-        const piece = document.createElement('div');
-        const origPos = originalPositions[idx];
-        const showPos = shuffled[idx];
-        
-        piece.style.cssText = `
-            width: 90px;
-            height: 90px;
-            background-image: url(${imageUrl});
-            background-size: 270px 270px;
-            background-position: ${-showPos.c * 90}px ${-showPos.r * 90}px;
-            border: 2px solid rgba(201, 162, 39, 0.5);
-            cursor: pointer;
-            transition: all 0.2s;
-            border-radius: 4px;
-        `;
-        piece.dataset.correctRow = origPos.r;
-        piece.dataset.correctCol = origPos.c;
-        piece.dataset.currentRow = showPos.r;
-        piece.dataset.currentCol = showPos.c;
-        
-        piece.addEventListener('click', function() {
-            if (selectedPiece === null) {
-                selectedPiece = this;
-                this.style.border = '3px solid #ffffff';
-                this.style.boxShadow = '0 0 15px rgba(255,255,255,0.5)';
-                this.style.transform = 'scale(1.05)';
-            } else if (selectedPiece === this) {
-                this.style.border = '2px solid rgba(201, 162, 39, 0.5)';
-                this.style.boxShadow = 'none';
-                this.style.transform = 'scale(1)';
-                selectedPiece = null;
-            } else {
-                // Обмен позициями
-                const tempBg = this.style.backgroundPosition;
-                const tempRow = this.dataset.currentRow;
-                const tempCol = this.dataset.currentCol;
-                
-                this.style.backgroundPosition = selectedPiece.style.backgroundPosition;
-                this.dataset.currentRow = selectedPiece.dataset.currentRow;
-                this.dataset.currentCol = selectedPiece.dataset.currentCol;
-                
-                selectedPiece.style.backgroundPosition = tempBg;
-                selectedPiece.dataset.currentRow = tempRow;
-                selectedPiece.dataset.currentCol = tempCol;
-                
-                selectedPiece.style.border = '2px solid rgba(201, 162, 39, 0.5)';
-                selectedPiece.style.boxShadow = 'none';
-                selectedPiece.style.transform = 'scale(1)';
-                selectedPiece = null;
-                
-                // Проверяем победу
-                const won = pieces.every(p => 
-                    p.dataset.currentRow === p.dataset.correctRow && 
-                    p.dataset.currentCol === p.dataset.correctCol
-                );
-                
-                if (won) {
-                    pieces.forEach(p => {
-                        p.style.border = '2px solid #2d5a27';
-                        p.style.boxShadow = '0 0 10px rgba(45, 90, 39, 0.5)';
-                    });
-                    setTimeout(() => {
-                        alert('🎉🎄 Поздравляем! Пазл собран! С Новым Годом! 🎄🎉');
-                        createClickParticles(window.innerWidth / 2, window.innerHeight / 2, 50, ['#c9a227', '#8b0000', '#2d5a27', '#ffffff']);
-                        puzzleContainer.style.display = 'none';
-                    }, 500);
-                }
-            }
+    shufflePuzzle();
+    
+    function checkPuzzleComplete() {
+        const isComplete = pieces.every(piece => {
+            return piece.dataset.row === piece.dataset.originalRow && 
+                   piece.dataset.col === piece.dataset.originalCol;
         });
         
-        pieces.push(piece);
-        grid.appendChild(piece);
+        if (isComplete) {
+            setTimeout(() => {
+                alert('🎉 Поздравляем! Пазл собран!');
+                createClickParticles(window.innerWidth / 2, window.innerHeight / 2, 50, ['#c9a227', '#8b0000', '#2d5a27']);
+                puzzleContainer.style.display = 'none';
+            }, 300);
+        }
     }
     
     puzzleContainer.appendChild(grid);
@@ -561,17 +584,16 @@ function initPuzzle() {
     btn.textContent = '🧩 Пазл';
     btn.style.cssText = `
         position: fixed;
-        bottom: 30px;
-        right: 100px;
-        background: linear-gradient(135deg, #1e3a5f, #2d5a27);
+        bottom: 140px;
+        right: 20px;
+        background: #1e3a5f;
         color: white;
-        border: 2px solid #c9a227;
+        border: none;
         padding: 10px 15px;
         border-radius: 12px;
         cursor: pointer;
         font-weight: bold;
         z-index: 100;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.3);
     `;
     btn.onclick = () => puzzleContainer.style.display = 'flex';
     document.body.appendChild(btn);
