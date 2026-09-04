@@ -1,20 +1,76 @@
-// === ПЛЕЕР С ЧЕЛКОЙ (БЕЗ JSMEDIATAGS) ===
+// === ПЛЕЕР С МЕТАДАННЫМИ MP3 ===
 
 let currentTrackIndex = 0;
 let isPlaying = false;
+let tracks = [];
 const audio = new Audio();
 audio.volume = 0.7;
+
+const DEFAULT_COVER = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyMDAiIGhlaWdodD0iMjAwIj48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iIzFhMWExYSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LXNpemU9IjgwIiBmaWxsPSIjYzlhMjI3IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkeT0iLjNlbSI+8J+OgDwvdGV4dD48L3N2Zz4=';
+
+async function readMetadata(fileNumber) {
+    return new Promise((resolve) => {
+        const url = getTrackUrl(fileNumber);
+        
+        jsmediatags.read(url, {
+            onSuccess: function(tag) {
+                const tags = tag.tags;
+                let coverUrl = DEFAULT_COVER;
+                
+                if (tags.picture) {
+                    const { data, format } = tags.picture;
+                    let base64String = '';
+                    for (let i = 0; i < data.length; i++) {
+                        base64String += String.fromCharCode(data[i]);
+                    }
+                    coverUrl = `data:${format};base64,${window.btoa(base64String)}`;
+                }
+                
+                resolve({
+                    id: fileNumber - 1,
+                    title: tags.title || `Трек ${fileNumber}`,
+                    artist: tags.artist || 'Неизвестный исполнитель',
+                    album: tags.album || '',
+                    cover: coverUrl,
+                    url: url
+                });
+            },
+            onError: function(error) {
+                console.warn(`Не удалось прочитать метаданные ${fileNumber}.mp3:`, error);
+                resolve({
+                    id: fileNumber - 1,
+                    title: `Трек ${fileNumber}`,
+                    artist: 'Неизвестный исполнитель',
+                    album: '',
+                    cover: DEFAULT_COVER,
+                    url: url
+                });
+            }
+        });
+    });
+}
+
+async function loadTracks() {
+    const loadedTracks = [];
+    for (let i = 1; i <= TRACKS_COUNT; i++) {
+        const track = await readMetadata(i);
+        loadedTracks.push(track);
+    }
+    tracks = loadedTracks;
+    buildPlaylist();
+    updateMiniPlayer(0);
+}
 
 function buildPlaylist() {
     const list = document.getElementById('playlist-bangs');
     if (!list) return;
     list.innerHTML = '';
     
-    TRACKS.forEach((track, i) => {
+    tracks.forEach((track, i) => {
         const li = document.createElement('li');
         li.dataset.index = i;
         li.innerHTML = `
-            <div style="width: 32px; height: 32px; background: var(--glass-bg); border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem;">🎵</div>
+            <img src="${track.cover}" alt="cover">
             <div style="flex: 1; overflow: hidden;">
                 <div style="font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${track.title}</div>
                 <div style="font-size: 0.8rem; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${track.artist}</div>
@@ -32,7 +88,7 @@ function buildPlaylist() {
 
 function selectTrack(index) {
     currentTrackIndex = index;
-    const track = TRACKS[index];
+    const track = tracks[index];
     if (!track) return;
     
     document.querySelectorAll('.playlist-bangs li').forEach(li => li.classList.remove('active'));
@@ -41,7 +97,7 @@ function selectTrack(index) {
     
     updateMiniPlayer(index);
     
-    audio.src = getTrackUrl(track.file);
+    audio.src = track.url;
     
     if (isPlaying) {
         audio.play().catch(err => {
@@ -53,7 +109,7 @@ function selectTrack(index) {
 }
 
 function updateMiniPlayer(index) {
-    const track = TRACKS[index];
+    const track = tracks[index];
     if (!track) return;
     
     document.getElementById('track-mini').textContent = track.title;
@@ -81,83 +137,75 @@ function togglePlay() {
 }
 
 function nextTrack() {
-    const next = (currentTrackIndex + 1) % TRACKS.length;
+    const next = (currentTrackIndex + 1) % tracks.length;
     selectTrack(next);
 }
 
 function prevTrack() {
-    const prev = (currentTrackIndex - 1 + TRACKS.length) % TRACKS.length;
+    const prev = (currentTrackIndex - 1 + tracks.length) % tracks.length;
     selectTrack(prev);
 }
 
 function initPlayer() {
-    buildPlaylist();
-    updateMiniPlayer(0);
-    
-    // Челка - раскрытие/скрытие
-    const header = document.getElementById('player-bangs-header');
-    const player = document.getElementById('player-bangs');
-    
-    if (header) {
-        header.addEventListener('click', (e) => {
-            if (e.target.closest('.controls-mini')) return;
-            player.classList.toggle('expanded');
-        });
-    }
-    
-    // Кнопки управления
-    const playBtn = document.getElementById('play-btn-mini');
-    const prevBtn = document.getElementById('prev-btn-mini');
-    const nextBtn = document.getElementById('next-btn-mini');
-    
-    if (playBtn) {
-        playBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            togglePlay();
-        });
-    }
-    
-    if (nextBtn) {
-        nextBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            nextTrack();
-        });
-    }
-    
-    if (prevBtn) {
-        prevBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            prevTrack();
-        });
-    }
-    
-    // Автопереключение
-    audio.addEventListener('ended', nextTrack);
-    
-    // Ошибки
-    audio.addEventListener('error', (e) => {
-        console.error('Audio error:', e);
-    });
-    
-    // Прогресс
-    audio.addEventListener('timeupdate', () => {
-        if (audio.duration) {
-            const progress = (audio.currentTime / audio.duration) * 100;
-            document.getElementById('progress-fill-mini').style.width = progress + '%';
-            document.getElementById('current-time-mini').textContent = formatTime(audio.currentTime);
-            document.getElementById('total-time-mini').textContent = formatTime(audio.duration);
+    loadTracks().then(() => {
+        const header = document.getElementById('player-bangs-header');
+        const player = document.getElementById('player-bangs');
+        
+        if (header) {
+            header.addEventListener('click', (e) => {
+                if (e.target.closest('.controls-mini')) return;
+                player.classList.toggle('expanded');
+            });
         }
+        
+        const playBtn = document.getElementById('play-btn-mini');
+        const prevBtn = document.getElementById('prev-btn-mini');
+        const nextBtn = document.getElementById('next-btn-mini');
+        
+        if (playBtn) {
+            playBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                togglePlay();
+            });
+        }
+        
+        if (nextBtn) {
+            nextBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                nextTrack();
+            });
+        }
+        
+        if (prevBtn) {
+            prevBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                prevTrack();
+            });
+        }
+        
+        audio.addEventListener('ended', nextTrack);
+        
+        audio.addEventListener('error', (e) => {
+            console.error('Audio error:', e);
+        });
+        
+        audio.addEventListener('timeupdate', () => {
+            if (audio.duration) {
+                const progress = (audio.currentTime / audio.duration) * 100;
+                document.getElementById('progress-fill-mini').style.width = progress + '%';
+                document.getElementById('current-time-mini').textContent = formatTime(audio.currentTime);
+                document.getElementById('total-time-mini').textContent = formatTime(audio.duration);
+            }
+        });
+        
+        document.getElementById('progress-track-mini')?.addEventListener('click', (e) => {
+            const rect = e.currentTarget.getBoundingClientRect();
+            const percent = (e.clientX - rect.left) / rect.width;
+            if (audio.duration) audio.currentTime = percent * audio.duration;
+        });
+        
+        initEqualizer();
     });
-    
-    // Клик по прогрессу
-    document.getElementById('progress-track-mini')?.addEventListener('click', (e) => {
-        const rect = e.currentTarget.getBoundingClientRect();
-        const percent = (e.clientX - rect.left) / rect.width;
-        if (audio.duration) audio.currentTime = percent * audio.duration;
-    });
-    
-    // Эквалайзер
-    initEqualizer();
 }
 
 function formatTime(seconds) {
@@ -167,7 +215,6 @@ function formatTime(seconds) {
     return `${m}:${s.toString().padStart(2, '0')}`;
 }
 
-// === ЭКВАЛАЙЗЕР ===
 function initEqualizer() {
     const container = document.getElementById('eq-container');
     if (!container) return;
