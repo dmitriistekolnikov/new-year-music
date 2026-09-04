@@ -1,6 +1,8 @@
+// === МОДУЛЬ РАБОТЫ С CLOUDFLARE D1 БАЗОЙ ===
+
 class Database {
     constructor() {
-        this.API_URL = 'https://newyear.dimastekolnikov1.workers.dev/api';
+        this.API_URL = '/api';
         this.sessionId = localStorage.getItem('sessionId') || null;
         this.currentNick = localStorage.getItem('currentNick') || null;
     }
@@ -22,7 +24,13 @@ class Database {
             const response = await fetch(`${this.API_URL}/messages`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ nick, text, sticker, photo, time: Date.now() })
+                body: JSON.stringify({
+                    nick,
+                    text,
+                    sticker,
+                    photo,
+                    time: Date.now()
+                })
             });
             if (!response.ok) throw new Error('Failed to send message');
             return await response.json();
@@ -39,7 +47,10 @@ class Database {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ nick })
             });
-            if (!response.ok) throw new Error('Login failed');
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error('Login failed: ' + errorText);
+            }
             const data = await response.json();
             
             this.sessionId = data.session_id;
