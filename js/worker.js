@@ -15,13 +15,25 @@ export default {
             return new Response(null, { headers: corsHeaders });
         }
 
-        // 1. API ЗАПРОСЫ (ЧАТ)
-        if (path.startsWith('/api/')) {
-            return handleApi(request, env, path, corsHeaders);
-        }
+        try {
+            // API запросы
+            if (path.startsWith('/api/')) {
+                return await handleApi(request, env, path, corsHeaders);
+            }
 
-        // 2. СТАТИКА И МУЗЫКА
-        return serveStatic(path, corsHeaders);
+            // Статика и музыка
+            return await serveStatic(path, corsHeaders);
+            
+        } catch (error) {
+            console.error('Worker error:', error);
+            return new Response(JSON.stringify({ 
+                error: 'Internal Server Error',
+                message: error.message 
+            }), { 
+                status: 500, 
+                headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+            });
+        }
     }
 };
 
@@ -34,15 +46,22 @@ async function serveStatic(path, headers) {
         const response = await fetch(githubUrl);
         
         if (!response.ok) {
-            return new Response('404 Not Found: ' + path, { status: 404, headers });
+            return new Response('404 Not Found: ' + path, { 
+                status: 404, 
+                headers 
+            });
         }
 
         let contentType = 'text/plain';
         if (path.endsWith('.html')) contentType = 'text/html; charset=utf-8';
         else if (path.endsWith('.css')) contentType = 'text/css; charset=utf-8';
         else if (path.endsWith('.js')) contentType = 'application/javascript; charset=utf-8';
-        else if (path.endsWith('.png') || path.endsWith('.jpg') || path.endsWith('.jpeg')) contentType = 'image/jpeg';
-        else if (path.endsWith('.mp3')) contentType = 'audio/mpeg'; // Ключевое для музыки!
+        else if (path.endsWith('.png')) contentType = 'image/png';
+        else if (path.endsWith('.jpg') || path.endsWith('.jpeg')) contentType = 'image/jpeg';
+        else if (path.endsWith('.mp3')) {
+            contentType = 'audio/mpeg';
+            console.log('Serving MP3:', path);
+        }
 
         return new Response(response.body, {
             status: response.status,
@@ -53,15 +72,31 @@ async function serveStatic(path, headers) {
             }
         });
     } catch (error) {
-        return new Response('Worker Error: ' + error.message, { status: 500, headers });
+        console.error('Static file error:', error);
+        return new Response('Error: ' + error.message, { status: 500, headers });
     }
 }
 
 async function handleApi(request, env, path, headers) {
     try {
-        // Проверка здоровья
+        // Health check
         if (path === '/api/health') {
-            return new Response(JSON.stringify({ status: 'ok', time: Date.now() }), { 
+            // Проверяем, подключена ли БД
+            if (!env.DB) {
+                return new Response(JSON.stringify({ 
+                    status: 'error', 
+                    message: 'Database not connected' 
+                }), { 
+                    status: 500,
+                    headers: { ...headers, 'Content-Type': 'application/json' } 
+                });
+            }
+            
+            return new Response(JSON.stringify({ 
+                status: 'ok', 
+                time: Date.now(),
+                db: 'connected'
+            }), { 
                 headers: { ...headers, 'Content-Type': 'application/json' } 
             });
         }
@@ -105,13 +140,17 @@ async function handleApi(request, env, path, headers) {
             });
         }
 
-        return new Response(JSON.stringify({ error: 'API endpoint not found' }), { 
+        return new Response(JSON.stringify({ error: 'Not found' }), { 
             status: 404, 
             headers: { ...headers, 'Content-Type': 'application/json' } 
         });
 
     } catch (error) {
-        return new Response(JSON.stringify({ error: 'DB Error: ' + error.message }), {
+        console.error('API error:', error);
+        return new Response(JSON.stringify({ 
+            error: 'API Error', 
+            message: error.message 
+        }), {
             status: 500,
             headers: { ...headers, 'Content-Type': 'application/json' }
         });
