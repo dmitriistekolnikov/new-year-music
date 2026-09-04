@@ -2,6 +2,8 @@
 
 function initSnow() {
     const container = document.getElementById('snow-container');
+    if (!container) return;
+    
     for (let i = 0; i < 60; i++) {
         const flake = document.createElement('div');
         flake.className = 'snowflake';
