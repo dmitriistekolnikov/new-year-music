@@ -76,8 +76,12 @@ function initLetter() {
             return;
         }
         
+        console.log('Попытка входа под ником:', nick.trim());
+        
         try {
             const result = await db.login(nick.trim());
+            console.log('Результат логина:', result);
+            
             if (result) {
                 isLoggedIn = true;
                 this.style.display = 'none';
@@ -99,11 +103,11 @@ function initLetter() {
                     time: Date.now()
                 });
             } else {
-                alert('Ошибка входа: сервер не вернул данные.');
+                alert('Ошибка входа: сервер не вернул данные. Проверь консоль (F12) для деталей.');
             }
         } catch (error) {
             console.error('КРИТИЧЕСКАЯ ОШИБКА ЛОГИНА:', error);
-            alert('Ошибка входа: ' + error.message);
+            alert('Ошибка входа: ' + error.message + '\n\nПроверь консоль браузера (F12) для полной информации.');
         }
     });
     
@@ -279,29 +283,6 @@ function initParallax() {
     }
 }
 
-// === 22. ЁЛОЧНАЯ ИГРУШКА-СЧЁТЧИК ===
-function initTreeCounter() {
-    let count = 0;
-    const counter = document.createElement('div');
-    counter.id = 'tree-counter';
-    counter.innerHTML = '🎄 0';
-    document.body.appendChild(counter);
-    
-    counter.addEventListener('click', () => {
-        count++;
-        counter.innerHTML = `🎄 ${count}`;
-        counter.style.transform = 'scale(1.2) rotate(10deg)';
-        setTimeout(() => counter.style.transform = 'scale(1) rotate(0deg)', 200);
-        localStorage.setItem('treeClicks', count);
-    });
-    
-    const saved = localStorage.getItem('treeClicks');
-    if (saved) {
-        count = parseInt(saved);
-        counter.innerHTML = `🎄 ${count}`;
-    }
-}
-
 // === 24. ВОЛШЕБНЫЙ ВОДОПАД ИЗ ИСКР (за 7 дней до НГ) ===
 function initSparkWaterfall() {
     const now = new Date();
@@ -416,7 +397,7 @@ function initNameFirework() {
     });
 }
 
-// === 32. НОВОГОДНИЙ ПАЗЛ (ИСПРАВЛЕН) ===
+// === 32. НОВОГОДНИЙ ПАЗЛ (ИСПРАВЛЕН — кликаешь 2 кусочка, они меняются) ===
 function initPuzzle() {
     const imageUrl = '/i-_1_.png';
     
@@ -427,7 +408,7 @@ function initPuzzle() {
         top: 50%;
         left: 50%;
         transform: translate(-50%, -50%);
-        width: 300px;
+        width: 320px;
         background: rgba(10, 10, 15, 0.95);
         border-radius: 16px;
         padding: 20px;
@@ -435,7 +416,8 @@ function initPuzzle() {
         flex-direction: column;
         align-items: center;
         z-index: 1001;
-        border: 1px solid var(--glass-border);
+        border: 2px solid #c9a227;
+        box-shadow: 0 0 40px rgba(201, 162, 39, 0.3);
     `;
     
     const closeBtn = document.createElement('button');
@@ -451,119 +433,125 @@ function initPuzzle() {
         cursor: pointer;
         margin-bottom: 10px;
     `;
-    closeBtn.onclick = () => puzzleContainer.style.display = 'none';
+    closeBtn.onclick = () => {
+        puzzleContainer.style.display = 'none';
+        selectedPiece = null;
+    };
     puzzleContainer.appendChild(closeBtn);
     
     const title = document.createElement('h3');
-    title.textContent = '🧩 Собери картинку!';
-    title.style.cssText = 'color: #c9a227; margin-bottom: 10px;';
+    title.textContent = '🎄 Собери новогоднюю картинку!';
+    title.style.cssText = 'color: #c9a227; margin-bottom: 5px; text-align: center;';
     puzzleContainer.appendChild(title);
+    
+    const hint = document.createElement('p');
+    hint.textContent = 'Кликни на 2 кусочка, чтобы поменять их местами';
+    hint.style.cssText = 'color: #888; font-size: 0.75rem; margin-bottom: 10px; text-align: center;';
+    puzzleContainer.appendChild(hint);
     
     const grid = document.createElement('div');
     grid.style.cssText = `
         display: grid;
         grid-template-columns: repeat(3, 1fr);
-        gap: 5px;
-        width: 270px;
-        height: 270px;
+        gap: 4px;
+        width: 276px;
+        height: 276px;
+        background: rgba(201, 162, 39, 0.2);
+        padding: 2px;
+        border-radius: 8px;
     `;
     
     const pieces = [];
     let selectedPiece = null;
     
+    // Создаём кусочки с правильными позициями
+    const originalPositions = [];
     for (let r = 0; r < 3; r++) {
         for (let c = 0; c < 3; c++) {
-            const piece = document.createElement('div');
-            piece.style.cssText = `
-                width: 90px;
-                height: 90px;
-                background-image: url(${imageUrl});
-                background-size: 270px 270px;
-                background-position: ${-c * 90}px ${-r * 90}px;
-                border: 2px solid #c9a227;
-                cursor: pointer;
-                transition: all 0.2s;
-                border-radius: 4px;
-            `;
-            piece.dataset.row = r;
-            piece.dataset.col = c;
-            piece.dataset.originalRow = r;
-            piece.dataset.originalCol = c;
-            
-            piece.addEventListener('click', function() {
-                if (selectedPiece === null) {
-                    selectedPiece = this;
-                    this.style.border = '3px solid #ffffff';
-                    this.style.transform = 'scale(1.05)';
-                } else if (selectedPiece === this) {
-                    this.style.border = '2px solid #c9a227';
-                    this.style.transform = 'scale(1)';
-                    selectedPiece = null;
-                } else {
-                    // Меняем позиции двух кусочков
-                    const tempPos = this.style.backgroundPosition;
-                    const tempRow = this.dataset.row;
-                    const tempCol = this.dataset.col;
-                    
-                    this.style.backgroundPosition = selectedPiece.style.backgroundPosition;
-                    this.dataset.row = selectedPiece.dataset.row;
-                    this.dataset.col = selectedPiece.dataset.col;
-                    
-                    selectedPiece.style.backgroundPosition = tempPos;
-                    selectedPiece.dataset.row = tempRow;
-                    selectedPiece.dataset.col = tempCol;
-                    
-                    selectedPiece.style.border = '2px solid #c9a227';
-                    selectedPiece.style.transform = 'scale(1)';
-                    selectedPiece = null;
-                    
-                    // Проверяем, собран ли пазл
-                    checkPuzzleComplete();
+            originalPositions.push({ r, c });
+        }
+    }
+    
+    // Перемешиваем через Fisher-Yates
+    const shuffled = [...originalPositions];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    
+    for (let idx = 0; idx < 9; idx++) {
+        const piece = document.createElement('div');
+        const origPos = originalPositions[idx];
+        const showPos = shuffled[idx];
+        
+        piece.style.cssText = `
+            width: 90px;
+            height: 90px;
+            background-image: url(${imageUrl});
+            background-size: 270px 270px;
+            background-position: ${-showPos.c * 90}px ${-showPos.r * 90}px;
+            border: 2px solid rgba(201, 162, 39, 0.5);
+            cursor: pointer;
+            transition: all 0.2s;
+            border-radius: 4px;
+        `;
+        piece.dataset.correctRow = origPos.r;
+        piece.dataset.correctCol = origPos.c;
+        piece.dataset.currentRow = showPos.r;
+        piece.dataset.currentCol = showPos.c;
+        
+        piece.addEventListener('click', function() {
+            if (selectedPiece === null) {
+                selectedPiece = this;
+                this.style.border = '3px solid #ffffff';
+                this.style.boxShadow = '0 0 15px rgba(255,255,255,0.5)';
+                this.style.transform = 'scale(1.05)';
+            } else if (selectedPiece === this) {
+                this.style.border = '2px solid rgba(201, 162, 39, 0.5)';
+                this.style.boxShadow = 'none';
+                this.style.transform = 'scale(1)';
+                selectedPiece = null;
+            } else {
+                // Обмен позициями
+                const tempBg = this.style.backgroundPosition;
+                const tempRow = this.dataset.currentRow;
+                const tempCol = this.dataset.currentCol;
+                
+                this.style.backgroundPosition = selectedPiece.style.backgroundPosition;
+                this.dataset.currentRow = selectedPiece.dataset.currentRow;
+                this.dataset.currentCol = selectedPiece.dataset.currentCol;
+                
+                selectedPiece.style.backgroundPosition = tempBg;
+                selectedPiece.dataset.currentRow = tempRow;
+                selectedPiece.dataset.currentCol = tempCol;
+                
+                selectedPiece.style.border = '2px solid rgba(201, 162, 39, 0.5)';
+                selectedPiece.style.boxShadow = 'none';
+                selectedPiece.style.transform = 'scale(1)';
+                selectedPiece = null;
+                
+                // Проверяем победу
+                const won = pieces.every(p => 
+                    p.dataset.currentRow === p.dataset.correctRow && 
+                    p.dataset.currentCol === p.dataset.correctCol
+                );
+                
+                if (won) {
+                    pieces.forEach(p => {
+                        p.style.border = '2px solid #2d5a27';
+                        p.style.boxShadow = '0 0 10px rgba(45, 90, 39, 0.5)';
+                    });
+                    setTimeout(() => {
+                        alert('🎉🎄 Поздравляем! Пазл собран! С Новым Годом! 🎄🎉');
+                        createClickParticles(window.innerWidth / 2, window.innerHeight / 2, 50, ['#c9a227', '#8b0000', '#2d5a27', '#ffffff']);
+                        puzzleContainer.style.display = 'none';
+                    }, 500);
                 }
-            });
-            
-            pieces.push(piece);
-            grid.appendChild(piece);
-        }
-    }
-    
-    // Перемешиваем
-    function shufflePuzzle() {
-        const positions = [];
-        for (let r = 0; r < 3; r++) {
-            for (let c = 0; c < 3; c++) {
-                positions.push({ r, c });
             }
-        }
-        // Fisher-Yates shuffle
-        for (let i = positions.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [positions[i], positions[j]] = [positions[j], positions[i]];
-        }
-        
-        pieces.forEach((piece, idx) => {
-            const pos = positions[idx];
-            piece.style.backgroundPosition = `${-pos.c * 90}px ${-pos.r * 90}px`;
-            piece.dataset.row = pos.r;
-            piece.dataset.col = pos.c;
-        });
-    }
-    
-    shufflePuzzle();
-    
-    function checkPuzzleComplete() {
-        const isComplete = pieces.every(piece => {
-            return piece.dataset.row === piece.dataset.originalRow && 
-                   piece.dataset.col === piece.dataset.originalCol;
         });
         
-        if (isComplete) {
-            setTimeout(() => {
-                alert('🎉 Поздравляем! Пазл собран!');
-                createClickParticles(window.innerWidth / 2, window.innerHeight / 2, 50, ['#c9a227', '#8b0000', '#2d5a27']);
-                puzzleContainer.style.display = 'none';
-            }, 300);
-        }
+        pieces.push(piece);
+        grid.appendChild(piece);
     }
     
     puzzleContainer.appendChild(grid);
@@ -573,16 +561,17 @@ function initPuzzle() {
     btn.textContent = '🧩 Пазл';
     btn.style.cssText = `
         position: fixed;
-        bottom: 140px;
-        right: 20px;
-        background: #1e3a5f;
+        bottom: 30px;
+        right: 100px;
+        background: linear-gradient(135deg, #1e3a5f, #2d5a27);
         color: white;
-        border: none;
+        border: 2px solid #c9a227;
         padding: 10px 15px;
         border-radius: 12px;
         cursor: pointer;
         font-weight: bold;
         z-index: 100;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.3);
     `;
     btn.onclick = () => puzzleContainer.style.display = 'flex';
     document.body.appendChild(btn);
