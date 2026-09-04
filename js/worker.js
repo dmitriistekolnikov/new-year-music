@@ -15,20 +15,18 @@ export default {
             return new Response(null, { headers: corsHeaders });
         }
 
-        // API запросы
+        // 1. API ЗАПРОСЫ (ЧАТ)
         if (path.startsWith('/api/')) {
             return handleApi(request, env, path, corsHeaders);
         }
 
-        // Статика с GitHub
+        // 2. СТАТИКА И МУЗЫКА
         return serveStatic(path, corsHeaders);
     }
 };
 
 async function serveStatic(path, headers) {
-    if (path === '/' || path === '') {
-        path = '/index.html';
-    }
+    if (path === '/' || path === '') path = '/index.html';
 
     const githubUrl = GITHUB_RAW_BASE + path;
 
@@ -43,9 +41,8 @@ async function serveStatic(path, headers) {
         if (path.endsWith('.html')) contentType = 'text/html; charset=utf-8';
         else if (path.endsWith('.css')) contentType = 'text/css; charset=utf-8';
         else if (path.endsWith('.js')) contentType = 'application/javascript; charset=utf-8';
-        else if (path.endsWith('.png')) contentType = 'image/png';
-        else if (path.endsWith('.jpg') || path.endsWith('.jpeg')) contentType = 'image/jpeg';
-        else if (path.endsWith('.mp3')) contentType = 'audio/mpeg';
+        else if (path.endsWith('.png') || path.endsWith('.jpg') || path.endsWith('.jpeg')) contentType = 'image/jpeg';
+        else if (path.endsWith('.mp3')) contentType = 'audio/mpeg'; // Ключевое для музыки!
 
         return new Response(response.body, {
             status: response.status,
@@ -56,18 +53,20 @@ async function serveStatic(path, headers) {
             }
         });
     } catch (error) {
-        return new Response('Error: ' + error.message, { status: 500, headers });
+        return new Response('Worker Error: ' + error.message, { status: 500, headers });
     }
 }
 
 async function handleApi(request, env, path, headers) {
     try {
+        // Проверка здоровья
         if (path === '/api/health') {
-            return new Response(JSON.stringify({ status: 'ok' }), { 
+            return new Response(JSON.stringify({ status: 'ok', time: Date.now() }), { 
                 headers: { ...headers, 'Content-Type': 'application/json' } 
             });
         }
 
+        // Получить сообщения
         if (path === '/api/messages' && request.method === 'GET') {
             const limit = parseInt(new URL(request.url).searchParams.get('limit') || '50');
             const messages = await env.DB.prepare(
@@ -79,6 +78,7 @@ async function handleApi(request, env, path, headers) {
             });
         }
 
+        // Отправить сообщение
         if (path === '/api/messages' && request.method === 'POST') {
             const body = await request.json();
             await env.DB.prepare(
@@ -90,6 +90,7 @@ async function handleApi(request, env, path, headers) {
             });
         }
 
+        // Логин
         if (path === '/api/auth/login' && request.method === 'POST') {
             const body = await request.json();
             const sessionId = crypto.randomUUID();
@@ -104,13 +105,13 @@ async function handleApi(request, env, path, headers) {
             });
         }
 
-        return new Response(JSON.stringify({ error: 'Not found' }), { 
+        return new Response(JSON.stringify({ error: 'API endpoint not found' }), { 
             status: 404, 
             headers: { ...headers, 'Content-Type': 'application/json' } 
         });
 
     } catch (error) {
-        return new Response(JSON.stringify({ error: error.message }), {
+        return new Response(JSON.stringify({ error: 'DB Error: ' + error.message }), {
             status: 500,
             headers: { ...headers, 'Content-Type': 'application/json' }
         });
