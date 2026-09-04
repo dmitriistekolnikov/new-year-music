@@ -9,38 +9,63 @@ audio.volume = 0.7;
 const DEFAULT_COVER = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyMDAiIGhlaWdodD0iMjAwIj48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iIzFhMWExYSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LXNpemU9IjgwIiBmaWxsPSIjYzlhMjI3IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkeT0iLjNlbSI+8J+OgDwvdGV4dD48L3N2Zz4=';
 
 async function readMetadata(fileNumber) {
-    const url = getTrackUrl(fileNumber);
-    try {
-        const response = await fetch(url);
-        const arrayBuffer = await response.arrayBuffer();
-        const metadata = await musicMetadata.parseBuffer(arrayBuffer, 'audio/mpeg');
-        
-        let coverUrl = DEFAULT_COVER;
-        if (metadata.common.picture && metadata.common.picture.length > 0) {
-            const pic = metadata.common.picture[0];
-            const base64 = btoa(String.fromCharCode(...new Uint8Array(pic.data)));
-            coverUrl = `data:${pic.format};base64,${base64}`;
+    return new Promise(async (resolve) => {
+        const url = getTrackUrl(fileNumber);
+        try {
+            // Скачиваем файл целиком как Blob. Это обходит проблему с Range requests на Cloudflare.
+            const response = await fetch(url);
+            const blob = await response.blob();
+            const blobUrl = URL.createObjectURL(blob);
+            
+            jsmediatags.read(blobUrl, {
+                onSuccess: function(tag) {
+                    URL.revokeObjectURL(blobUrl); // Освобождаем память
+                    const tags = tag.tags;
+                    let coverUrl = DEFAULT_COVER;
+                    
+                    if (tags.picture) {
+                        const { data, format } = tags.picture;
+                        let base64String = '';
+                        for (let i = 0; i < data.length; i++) {
+                            base64String += String.fromCharCode(data[i]);
+                        }
+                        coverUrl = `data:${format};base64,${window.btoa(base64String)}`;
+                    }
+                    
+                    resolve({
+                        id: fileNumber - 1,
+                        title: tags.title || `Трек ${fileNumber}`,
+                        artist: tags.artist || 'Неизвестный исполнитель',
+                        album: tags.album || '',
+                        cover: coverUrl,
+                        url: url
+                    });
+                },
+                onError: function(error) {
+                    URL.revokeObjectURL(blobUrl);
+                    console.warn(`Не удалось прочитать метаданные ${fileNumber}.mp3:`, error);
+                    resolve({
+                        id: fileNumber - 1,
+                        title: `Трек ${fileNumber}`,
+                        artist: 'Неизвестный исполнитель',
+                        album: '',
+                        cover: DEFAULT_COVER,
+                        url: url
+                    });
+                }
+            });
+        } catch (e) {
+            console.warn(`Ошибка загрузки ${fileNumber}:`, e);
+            resolve({
+                id: fileNumber - 1,
+                title: `Трек ${fileNumber}`,
+                artist: 'Неизвестный исполнитель',
+                album: '',
+                cover: DEFAULT_COVER,
+                url: url
+            });
         }
-        
-        return {
-            id: fileNumber - 1,
-            title: metadata.common.title || `Трек ${fileNumber}`,
-            artist: metadata.common.artist || 'Неизвестный исполнитель',
-            album: metadata.common.album || '',
-            cover: coverUrl,
-            url: url
-        };
-    } catch (error) {
-        console.warn(`Не удалось прочитать метаданные ${fileNumber}.mp3:`, error);
-        return {
-            id: fileNumber - 1,
-            title: `Трек ${fileNumber}`,
-            artist: 'Неизвестный исполнитель',
-            album: '',
-            cover: DEFAULT_COVER,
-            url: url
-        };
-    }
+    });
 }
 
 async function loadTracks() {
@@ -146,8 +171,22 @@ function initPlayer() {
         
         if (header) {
             header.addEventListener('click', (e) => {
+                // Игнорируем клики по кнопкам управления (⏮, ▶, ⏭)
                 if (e.target.closest('.controls-mini')) return;
-                player.classList.toggle('expanded');
+                
+                const body = document.querySelector('.player-bangs-body');
+                const indicator = document.querySelector('.expand-indicator');
+                
+                // Явно управляем стилями, чтобы не зависеть от CSS
+                if (player.classList.contains('expanded')) {
+                    player.classList.remove('expanded');
+                    if (body) body.style.display = 'none';
+                    if (indicator) indicator.textContent = '▼';
+                } else {
+                    player.classList.add('expanded');
+                    if (body) body.style.display = 'block'; 
+                    if (indicator) indicator.textContent = '▲';
+                }
             });
         }
         
