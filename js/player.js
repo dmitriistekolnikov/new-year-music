@@ -8,91 +8,48 @@ audio.volume = 0.7;
 
 const DEFAULT_COVER = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyMDAiIGhlaWdodD0iMjAwIj48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iIzFhMWExYSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LXNpemU9IjgwIiBmaWxsPSIjYzlhMjI3IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkeT0iLjNlbSI+8J+OgDwvdGV4dD48L3N2Zz4=';
 
-function getFallbackTrack(trackNumber) {
-    return {
-        id: trackNumber - 1,
-        title: `Трек ${trackNumber}`,
-        artist: 'Неизвестный исполнитель',
-        album: '',
-        cover: DEFAULT_COVER,
-        url: getTrackUrl(trackNumber)
-    };
-}
-
-async function readMetadata(trackNumber) {
-    return new Promise((resolve) => {
-        const url = getTrackUrl(trackNumber);
-        let resolved = false;
-
-        function done(result) {
-            if (resolved) return;
-            resolved = true;
-            clearTimeout(timer);
-            resolve(result);
+async function readMetadata(fileNumber) {
+    const url = getTrackUrl(fileNumber);
+    try {
+        const response = await fetch(url);
+        const arrayBuffer = await response.arrayBuffer();
+        const metadata = await musicMetadata.parseBuffer(arrayBuffer, 'audio/mpeg');
+        
+        let coverUrl = DEFAULT_COVER;
+        if (metadata.common.picture && metadata.common.picture.length > 0) {
+            const pic = metadata.common.picture[0];
+            const base64 = btoa(String.fromCharCode(...new Uint8Array(pic.data)));
+            coverUrl = `data:${pic.format};base64,${base64}`;
         }
-
-        // Таймаут 4 секунды — если jsmediatags завис, не блокируем
-        const timer = setTimeout(() => {
-            console.warn(`Таймаут метаданных для трека ${trackNumber}, использую fallback`);
-            done(getFallbackTrack(trackNumber));
-        }, 4000);
-
-        // Если библиотека не загрузилась — сразу fallback
-        if (typeof jsmediatags === 'undefined') {
-            console.warn('jsmediatags не загружен, использую fallback для всех треков');
-            done(getFallbackTrack(trackNumber));
-            return;
-        }
-
-        try {
-            jsmediatags.read(url, {
-                onSuccess: function(tag) {
-                    const tags = tag.tags;
-                    let coverUrl = DEFAULT_COVER;
-                    
-                    if (tags.picture) {
-                        try {
-                            const { data, format } = tags.picture;
-                            let base64String = '';
-                            for (let i = 0; i < data.length; i++) {
-                                base64String += String.fromCharCode(data[i]);
-                            }
-                            coverUrl = `data:${format};base64,${window.btoa(base64String)}`;
-                        } catch (e) {
-                            console.warn('Ошибка декодирования обложки:', e);
-                        }
-                    }
-                    
-                    done({
-                        id: trackNumber - 1,
-                        title: tags.title || `Трек ${trackNumber}`,
-                        artist: tags.artist || 'Неизвестный исполнитель',
-                        album: tags.album || '',
-                        cover: coverUrl,
-                        url: url
-                    });
-                },
-                onError: function(error) {
-                    console.warn(`Не удалось прочитать метаданные ${trackNumber}.mp3:`, error);
-                    done(getFallbackTrack(trackNumber));
-                }
-            });
-        } catch (e) {
-            console.warn(`Исключение при чтении метаданных ${trackNumber}:`, e);
-            done(getFallbackTrack(trackNumber));
-        }
-    });
+        
+        return {
+            id: fileNumber - 1,
+            title: metadata.common.title || `Трек ${fileNumber}`,
+            artist: metadata.common.artist || 'Неизвестный исполнитель',
+            album: metadata.common.album || '',
+            cover: coverUrl,
+            url: url
+        };
+    } catch (error) {
+        console.warn(`Не удалось прочитать метаданные ${fileNumber}.mp3:`, error);
+        return {
+            id: fileNumber - 1,
+            title: `Трек ${fileNumber}`,
+            artist: 'Неизвестный исполнитель',
+            album: '',
+            cover: DEFAULT_COVER,
+            url: url
+        };
+    }
 }
 
 async function loadTracks() {
-    console.log('Загрузка треков...');
     const loadedTracks = [];
     for (let i = 1; i <= TRACKS_COUNT; i++) {
         const track = await readMetadata(i);
         loadedTracks.push(track);
     }
     tracks = loadedTracks;
-    console.log(`Загружено ${tracks.length} треков`);
     buildPlaylist();
     updateMiniPlayer(0);
 }
@@ -123,7 +80,6 @@ function buildPlaylist() {
 }
 
 function selectTrack(index) {
-    if (tracks.length === 0) return;
     currentTrackIndex = index;
     const track = tracks[index];
     if (!track) return;
@@ -135,18 +91,13 @@ function selectTrack(index) {
     updateMiniPlayer(index);
     
     audio.src = track.url;
-    audio.load();
     
     if (isPlaying) {
-        const playPromise = audio.play();
-        if (playPromise !== undefined) {
-            playPromise.catch(err => {
-                console.error('Ошибка воспроизведения:', err);
-                isPlaying = false;
-                const btn = document.getElementById('play-btn-mini');
-                if (btn) btn.textContent = '▶';
-            });
-        }
+        audio.play().catch(err => {
+            console.error('Ошибка воспроизведения:', err);
+            isPlaying = false;
+            document.getElementById('play-btn-mini').textContent = '▶';
+        });
     }
 }
 
@@ -154,72 +105,38 @@ function updateMiniPlayer(index) {
     const track = tracks[index];
     if (!track) return;
     
-    const titleEl = document.getElementById('track-mini');
-    const artistEl = document.getElementById('artist-mini');
-    if (titleEl) titleEl.textContent = track.title;
-    if (artistEl) artistEl.textContent = track.artist;
+    document.getElementById('track-mini').textContent = track.title;
+    document.getElementById('artist-mini').textContent = track.artist;
 }
 
 function togglePlay() {
     const btn = document.getElementById('play-btn-mini');
-    if (!btn) return;
-    
-    if (tracks.length === 0) {
-        console.warn('Треки ещё не загружены, подождите...');
-        return;
-    }
     
     if (isPlaying) {
         audio.pause();
         isPlaying = false;
         btn.textContent = '▶';
     } else {
-        if (!audio.src || audio.src === '' || audio.src === window.location.href) {
+        if (!audio.src) {
             selectTrack(currentTrackIndex);
         }
-        const playPromise = audio.play();
-        if (playPromise !== undefined) {
-            playPromise.then(() => {
-                isPlaying = true;
-                btn.textContent = '⏸';
-            }).catch(err => {
-                console.error('Play error:', err);
-                // Повторная попытка через 50мс
-                setTimeout(() => {
-                    audio.play().then(() => {
-                        isPlaying = true;
-                        btn.textContent = '⏸';
-                    }).catch(e => console.error('Retry play error:', e));
-                }, 50);
-            });
-        }
+        audio.play().then(() => {
+            isPlaying = true;
+            btn.textContent = '⏸';
+        }).catch(err => {
+            console.error('Play error:', err);
+        });
     }
 }
 
 function nextTrack() {
-    if (tracks.length === 0) return;
     const next = (currentTrackIndex + 1) % tracks.length;
     selectTrack(next);
-    if (!isPlaying) {
-        audio.play().then(() => {
-            isPlaying = true;
-            const btn = document.getElementById('play-btn-mini');
-            if (btn) btn.textContent = '⏸';
-        }).catch(() => {});
-    }
 }
 
 function prevTrack() {
-    if (tracks.length === 0) return;
     const prev = (currentTrackIndex - 1 + tracks.length) % tracks.length;
     selectTrack(prev);
-    if (!isPlaying) {
-        audio.play().then(() => {
-            isPlaying = true;
-            const btn = document.getElementById('play-btn-mini');
-            if (btn) btn.textContent = '⏸';
-        }).catch(() => {});
-    }
 }
 
 function initPlayer() {
@@ -268,12 +185,9 @@ function initPlayer() {
         audio.addEventListener('timeupdate', () => {
             if (audio.duration) {
                 const progress = (audio.currentTime / audio.duration) * 100;
-                const fillEl = document.getElementById('progress-fill-mini');
-                const curEl = document.getElementById('current-time-mini');
-                const totEl = document.getElementById('total-time-mini');
-                if (fillEl) fillEl.style.width = progress + '%';
-                if (curEl) curEl.textContent = formatTime(audio.currentTime);
-                if (totEl) totEl.textContent = formatTime(audio.duration);
+                document.getElementById('progress-fill-mini').style.width = progress + '%';
+                document.getElementById('current-time-mini').textContent = formatTime(audio.currentTime);
+                document.getElementById('total-time-mini').textContent = formatTime(audio.duration);
             }
         });
         
@@ -284,8 +198,6 @@ function initPlayer() {
         });
         
         initEqualizer();
-    }).catch(err => {
-        console.error('Ошибка инициализации плеера:', err);
     });
 }
 
@@ -321,4 +233,4 @@ function initEqualizer() {
         requestAnimationFrame(animate);
     }
     requestAnimationFrame(animate);
-                      }
+}
