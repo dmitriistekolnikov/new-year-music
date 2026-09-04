@@ -7,7 +7,7 @@ export default {
             'Access-Control-Allow-Origin': '*',
             'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
             'Access-Control-Allow-Headers': 'Content-Type, Range',
-            'Access-Control-Expose-Headers': 'Content-Range, Accept-Ranges',
+            'Access-Control-Expose-Headers': 'Content-Range, Accept-Ranges, Content-Length',
         };
 
         if (request.method === 'OPTIONS') {
@@ -23,13 +23,46 @@ export default {
         try {
             const response = await env.ASSETS.fetch(request);
             
-            // Для MP3 добавляем CORS и Range headers
+            // Для MP3 добавляем CORS и обрабатываем Range-запросы
             if (path.endsWith('.mp3') && response.ok) {
                 const newHeaders = new Headers(response.headers);
                 newHeaders.set('Access-Control-Allow-Origin', '*');
                 newHeaders.set('Access-Control-Allow-Headers', 'Range');
                 newHeaders.set('Accept-Ranges', 'bytes');
                 newHeaders.set('Content-Type', 'audio/mpeg');
+                
+                // Обработка Range-запросов для jsmediatags
+                const rangeHeader = request.headers.get('Range');
+                if (rangeHeader) {
+                    const body = await response.arrayBuffer();
+                    const totalSize = body.byteLength;
+                    
+                    // Парсим Range: bytes=start-end
+                    const match = rangeHeader.match(/bytes=(\d+)-(\d+)?/);
+                    if (match) {
+                        const start = parseInt(match[1]);
+                        const end = match[2] ? parseInt(match[2]) : totalSize - 1;
+                        
+                        if (start >= totalSize) {
+                            return new Response(null, {
+                                status: 416,
+                                headers: {
+                                    ...newHeaders,
+                                    'Content-Range': `bytes */${totalSize}`
+                                }
+                            });
+                        }
+                        
+                        const slice = body.slice(start, end + 1);
+                        newHeaders.set('Content-Range', `bytes ${start}-${end}/${totalSize}`);
+                        newHeaders.set('Content-Length', slice.byteLength.toString());
+                        
+                        return new Response(slice, {
+                            status: 206,
+                            headers: newHeaders
+                        });
+                    }
+                }
                 
                 return new Response(response.body, {
                     status: response.status,
@@ -74,7 +107,6 @@ async function ensureTables(env) {
 
 async function handleApi(request, env, path, headers) {
     try {
-        // Гарантируем что таблицы существуют
         await ensureTables(env);
 
         if (path === '/api/health') {
@@ -164,7 +196,7 @@ async function handleApi(request, env, path, headers) {
             const expiresAt = Date.now() + (24 * 60 * 60 * 1000);
             
             await env.DB.prepare(
-                'INSERT INTO sessions (session_id, nick, expires_at) VALUES (?, ?, ?)'
+                'INSERT OR REPLACE INTO sessions (session_id, nick, expires_at) VALUES (?, ?, ?)'
             ).bind(sessionId, body.nick, expiresAt).run();
             
             return new Response(JSON.stringify({ session_id: sessionId, nick: body.nick }), { 
