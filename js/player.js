@@ -80,13 +80,13 @@ function buildPlaylist() {
         if (i === currentTrackIndex) li.classList.add('active');
         li.addEventListener('click', (e) => {
             e.stopPropagation();
-            selectTrack(i);
+            selectTrack(i, true);
         });
         list.appendChild(li);
     });
 }
 
-function selectTrack(index) {
+function selectTrack(index, autoPlay = false) {
     currentTrackIndex = index;
     const track = tracks[index];
     if (!track) return;
@@ -97,14 +97,31 @@ function selectTrack(index) {
     
     updateMiniPlayer(index);
     
+    // Устанавливаем src и ждём загрузки перед play
     audio.src = track.url;
+    audio.load();
     
-    if (isPlaying) {
-        audio.play().catch(err => {
-            console.error('Ошибка воспроизведения:', err);
-            isPlaying = false;
-            document.getElementById('play-btn-mini').textContent = '▶';
-        });
+    if (autoPlay || isPlaying) {
+        const playPromise = audio.play();
+        if (playPromise !== undefined) {
+            playPromise.then(() => {
+                isPlaying = true;
+                document.getElementById('play-btn-mini').textContent = '⏸';
+            }).catch(err => {
+                console.error('Ошибка воспроизведения:', err);
+                // Повторная попытка после короткой задержки
+                setTimeout(() => {
+                    audio.play().then(() => {
+                        isPlaying = true;
+                        document.getElementById('play-btn-mini').textContent = '⏸';
+                    }).catch(e => {
+                        console.error('Повторная ошибка:', e);
+                        isPlaying = false;
+                        document.getElementById('play-btn-mini').textContent = '▶';
+                    });
+                }, 100);
+            });
+        }
     }
 }
 
@@ -124,26 +141,35 @@ function togglePlay() {
         isPlaying = false;
         btn.textContent = '▶';
     } else {
-        if (!audio.src) {
-            selectTrack(currentTrackIndex);
+        // Если трек ещё не загружен — загружаем и играем
+        if (!audio.src || audio.src === window.location.href) {
+            selectTrack(currentTrackIndex, true);
+            return;
         }
-        audio.play().then(() => {
-            isPlaying = true;
-            btn.textContent = '⏸';
-        }).catch(err => {
-            console.error('Play error:', err);
-        });
+        const playPromise = audio.play();
+        if (playPromise !== undefined) {
+            playPromise.then(() => {
+                isPlaying = true;
+                btn.textContent = '⏸';
+            }).catch(err => {
+                console.error('Play error:', err);
+                // Пробуем перезагрузить трек
+                selectTrack(currentTrackIndex, true);
+            });
+        }
     }
 }
 
 function nextTrack() {
+    if (tracks.length === 0) return;
     const next = (currentTrackIndex + 1) % tracks.length;
-    selectTrack(next);
+    selectTrack(next, true);
 }
 
 function prevTrack() {
+    if (tracks.length === 0) return;
     const prev = (currentTrackIndex - 1 + tracks.length) % tracks.length;
-    selectTrack(prev);
+    selectTrack(prev, true);
 }
 
 function initPlayer() {
@@ -183,10 +209,14 @@ function initPlayer() {
             });
         }
         
-        audio.addEventListener('ended', nextTrack);
+        audio.addEventListener('ended', () => {
+            nextTrack();
+        });
         
         audio.addEventListener('error', (e) => {
             console.error('Audio error:', e);
+            console.error('Audio src:', audio.src);
+            console.error('Audio networkState:', audio.networkState);
         });
         
         audio.addEventListener('timeupdate', () => {
