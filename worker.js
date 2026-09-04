@@ -6,31 +6,33 @@ export default {
         const corsHeaders = {
             'Access-Control-Allow-Origin': '*',
             'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-            'Access-Control-Allow-Headers': 'Content-Type',
+            'Access-Control-Allow-Headers': 'Content-Type, Range',
+            'Access-Control-Expose-Headers': 'Content-Range, Accept-Ranges',
         };
 
         if (request.method === 'OPTIONS') {
             return new Response(null, { headers: corsHeaders });
         }
 
-        // === API ЗАПРОСЫ ===
+        // API запросы
         if (path.startsWith('/api/')) {
             return handleApi(request, env, path, corsHeaders);
         }
 
-        // === СТАТИКА ===
+        // Статика (HTML, CSS, JS, MP3)
         const response = await env.ASSETS.fetch(request);
         
-        // Добавляем CORS для MP3 файлов (нужно для jsmediatags)
+        // Для MP3 добавляем CORS и Range headers (критично для jsmediatags!)
         if (path.endsWith('.mp3')) {
+            const newHeaders = new Headers(response.headers);
+            newHeaders.set('Access-Control-Allow-Origin', '*');
+            newHeaders.set('Access-Control-Allow-Headers', 'Range');
+            newHeaders.set('Accept-Ranges', 'bytes');
+            newHeaders.set('Content-Type', 'audio/mpeg');
+            
             return new Response(response.body, {
                 status: response.status,
-                headers: {
-                    ...response.headers,
-                    ...corsHeaders,
-                    'Access-Control-Allow-Headers': 'Range',
-                    'Accept-Ranges': 'bytes'
-                }
+                headers: newHeaders
             });
         }
         
@@ -122,4 +124,4 @@ async function handleApi(request, env, path, headers) {
             headers: { ...headers, 'Content-Type': 'application/json' }
         });
     }
-}
+                }
