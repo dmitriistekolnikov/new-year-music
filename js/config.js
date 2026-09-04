@@ -37,5 +37,5 @@ const SNOWFLAKES_CHARS = ['❅', '✼', '❆', '✻', '❄', '•'];
 const BULB_COLORS = ['#8b0000', '#2d5a27', '#1e3a5f', '#c9a227', '#9333ea'];
 
 function getTrackUrl(filename) {
-    return `/music/${filename}`;
+    return `/music/${filename}.mp3`;
 }
