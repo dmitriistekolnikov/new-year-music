@@ -22,8 +22,7 @@ export default {
         // Статика (HTML, CSS, JS, MP3)
         const response = await env.ASSETS.fetch(request);
         
-        // Для MP3 добавляем CORS и Range headers (критично для jsmediatags!)
-        // ДОБАВЛЕНО: проверка response.ok, чтобы не ломать обработку 404 ошибок
+        // Для MP3 добавляем CORS и Range headers
         if (path.endsWith('.mp3') && response.ok) {
             const newHeaders = new Headers(response.headers);
             newHeaders.set('Access-Control-Allow-Origin', '*');
@@ -41,8 +40,41 @@ export default {
     }
 };
 
+// === СОЗДАНИЕ ТАБЛИЦ (вызывается автоматически) ===
+async function ensureTables(env) {
+    if (!env.DB) return false;
+    try {
+        await env.DB.exec(`
+            CREATE TABLE IF NOT EXISTS messages (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                nick TEXT NOT NULL,
+                text TEXT NOT NULL,
+                system INTEGER DEFAULT 0,
+                time INTEGER NOT NULL,
+                sticker TEXT,
+                photo TEXT
+            );
+        `);
+        await env.DB.exec(`
+            CREATE TABLE IF NOT EXISTS sessions (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                session_id TEXT NOT NULL UNIQUE,
+                nick TEXT NOT NULL,
+                expires_at INTEGER NOT NULL
+            );
+        `);
+        return true;
+    } catch (e) {
+        console.error('Ошибка создания таблиц:', e);
+        return false;
+    }
+}
+
 async function handleApi(request, env, path, headers) {
     try {
+        // Гарантируем, что таблицы существуют
+        await ensureTables(env);
+
         if (path === '/api/health') {
             if (!env.DB) {
                 return new Response(JSON.stringify({ 
@@ -125,4 +157,4 @@ async function handleApi(request, env, path, headers) {
             headers: { ...headers, 'Content-Type': 'application/json' }
         });
     }
-                          }
+} 
