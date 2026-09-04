@@ -4,8 +4,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     console.log('🎄 НовыйГодЧат загружается...');
     
     // === ФОН ОТ ВРЕМЕНИ ПОЛЬЗОВАТЕЛЯ ===
-    updateTimeBackground();
-    setInterval(updateTimeBackground, 60000);
+    updateBackgroundByTime();
+    setInterval(updateBackgroundByTime, 60000); // Обновляем каждую минуту
     
     // === БАЗОВЫЕ ЭФФЕКТЫ ===
     initSnow();
@@ -24,10 +24,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     // === ДОПОЛНИТЕЛЬНЫЕ ЭФФЕКТЫ ===
     initCustomCursor();
     initParallax();
+    initTreeCounter();
     initSparkWaterfall();
     initElementTransforms();
     initNameFirework();
-    initPuzzle();
     
     // === ПРОВЕРКА БД ===
     const isConnected = await db.checkConnection();
@@ -52,7 +52,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const headerLoginBtn = document.getElementById('header-login-btn');
     if (headerLoginBtn) {
         headerLoginBtn.addEventListener('click', () => {
-            console.log('🔑 Клик по входу в шапке');
+            console.log(' Клик по входу в шапке');
         });
     }
     
@@ -66,52 +66,51 @@ document.addEventListener('DOMContentLoaded', async () => {
     console.log('✨ Все системы активны!');
 });
 
-// === ФОН ОТ ВРЕМЕНИ ПОЛЬЗОВАТЕЛЯ (ИСПРАВЛЕНО) ===
-// Теперь использует CSS-переменные вместо inline-стилей, чтобы не конфликтовать с темами
-function updateTimeBackground() {
+function lerpColor(colorA, colorB, t) {
+    const ah = parseInt(colorA.replace(/#/g, ''), 16);
+    const ar = ah >> 16, ag = (ah >> 8) & 0xff, ab = ah & 0xff;
+    const bh = parseInt(colorB.replace(/#/g, ''), 16);
+    const br = bh >> 16, bg = (bh >> 8) & 0xff, bb = bh & 0xff;
+    const rr = ar + t * (br - ar);
+    const rg = ag + t * (bg - ag);
+    const rb = ab + t * (bb - ab);
+    return '#' + ((1 << 24) + (Math.round(rr) << 16) + (Math.round(rg) << 8) + Math.round(rb)).toString(16).slice(1);
+}
+
+// === ФОН ОТ ВРЕМЕНИ ПОЛЬЗОВАТЕЛЯ ===
+function updateBackgroundByTime() {
     const now = new Date();
-    const hour = now.getHours();
-    const root = document.documentElement;
+    const h = now.getHours();
+    const m = now.getMinutes();
+    const mins = h * 60 + m;
     
-    // Проверяем, не выбрана ли кастомная тема (не пустая)
-    const currentTheme = document.body.className;
-    if (currentTheme && currentTheme !== '') {
-        // Если тема выбрана — не меняем фон по времени
-        return;
-    }
+    // Сдвиг: минимум в 1:00 (60 мин), максимум в 14:00 (840 мин)
+    const shifted = (mins - 60 + 1440) % 1440;
+    let brightness = 0;
     
-    // Настраиваем CSS-переменные в зависимости от времени суток
-    if (hour >= 0 && hour < 6) {
-        // Ночь - тёмный
-        root.style.setProperty('--bg-dark', '#0a0a0f');
-        root.style.setProperty('--bg-gradient-1', '#0a0a0f');
-        root.style.setProperty('--bg-gradient-2', '#151525');
-        root.style.setProperty('--bg-gradient-3', '#0a0a0f');
-    } else if (hour >= 6 && hour < 12) {
-        // Утро - светлеет
-        const brightness = (hour - 6) / 6;
-        const lightness1 = 5 + brightness * 15;
-        const lightness2 = 15 + brightness * 20;
-        root.style.setProperty('--bg-dark', `hsl(240, 20%, ${10 + brightness * 20}%)`);
-        root.style.setProperty('--bg-gradient-1', `hsl(240, 20%, ${lightness1}%)`);
-        root.style.setProperty('--bg-gradient-2', `hsl(240, 20%, ${lightness2}%)`);
-        root.style.setProperty('--bg-gradient-3', `hsl(240, 20%, ${lightness1}%)`);
-    } else if (hour >= 12 && hour < 18) {
-        // День - светлый
-        root.style.setProperty('--bg-dark', '#1a1a2e');
-        root.style.setProperty('--bg-gradient-1', '#1a1a2e');
-        root.style.setProperty('--bg-gradient-2', '#2a2a4e');
-        root.style.setProperty('--bg-gradient-3', '#1a1a2e');
+    if (shifted <= 780) {
+        brightness = shifted / 780; // Растёт от 0 до 1
     } else {
-        // Вечер - темнеет
-        const darkness = (hour - 18) / 6;
-        const lightness1 = 25 - darkness * 15;
-        const lightness2 = 35 - darkness * 20;
-        root.style.setProperty('--bg-dark', `hsl(240, 20%, ${30 - darkness * 20}%)`);
-        root.style.setProperty('--bg-gradient-1', `hsl(240, 20%, ${lightness1}%)`);
-        root.style.setProperty('--bg-gradient-2', `hsl(240, 20%, ${lightness2}%)`);
-        root.style.setProperty('--bg-gradient-3', `hsl(240, 20%, ${lightness1}%)`);
+        brightness = 1 - ((shifted - 780) / 660); // Падает от 1 до 0
     }
+    
+    // Ограничиваем яркость от 0 до 1
+    brightness = Math.max(0, Math.min(1, brightness));
+    
+    const nightColors = ['#000000', '#0a0a2e', '#1a0525', '#05001a'];
+    const dayColors = ['#00ffff', '#00ff00', '#ff0000', '#ffff00'];
+    
+    const c1 = lerpColor(nightColors[0], dayColors[0], brightness);
+    const c2 = lerpColor(nightColors[1], dayColors[1], brightness);
+    const c3 = lerpColor(nightColors[2], dayColors[2], brightness);
+    const c4 = lerpColor(nightColors[3], dayColors[3], brightness);
+    
+    document.body.style.background = `linear-gradient(135deg, ${c1}, ${c2}, ${c3}, ${c4})`;
+    
+    // Переключение цвета текста для контрастности
+    const textColor = brightness > 0.6 ? '#111' : '#e0e0e0';
+    document.body.style.color = textColor;
+    document.documentElement.style.setProperty('--text-color', textColor);
 }
 
 // === ОБРАБОТКА ОШИБОК ===
