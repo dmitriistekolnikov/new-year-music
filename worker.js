@@ -13,19 +13,33 @@ export default {
             return new Response(null, { headers: corsHeaders });
         }
 
-        // === API ЗАПРОСЫ (ЧАТ, ЛОГИН) ===
+        // === API ЗАПРОСЫ ===
         if (path.startsWith('/api/')) {
             return handleApi(request, env, path, corsHeaders);
         }
 
-        // === СТАТИКА (HTML, CSS, JS, MP3) ===
-        return env.ASSETS.fetch(request);
+        // === СТАТИКА ===
+        const response = await env.ASSETS.fetch(request);
+        
+        // Добавляем CORS для MP3 файлов (нужно для jsmediatags)
+        if (path.endsWith('.mp3')) {
+            return new Response(response.body, {
+                status: response.status,
+                headers: {
+                    ...response.headers,
+                    ...corsHeaders,
+                    'Access-Control-Allow-Headers': 'Range',
+                    'Accept-Ranges': 'bytes'
+                }
+            });
+        }
+        
+        return response;
     }
 };
 
 async function handleApi(request, env, path, headers) {
     try {
-        // Health check
         if (path === '/api/health') {
             if (!env.DB) {
                 return new Response(JSON.stringify({ 
@@ -46,7 +60,6 @@ async function handleApi(request, env, path, headers) {
             });
         }
 
-        // Получить сообщения
         if (path === '/api/messages' && request.method === 'GET') {
             const limit = parseInt(new URL(request.url).searchParams.get('limit') || '50');
             const messages = await env.DB.prepare(
@@ -58,7 +71,6 @@ async function handleApi(request, env, path, headers) {
             });
         }
 
-        // Отправить сообщение
         if (path === '/api/messages' && request.method === 'POST') {
             const body = await request.json();
             await env.DB.prepare(
@@ -70,7 +82,6 @@ async function handleApi(request, env, path, headers) {
             });
         }
 
-        // Логин
         if (path === '/api/auth/login' && request.method === 'POST') {
             const body = await request.json();
             const sessionId = crypto.randomUUID();
@@ -85,7 +96,6 @@ async function handleApi(request, env, path, headers) {
             });
         }
 
-        // Проверка сессии
         if (path === '/api/auth/check' && request.method === 'POST') {
             const body = await request.json();
             const session = await env.DB.prepare(
@@ -97,7 +107,7 @@ async function handleApi(request, env, path, headers) {
             });
         }
 
-        return new Response(JSON.stringify({ error: 'API endpoint not found' }), { 
+        return new Response(JSON.stringify({ error: 'Not found' }), { 
             status: 404, 
             headers: { ...headers, 'Content-Type': 'application/json' } 
         });
