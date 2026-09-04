@@ -19,7 +19,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     initCustomCursor();
     initParallax();
-    initTreeCounter();
     initSparkWaterfall();
     initElementTransforms();
     initNameFirework();
