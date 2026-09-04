@@ -11,7 +11,7 @@ export default {
         };
 
         if (request.method === 'OPTIONS') {
-            return new Response(null, { headers: corsHeaders });
+            return new Response(null, { status: 204, headers: corsHeaders });
         }
 
         // API запросы
@@ -20,29 +20,33 @@ export default {
         }
 
         // Статика (HTML, CSS, JS, MP3)
-        const response = await env.ASSETS.fetch(request);
-        
-        // Для MP3 добавляем CORS и Range headers
-        if (path.endsWith('.mp3') && response.ok) {
-            const newHeaders = new Headers(response.headers);
-            newHeaders.set('Access-Control-Allow-Origin', '*');
-            newHeaders.set('Access-Control-Allow-Headers', 'Range');
-            newHeaders.set('Accept-Ranges', 'bytes');
-            newHeaders.set('Content-Type', 'audio/mpeg');
+        try {
+            const response = await env.ASSETS.fetch(request);
             
-            return new Response(response.body, {
-                status: response.status,
-                headers: newHeaders
-            });
+            // Для MP3 добавляем CORS и Range headers
+            if (path.endsWith('.mp3') && response.ok) {
+                const newHeaders = new Headers(response.headers);
+                newHeaders.set('Access-Control-Allow-Origin', '*');
+                newHeaders.set('Access-Control-Allow-Headers', 'Range');
+                newHeaders.set('Accept-Ranges', 'bytes');
+                newHeaders.set('Content-Type', 'audio/mpeg');
+                
+                return new Response(response.body, {
+                    status: response.status,
+                    headers: newHeaders
+                });
+            }
+            
+            return response;
+        } catch (err) {
+            return new Response('Not found: ' + path, { status: 404 });
         }
-        
-        return response;
     }
 };
 
-// === СОЗДАНИЕ ТАБЛИЦ (вызывается автоматически) ===
+// === АВТО-СОЗДАНИЕ ТАБЛИЦ ===
 async function ensureTables(env) {
-    if (!env.DB) return false;
+    if (!env.DB) return;
     try {
         await env.DB.exec(`
             CREATE TABLE IF NOT EXISTS messages (
@@ -63,16 +67,14 @@ async function ensureTables(env) {
                 expires_at INTEGER NOT NULL
             );
         `);
-        return true;
     } catch (e) {
-        console.error('Ошибка создания таблиц:', e);
-        return false;
+        console.error('ensureTables error:', e);
     }
 }
 
 async function handleApi(request, env, path, headers) {
     try {
-        // Гарантируем, что таблицы существуют
+        // Гарантируем что таблицы существуют
         await ensureTables(env);
 
         if (path === '/api/health') {
@@ -107,10 +109,33 @@ async function handleApi(request, env, path, headers) {
         }
 
         if (path === '/api/messages' && request.method === 'POST') {
-            const body = await request.json();
+            let body;
+            try {
+                body = await request.json();
+            } catch (e) {
+                return new Response(JSON.stringify({ error: 'Invalid JSON' }), { 
+                    status: 400, 
+                    headers: { ...headers, 'Content-Type': 'application/json' } 
+                });
+            }
+            
+            if (!body.nick || !body.text) {
+                return new Response(JSON.stringify({ error: 'nick and text required' }), { 
+                    status: 400, 
+                    headers: { ...headers, 'Content-Type': 'application/json' } 
+                });
+            }
+
             await env.DB.prepare(
                 'INSERT INTO messages (nick, text, system, time, sticker, photo) VALUES (?, ?, ?, ?, ?, ?)'
-            ).bind(body.nick, body.text, body.system || 0, body.time, body.sticker || null, body.photo || null).run();
+            ).bind(
+                body.nick, 
+                body.text, 
+                body.system || 0, 
+                body.time || Date.now(), 
+                body.sticker || null, 
+                body.photo || null
+            ).run();
             
             return new Response(JSON.stringify({ success: true }), { 
                 headers: { ...headers, 'Content-Type': 'application/json' } 
@@ -118,7 +143,23 @@ async function handleApi(request, env, path, headers) {
         }
 
         if (path === '/api/auth/login' && request.method === 'POST') {
-            const body = await request.json();
+            let body;
+            try {
+                body = await request.json();
+            } catch (e) {
+                return new Response(JSON.stringify({ error: 'Invalid JSON' }), { 
+                    status: 400, 
+                    headers: { ...headers, 'Content-Type': 'application/json' } 
+                });
+            }
+
+            if (!body.nick) {
+                return new Response(JSON.stringify({ error: 'nick required' }), { 
+                    status: 400, 
+                    headers: { ...headers, 'Content-Type': 'application/json' } 
+                });
+            }
+
             const sessionId = crypto.randomUUID();
             const expiresAt = Date.now() + (24 * 60 * 60 * 1000);
             
@@ -132,7 +173,15 @@ async function handleApi(request, env, path, headers) {
         }
 
         if (path === '/api/auth/check' && request.method === 'POST') {
-            const body = await request.json();
+            let body;
+            try {
+                body = await request.json();
+            } catch (e) {
+                return new Response(JSON.stringify({ valid: false }), { 
+                    headers: { ...headers, 'Content-Type': 'application/json' } 
+                });
+            }
+
             const session = await env.DB.prepare(
                 'SELECT * FROM sessions WHERE session_id = ? AND expires_at > ?'
             ).bind(body.session_id, Date.now()).first();
@@ -157,4 +206,4 @@ async function handleApi(request, env, path, headers) {
             headers: { ...headers, 'Content-Type': 'application/json' }
         });
     }
-} 
+}
