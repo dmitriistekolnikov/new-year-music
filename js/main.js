@@ -4,8 +4,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     console.log('🎄 НовыйГодЧат загружается...');
     
     // === ФОН ОТ ВРЕМЕНИ ПОЛЬЗОВАТЕЛЯ ===
-    updateBackgroundByTime();
-    setInterval(updateBackgroundByTime, 60000);
+    updateTimeBackground();
+    setInterval(updateTimeBackground, 60000);
     
     // === БАЗОВЫЕ ЭФФЕКТЫ ===
     initSnow();
@@ -66,26 +66,51 @@ document.addEventListener('DOMContentLoaded', async () => {
     console.log('✨ Все системы активны!');
 });
 
-// === ФОН ОТ ВРЕМЕНИ ПОЛЬЗОВАТЕЛЯ ===
-function updateBackgroundByTime() {
+// === ФОН ОТ ВРЕМЕНИ ПОЛЬЗОВАТЕЛЯ (ИСПРАВЛЕНО) ===
+// Теперь использует CSS-переменные вместо inline-стилей, чтобы не конфликтовать с темами
+function updateTimeBackground() {
     const now = new Date();
     const hour = now.getHours();
     const root = document.documentElement;
     
+    // Проверяем, не выбрана ли кастомная тема (не пустая)
+    const currentTheme = document.body.className;
+    if (currentTheme && currentTheme !== '') {
+        // Если тема выбрана — не меняем фон по времени
+        return;
+    }
+    
+    // Настраиваем CSS-переменные в зависимости от времени суток
     if (hour >= 0 && hour < 6) {
+        // Ночь - тёмный
         root.style.setProperty('--bg-dark', '#0a0a0f');
-        document.body.style.background = `linear-gradient(135deg, #0a0a0f 0%, #151525 50%, #0a0a0f 100%)`;
+        root.style.setProperty('--bg-gradient-1', '#0a0a0f');
+        root.style.setProperty('--bg-gradient-2', '#151525');
+        root.style.setProperty('--bg-gradient-3', '#0a0a0f');
     } else if (hour >= 6 && hour < 12) {
+        // Утро - светлеет
         const brightness = (hour - 6) / 6;
+        const lightness1 = 5 + brightness * 15;
+        const lightness2 = 15 + brightness * 20;
         root.style.setProperty('--bg-dark', `hsl(240, 20%, ${10 + brightness * 20}%)`);
-        document.body.style.background = `linear-gradient(135deg, hsl(240, 20%, ${5 + brightness * 15}%) 0%, hsl(240, 20%, ${15 + brightness * 20}%) 50%, hsl(240, 20%, ${5 + brightness * 15}%) 100%)`;
+        root.style.setProperty('--bg-gradient-1', `hsl(240, 20%, ${lightness1}%)`);
+        root.style.setProperty('--bg-gradient-2', `hsl(240, 20%, ${lightness2}%)`);
+        root.style.setProperty('--bg-gradient-3', `hsl(240, 20%, ${lightness1}%)`);
     } else if (hour >= 12 && hour < 18) {
+        // День - светлый
         root.style.setProperty('--bg-dark', '#1a1a2e');
-        document.body.style.background = `linear-gradient(135deg, #1a1a2e 0%, #2a2a4e 50%, #1a1a2e 100%)`;
+        root.style.setProperty('--bg-gradient-1', '#1a1a2e');
+        root.style.setProperty('--bg-gradient-2', '#2a2a4e');
+        root.style.setProperty('--bg-gradient-3', '#1a1a2e');
     } else {
+        // Вечер - темнеет
         const darkness = (hour - 18) / 6;
+        const lightness1 = 25 - darkness * 15;
+        const lightness2 = 35 - darkness * 20;
         root.style.setProperty('--bg-dark', `hsl(240, 20%, ${30 - darkness * 20}%)`);
-        document.body.style.background = `linear-gradient(135deg, hsl(240, 20%, ${25 - darkness * 15}%) 0%, hsl(240, 20%, ${35 - darkness * 20}%) 50%, hsl(240, 20%, ${25 - darkness * 15}%) 100%)`;
+        root.style.setProperty('--bg-gradient-1', `hsl(240, 20%, ${lightness1}%)`);
+        root.style.setProperty('--bg-gradient-2', `hsl(240, 20%, ${lightness2}%)`);
+        root.style.setProperty('--bg-gradient-3', `hsl(240, 20%, ${lightness1}%)`);
     }
 }
 
