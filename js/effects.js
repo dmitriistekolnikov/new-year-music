@@ -1,4 +1,4 @@
-// === ВСЕ ЭФФЕКТЫ (КРОМЕ ЧАСОВ И СВЕЧЕЙ) ===
+// === ВСЕ ЭФФЕКТЫ ===
 
 // === 10. ГИРЛЯНДА ===
 function initGarland() {
@@ -259,7 +259,7 @@ function initCustomCursor() {
         cursor.style.top = e.clientY + 'px';
     });
 
-    document.querySelectorAll('button, a, input, .playlist li').forEach(el => {
+    document.querySelectorAll('button, a, input, .playlist-bangs li').forEach(el => {
         el.addEventListener('mouseenter', () => {
             cursor.style.transform = 'scale(1.5)';
             cursor.innerHTML = '🎄';
@@ -520,7 +520,8 @@ function initPhotoFrame() {
 
 // === 21. ЗЕРКАЛЬНОЕ ОТРАЖЕНИЕ ===
 function initReflection() {
-    const player = document.querySelector('.music-section');
+    // Исправлено: ищем правильный селектор плеера, так как .music-section может не существовать
+    const player = document.querySelector('.player-bangs') || document.querySelector('.music-section');
     if (!player) return;
     
     const reflection = player.cloneNode(true);
@@ -653,6 +654,44 @@ function initPuzzle() {
     `;
     btn.onclick = () => puzzleContainer.style.display = 'flex';
     document.body.appendChild(btn);
+}
+
+// === НОВЫЕ: СВЕЧИ И ЧАСЫ (чтобы HTML/CSS элементы ожили) ===
+function initCandles() {
+    const container = document.getElementById('candles-bg');
+    if (!container) return;
+    for (let i = 0; i < 3; i++) {
+        const candle = document.createElement('div');
+        candle.className = 'candle';
+        candle.innerHTML = '<div class="flame"></div>';
+        candle.style.animationDelay = `${i * 0.3}s`;
+        container.appendChild(candle);
+    }
+}
+
+function initClock() {
+    const clock = document.getElementById('clock-bg');
+    if (!clock) return;
+    
+    const hourHand = document.createElement('div');
+    hourHand.className = 'clock-hand hour';
+    const minuteHand = document.createElement('div');
+    minuteHand.className = 'clock-hand minute';
+    
+    clock.appendChild(hourHand);
+    clock.appendChild(minuteHand);
+
+    function updateClock() {
+        const now = new Date();
+        const h = now.getHours() % 12;
+        const m = now.getMinutes();
+        const hDeg = (h * 30) + (m * 0.5);
+        const mDeg = m * 6;
+        hourHand.style.transform = `rotate(${hDeg}deg)`;
+        minuteHand.style.transform = `rotate(${mDeg}deg)`;
+    }
+    updateClock();
+    setInterval(updateClock, 1000);
 }
 
 // === СТИЛИ ДЛЯ АНИМАЦИЙ ===
