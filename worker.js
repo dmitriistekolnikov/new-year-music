@@ -23,7 +23,8 @@ export default {
         const response = await env.ASSETS.fetch(request);
         
         // Для MP3 добавляем CORS и Range headers (критично для jsmediatags!)
-        if (path.endsWith('.mp3')) {
+        // ДОБАВЛЕНО: проверка response.ok, чтобы не ломать обработку 404 ошибок
+        if (path.endsWith('.mp3') && response.ok) {
             const newHeaders = new Headers(response.headers);
             newHeaders.set('Access-Control-Allow-Origin', '*');
             newHeaders.set('Access-Control-Allow-Headers', 'Range');
@@ -124,4 +125,4 @@ async function handleApi(request, env, path, headers) {
             headers: { ...headers, 'Content-Type': 'application/json' }
         });
     }
-                }
+                          }
