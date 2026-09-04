@@ -3,20 +3,25 @@
 document.addEventListener('DOMContentLoaded', async () => {
     console.log('🎄 НовыйГодЧат загружается...');
     
+    // === ФОН ОТ ВРЕМЕНИ ПОЛЬЗОВАТЕЛЯ ===
     updateBackgroundByTime();
     setInterval(updateBackgroundByTime, 60000);
     
+    // === БАЗОВЫЕ ЭФФЕКТЫ ===
     initSnow();
     initGarland();
     initTimer();
     
+    // === ПЛЕЕР ===
     initPlayer();
     
+    // === ИНТЕРАКТИВНЫЕ ЭФФЕКТЫ ===
     initFreeze();
     initGift();
     initLetter();
     initThemeSwitcher();
     
+    // === ДОПОЛНИТЕЛЬНЫЕ ЭФФЕКТЫ ===
     initCustomCursor();
     initParallax();
     initSparkWaterfall();
@@ -24,9 +29,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     initNameFirework();
     initPuzzle();
     
+    // === ПРОВЕРКА БД ===
     const isConnected = await db.checkConnection();
     if (isConnected) {
         console.log('✅ База данных подключена');
+        
         const hasSession = await db.checkSession();
         if (hasSession) {
             console.log('✅ Сессия активна:', db.currentNick);
@@ -41,6 +48,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         console.log('⚠️ База данных недоступна. Чат работает в офлайн-режиме.');
     }
     
+    // === ЗАГЛУШКИ ===
     const headerLoginBtn = document.getElementById('header-login-btn');
     if (headerLoginBtn) {
         headerLoginBtn.addEventListener('click', () => {
@@ -58,6 +66,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     console.log('✨ Все системы активны!');
 });
 
+// === ФОН ОТ ВРЕМЕНИ ПОЛЬЗОВАТЕЛЯ ===
 function updateBackgroundByTime() {
     const now = new Date();
     const hour = now.getHours();
@@ -80,6 +89,7 @@ function updateBackgroundByTime() {
     }
 }
 
+// === ОБРАБОТКА ОШИБОК ===
 window.addEventListener('error', (e) => {
     console.error('Глобальная ошибка:', e.error);
 });
