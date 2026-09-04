@@ -4,7 +4,7 @@ function initSnow() {
     const container = document.getElementById('snow-container');
     if (!container) return;
     
-    for (let i = 0; i < 60; i++) {
+    for (let i = 0; i < 100; i++) {
         const flake = document.createElement('div');
         flake.className = 'snowflake';
         flake.textContent = SNOWFLAKES_CHARS[Math.floor(Math.random() * SNOWFLAKES_CHARS.length)];
