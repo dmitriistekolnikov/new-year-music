@@ -321,4 +321,4 @@ function initEqualizer() {
         requestAnimationFrame(animate);
     }
     requestAnimationFrame(animate);
-}
+                      }
