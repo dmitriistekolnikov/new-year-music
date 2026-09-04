@@ -27,7 +27,7 @@ const sparks = [];
 const MAX_SPARKS = 40;
 
 document.addEventListener('mousemove', (e) => {
-    if (Math.random() > 0.3) return;
+    if (Math.random() > 0.3) return; // Ограничиваем частоту для производительности
     const spark = document.createElement('div');
     spark.className = 'spark';
     spark.style.left = e.clientX + 'px';
