@@ -10,7 +10,10 @@ class Database {
     async getMessages(limit = 50) {
         try {
             const response = await fetch(`${this.API_URL}/messages?limit=${limit}`);
-            if (!response.ok) throw new Error('Failed to fetch messages');
+            if (!response.ok) {
+                console.error('getMessages: HTTP', response.status);
+                return [];
+            }
             const data = await response.json();
             return data.messages || [];
         } catch (error) {
@@ -25,14 +28,18 @@ class Database {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    nick,
-                    text,
-                    sticker,
-                    photo,
+                    nick: nick,
+                    text: text,
+                    sticker: sticker,
+                    photo: photo,
                     time: Date.now()
                 })
             });
-            if (!response.ok) throw new Error('Failed to send message');
+            if (!response.ok) {
+                const errText = await response.text();
+                console.error('sendMessage: HTTP', response.status, errText);
+                return null;
+            }
             return await response.json();
         } catch (error) {
             console.error('Error sending message:', error);
@@ -45,13 +52,17 @@ class Database {
             const response = await fetch(`${this.API_URL}/auth/login`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ nick })
+                body: JSON.stringify({ nick: nick })
             });
             if (!response.ok) {
                 const errorText = await response.text();
-                throw new Error('Login failed: ' + errorText);
+                throw new Error('Login failed: HTTP ' + response.status + ' ' + errorText);
             }
             const data = await response.json();
+            
+            if (!data.session_id) {
+                throw new Error('Сервер не вернул session_id');
+            }
             
             this.sessionId = data.session_id;
             this.currentNick = nick;
@@ -74,6 +85,7 @@ class Database {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ session_id: this.sessionId })
             });
+            if (!response.ok) return false;
             const data = await response.json();
             return data.valid || false;
         } catch {
@@ -84,7 +96,9 @@ class Database {
     async checkConnection() {
         try {
             const response = await fetch(`${this.API_URL}/health`);
-            return response.ok;
+            if (!response.ok) return false;
+            const data = await response.json();
+            return data.status === 'ok';
         } catch {
             return false;
         }
