@@ -8,9 +8,9 @@ audio.volume = 0.7;
 
 const DEFAULT_COVER = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyMDAiIGhlaWdodD0iMjAwIj48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iIzFhMWExYSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LXNpemU9IjgwIiBmaWxsPSIjYzlhMjI3IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkeT0iLjNlbSI+8J+OgDwvdGV4dD48L3N2Zz4=';
 
-async function readMetadata(fileNumber) {
+async function readMetadata(trackNumber) {
     return new Promise((resolve) => {
-        const url = getTrackUrl(fileNumber);
+        const url = getTrackUrl(trackNumber);
         
         jsmediatags.read(url, {
             onSuccess: function(tag) {
@@ -27,8 +27,8 @@ async function readMetadata(fileNumber) {
                 }
                 
                 resolve({
-                    id: fileNumber - 1,
-                    title: tags.title || `Трек ${fileNumber}`,
+                    id: trackNumber - 1,
+                    title: tags.title || `Трек ${trackNumber}`,
                     artist: tags.artist || 'Неизвестный исполнитель',
                     album: tags.album || '',
                     cover: coverUrl,
@@ -36,10 +36,10 @@ async function readMetadata(fileNumber) {
                 });
             },
             onError: function(error) {
-                console.warn(`Не удалось прочитать метаданные ${fileNumber}.mp3:`, error);
+                console.warn(`Не удалось прочитать метаданные ${trackNumber}.mp3:`, error);
                 resolve({
-                    id: fileNumber - 1,
-                    title: `Трек ${fileNumber}`,
+                    id: trackNumber - 1,
+                    title: `Трек ${trackNumber}`,
                     artist: 'Неизвестный исполнитель',
                     album: '',
                     cover: DEFAULT_COVER,
