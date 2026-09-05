@@ -468,7 +468,7 @@ function appendMessageToChat(msg) {
     }
     
     if (msg.sticker) {
-        const stickerUrl = `/stickers/${msg.sticker}`;
+        const stickerUrl = new URL(`stickers/${msg.sticker}`, document.baseURI).href;
         content += `<img src="${stickerUrl}" style="max-width: 150px; border-radius: 8px; margin-top: 8px;">`;
     }
     
@@ -596,24 +596,7 @@ function initPhotoFrame() {
 }
 
 // === 15. ПЕРЕКЛЮЧАТЕЛЬ ТЕМ ===
-function initThemeSwitcher() {
-    let currentTheme = 0;
-    const themeBtn = document.getElementById('theme-btn');
-    if (themeBtn) {
-        themeBtn.addEventListener('click', () => {
-            currentTheme = (currentTheme + 1) % THEMES.length;
-            document.body.className = THEMES[currentTheme];
-            localStorage.setItem('theme', THEMES[currentTheme]);
-            toast.show('Тема изменена', `Применена тема: ${THEMES[currentTheme]}`, 'info', 2000);
-        });
-    }
-    
-    const saved = localStorage.getItem('theme');
-    if (saved) {
-        document.body.className = saved;
-        currentTheme = THEMES.indexOf(saved);
-    }
-}
+
 
 // === 6. ТАЙМЕР ОБРАТНОГО ОТСЧЁТА ===
 function initTimer() {
@@ -1003,39 +986,38 @@ document.head.appendChild(style);
 function initStickers() {
     const stickerBtn = document.getElementById('sticker-btn');
     const stickerPanel = document.getElementById('sticker-panel');
-
     if (!stickerBtn || !stickerPanel) return;
 
     const stickers = [];
+    const start = (typeof STICKERS_CATS_RANGE !== 'undefined') ? STICKERS_CATS_RANGE.start : 66959;
+    const end = (typeof STICKERS_CATS_RANGE !== 'undefined') ? STICKERS_CATS_RANGE.end : 67006;
+    const memes = (typeof STICKERS_MEMES !== 'undefined') ? STICKERS_MEMES : [];
 
-    if (typeof STICKERS_CATS_RANGE !== 'undefined') {
-        for (let n = STICKERS_CATS_RANGE.start; n <= STICKERS_CATS_RANGE.end; n++) {
-            stickers.push({ id: `cats/1-${n}-256b.png`, name: `Кот ${n - STICKERS_CATS_RANGE.start + 1}` });
-        }
-    }
-
-    if (typeof STICKERS_MEMES !== 'undefined') {
-        STICKERS_MEMES.forEach((name, index) => {
-            stickers.push({ id: `memes/${name}`, name: `Мем ${index + 1}` });
+    for (let number = start; number <= end; number++) {
+        stickers.push({
+            id: `cats/1-${number}-256b.png`,
+            name: `Кот ${number - start + 1}`
         });
     }
+    memes.forEach((name, index) => stickers.push({ id: `memes/${name}`, name: `Мем ${index + 1}` }));
 
+    const stickerUrl = id => new URL(`stickers/${id}`, document.baseURI).href;
     stickerPanel.innerHTML = '';
 
     stickers.forEach(sticker => {
-        const el = document.createElement('button');
-        el.type = 'button';
-        el.className = 'sticker-item';
-        el.title = sticker.name;
+        const item = document.createElement('button');
+        item.type = 'button';
+        item.className = 'sticker-item';
+        item.title = sticker.name;
 
         const img = document.createElement('img');
-        img.src = `stickers/${sticker.id}`;
+        img.src = stickerUrl(sticker.id);
         img.alt = sticker.name;
         img.loading = 'lazy';
-        img.addEventListener('error', () => el.remove());
-        el.appendChild(img);
+        img.addEventListener('error', () => item.remove(), { once: true });
+        item.appendChild(img);
 
-        el.addEventListener('click', async event => {
+        item.addEventListener('click', async event => {
             event.preventDefault();
             event.stopPropagation();
 
@@ -1044,38 +1026,38 @@ function initStickers() {
                 return;
             }
 
+            item.disabled = true;
             try {
                 const result = await db.sendMessage(db.currentNick, '', sticker.id);
-                if (!result) {
-                    alert('Ошибка отправки стикера.');
-                    return;
-                }
+                if (!result || result.success === false) throw new Error('Сервер не подтвердил отправку');
 
-                if (typeof appendMessageToChat === 'function') {
-                    appendMessageToChat({
-                        nick: db.currentNick, text: '', sticker: sticker.id,
-                        system: 0, time: Date.now()
-                    });
-                }
+                appendMessageToChat({
+                    nick: db.currentNick,
+                    text: '',
+                    sticker: sticker.id,
+                    system: 0,
+                    time: Date.now()
+                });
                 stickerPanel.classList.remove('visible');
             } catch (error) {
                 console.error('Ошибка отправки стикера:', error);
-                alert('Не удалось отправить стикер.');
+                alert('Не удалось отправить стикер. Проверь соединение с сервером.');
+            } finally {
+                item.disabled = false;
             }
         });
 
-        stickerPanel.appendChild(el);
+        stickerPanel.appendChild(item);
     });
 
     stickerBtn.addEventListener('click', event => {
         event.preventDefault();
         event.stopPropagation();
         stickerPanel.classList.toggle('visible');
-
-        const themePanel = document.getElementById('theme-switcher');
-        const effectsPanel = document.getElementById('bg-effects-switcher');
-        if (themePanel) themePanel.classList.remove('visible');
-        if (effectsPanel) effectsPanel.classList.remove('visible');
+        const theme = document.getElementById('theme-switcher');
+        const effects = document.getElementById('bg-effects-switcher');
+        if (theme) theme.classList.remove('visible');
+        if (effects) effects.classList.remove('visible');
     });
 
     document.addEventListener('click', event => {
