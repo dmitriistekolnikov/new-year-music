@@ -18,6 +18,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (typeof initLetter === 'function') initLetter();
         if (typeof initThemeSwitcher === 'function') initThemeSwitcher();
         
+        // === ФЕЙЕРВЕРК ===
+        if (typeof initFireworks === 'function') initFireworks();
+        
         // === ДОПОЛНИТЕЛЬНЫЕ ЭФФЕКТЫ ===
         if (typeof initCustomCursor === 'function') initCustomCursor();
         if (typeof initParallax === 'function') initParallax();
@@ -76,15 +79,15 @@ const themes = [
         colors: ['#0A3D2E', '#14532D', '#A7F3D0', '#4D5E37'],
         text: '#fff'
     },
-    //  Ночная зимняя магия
+    // 🌌 Ночная зимняя магия
     { 
-        name: '🌌 Ночная магия', 
+        name: ' Ночная магия', 
         colors: ['#0F172A', '#1E3A8A', '#2E1065', '#312E81'],
         text: '#fff'
     },
     // 🔥 Уют и Тепло
     { 
-        name: '🔥 Уют и Тепло', 
+        name: ' Уют и Тепло', 
         colors: ['#3E2723', '#4E342E', '#78350F', '#FEF3C7'],
         text: '#fff'
     },
@@ -100,13 +103,13 @@ const themes = [
         colors: ['#4C1D95', '#14532D', '#0284C7', '#0E7490'],
         text: '#fff'
     },
-    //  Волшебные и Нежные
+    // ✨ Волшебные и Нежные
     { 
         name: '✨ Нежные', 
         colors: ['#DDD6FE', '#E0F2FE', '#FBCFE8', '#64748B'],
         text: '#1a1a1a'
     },
-    //  Морские оттенки
+    // 🌊 Морские оттенки
     { 
         name: '🌊 Морские', 
         colors: ['#2E4F4F', '#134E4A', '#0284C7', '#0E7490'],
