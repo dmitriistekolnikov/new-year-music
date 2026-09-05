@@ -316,6 +316,35 @@ class BackgroundEffects {
         this.animate('particles');
     }
 
+    // Эффект 4: Северное сияние + созвездия + падающие звёзды
+    startAurora() {
+        this.items = [];
+        const starCount = Math.min(95, Math.max(45, Math.floor(window.innerWidth / 18)));
+        for (let i = 0; i < starCount; i++) {
+            this.items.push({
+                type: 'aurora-star',
+                x: Math.random() * this.canvas.width,
+                y: Math.random() * this.canvas.height,
+                r: 0.7 + Math.random() * 2.1,
+                phase: Math.random() * Math.PI * 2,
+                speed: 0.006 + Math.random() * 0.015
+            });
+        }
+        for (let i = 0; i < 4; i++) {
+            this.items.push({
+                type: 'shooting-star',
+                x: Math.random() * this.canvas.width,
+                y: Math.random() * this.canvas.height * 0.55,
+                vx: 4 + Math.random() * 5,
+                vy: 2 + Math.random() * 3,
+                length: 60 + Math.random() * 100,
+                alpha: 0,
+                delay: Math.random() * 500
+            });
+        }
+        this.animate('aurora');
+    }
+
     // Главный цикл анимации
     animate(type) {
         if (currentBgEffect !== type) return;
@@ -431,6 +460,86 @@ class BackgroundEffects {
                 ctx.arc(particle.x, particle.y, size, 0, Math.PI * 2);
                 ctx.fill();
             });
+        } else if (type === 'aurora') {
+            const t = performance.now() * 0.00018;
+
+            // Мягкие полярные ленты
+            ctx.save();
+            ctx.globalCompositeOperation = 'screen';
+            for (let band = 0; band < 5; band++) {
+                const gradient = ctx.createLinearGradient(0, h * (0.10 + band * 0.11), w, h * (0.28 + band * 0.11));
+                gradient.addColorStop(0, `hsla(${145 + band * 24}, 90%, 55%, 0)`);
+                gradient.addColorStop(0.35, `hsla(${155 + band * 18}, 90%, 60%, 0.10)`);
+                gradient.addColorStop(0.65, `hsla(${185 + band * 16}, 90%, 65%, 0.06)`);
+                gradient.addColorStop(1, `hsla(${210 + band * 14}, 90%, 65%, 0)`);
+                ctx.fillStyle = gradient;
+                ctx.beginPath();
+                ctx.moveTo(0, h * (0.10 + band * 0.10));
+                for (let x = 0; x <= w; x += 24) {
+                    const y = h * (0.13 + band * 0.105) +
+                        Math.sin(x * 0.004 + t * 7 + band) * 38 +
+                        Math.sin(x * 0.011 - t * 4) * 16;
+                    ctx.lineTo(x, y);
+                }
+                ctx.lineTo(w, h * 0.48);
+                ctx.lineTo(0, h * 0.48);
+                ctx.closePath();
+                ctx.fill();
+            }
+
+            const stars = this.items.filter(i => i.type === 'aurora-star');
+            stars.forEach(star => {
+                star.phase += star.speed;
+                const alpha = 0.25 + (Math.sin(star.phase) + 1) * 0.30;
+                ctx.fillStyle = `rgba(255,255,255,${alpha})`;
+                ctx.shadowBlur = 10;
+                ctx.shadowColor = 'rgba(180,230,255,0.7)';
+                ctx.beginPath();
+                ctx.arc(star.x, star.y, star.r, 0, Math.PI * 2);
+                ctx.fill();
+            });
+
+            // Созвездия: соединяем только близкие звёзды
+            ctx.lineWidth = 0.6;
+            for (let i = 0; i < stars.length; i++) {
+                for (let j = i + 1; j < stars.length; j++) {
+                    const a = stars[i], b = stars[j];
+                    const dx = a.x - b.x, dy = a.y - b.y;
+                    const d2 = dx * dx + dy * dy;
+                    if (d2 < 10500) {
+                        const alpha = (1 - Math.sqrt(d2) / 102) * 0.16;
+                        ctx.strokeStyle = `rgba(190,230,255,${alpha})`;
+                        ctx.beginPath();
+                        ctx.moveTo(a.x, a.y);
+                        ctx.lineTo(b.x, b.y);
+                        ctx.stroke();
+                    }
+                }
+            }
+
+            this.items.filter(i => i.type === 'shooting-star').forEach(star => {
+                if (star.delay > 0) { star.delay -= 1; return; }
+                star.x += star.vx;
+                star.y += star.vy;
+                star.alpha += 0.025;
+                if (star.alpha > 1) star.alpha = 1;
+                if (star.x > w + 120 || star.y > h * 0.72) {
+                    star.x = Math.random() * w * 0.65;
+                    star.y = Math.random() * h * 0.35;
+                    star.alpha = 0;
+                    star.delay = 180 + Math.random() * 420;
+                }
+                const grad = ctx.createLinearGradient(star.x, star.y, star.x - star.length, star.y - star.length * 0.55);
+                grad.addColorStop(0, `rgba(255,255,255,${0.9 * star.alpha})`);
+                grad.addColorStop(1, 'rgba(255,255,255,0)');
+                ctx.strokeStyle = grad;
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(star.x, star.y);
+                ctx.lineTo(star.x - star.length, star.y - star.length * 0.55);
+                ctx.stroke();
+            });
+            ctx.restore();
         }
 
         ctx.shadowBlur = 0;
@@ -468,6 +577,7 @@ function initBackgroundEffects() {
             if (effect === 'lines') bgEffects.startLines();
             else if (effect === 'balls') bgEffects.startBalls();
             else if (effect === 'particles') bgEffects.startParticles();
+            else if (effect === 'aurora') bgEffects.startAurora();
         }
 
         function updateActiveOption(activeEffect) {

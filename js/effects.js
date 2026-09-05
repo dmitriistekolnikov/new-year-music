@@ -239,7 +239,7 @@ function initGift() {
 
 // === 7. ПИСЬМО / ЧАТ С АНТИ-МАТОМ И СТИКЕРАМИ ===
 function initLetter() {
-    let isLoggedIn = false;
+    let isLoggedIn = !!(window.db && db.currentNick);
     const chatInput = document.getElementById('letter-text');
     const sendBtn = document.getElementById('send-letter-btn');
     const chatContainer = document.getElementById('chat-messages');
@@ -357,24 +357,11 @@ function initLetter() {
         }
     });
     
-    // Панель стикеров
-    if (stickerBtn && stickerPanel) {
-        stickerBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            stickerPanel.classList.toggle('visible');
-        });
-        
-        document.addEventListener('click', (e) => {
-            if (!e.target.closest('.sticker-panel') && !e.target.closest('#sticker-btn')) {
-                stickerPanel.classList.remove('visible');
-            }
-        });
-    }
 }
 
 // === ПАНЕЛЬ СТИКЕРОВ ===
 function getStickerAssetUrl(stickerId) {
-    return `stickers/${stickerId.split('/').map(encodeURIComponent).join('/')}`;
+    return new URL(`stickers/${stickerId.split('/').map(encodeURIComponent).join('/')}`, document.baseURI).href;
 }
 
 function positionStickerPanel(button, panel) {
@@ -412,6 +399,7 @@ function positionStickerPanel(button, panel) {
     panel.style.left = `${left}px`;
     panel.style.top = `${top}px`;
     panel.style.bottom = 'auto';
+    panel.style.position = 'fixed';
 }
 
 function initStickerPanel() {
@@ -1090,45 +1078,47 @@ function initPuzzle() {
 const stickerStyle = document.createElement('style');
 stickerStyle.textContent = `
     .sticker-panel {
-        position: absolute;
-        bottom: 100%;
+        position: fixed !important;
         left: 0;
-        right: 0;
-        background: rgba(255, 255, 255, 0.1);
-        backdrop-filter: blur(20px);
-        -webkit-backdrop-filter: blur(20px);
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        border-radius: 12px;
-        padding: 15px;
-        display: none;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 10px;
-        margin-bottom: 10px;
-        max-height: 300px;
+        top: 0;
+        width: min(360px, calc(100vw - 20px));
+        max-height: min(430px, 72vh);
         overflow-y: auto;
+        overflow-x: hidden;
+        padding: 10px;
+        background: rgba(10, 12, 18, 0.97);
+        backdrop-filter: blur(18px);
+        -webkit-backdrop-filter: blur(18px);
+        border: 1px solid rgba(255, 255, 255, 0.16);
+        border-radius: 16px;
+        display: none;
+        grid-template-columns: repeat(5, minmax(50px, 1fr));
+        gap: 8px;
+        margin: 0;
+        z-index: 10020 !important;
+        box-shadow: 0 18px 55px rgba(0,0,0,.55), 0 0 35px rgba(80,180,255,.10);
     }
-    
-    .sticker-panel.visible {
-        display: grid;
-    }
-    
+    .sticker-panel.visible { display: grid !important; }
     .sticker-item {
+        min-width: 0;
+        aspect-ratio: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 4px;
+        background: rgba(255,255,255,.06);
+        border: 1px solid rgba(255,255,255,.08);
+        border-radius: 10px;
         cursor: pointer;
-        transition: all 0.2s;
-        border-radius: 8px;
-        padding: 5px;
-        background: rgba(255, 255, 255, 0.05);
+        color: inherit;
+        font: inherit;
+        transition: transform .15s ease, background .15s ease, border-color .15s ease;
     }
-    
-    .sticker-item:hover {
-        transform: scale(1.1);
-        background: rgba(255, 255, 255, 0.15);
-    }
-    
-    .sticker-item img {
-        width: 100%;
-        height: auto;
-        border-radius: 4px;
+    .sticker-item:hover { transform: translateY(-2px) scale(1.04); background: rgba(255,255,255,.13); border-color: rgba(255,215,100,.45); }
+    .sticker-item:disabled { opacity: .55; cursor: wait; }
+    .sticker-item img { width: 100%; height: 100%; object-fit: contain; pointer-events: none; display: block; }
+    @media (max-width: 600px) {
+        .sticker-panel { width: min(330px, calc(100vw - 16px)); grid-template-columns: repeat(4, minmax(0,1fr)); max-height: 64vh; }
     }
 `;
 document.head.appendChild(stickerStyle);
