@@ -414,38 +414,15 @@ function initStickerPanel() {
     if (stickerPanel.dataset.initialized === 'true') return;
     stickerPanel.dataset.initialized = 'true';
 
-    const stickers = [];
+    const catIds = [];
+    for (let id = STICKERS_CATS_RANGE.start; id <= STICKERS_CATS_RANGE.end; id++) {
+        catIds.push(id);
+    }
 
-    // В архиве реально существуют именно эти 47 PNG-файлов.
-    const catIds = [
-        66959, 66960,
-        66962, 66963, 66964, 66965, 66966, 66967, 66968, 66969,
-        66970, 66971, 66972, 66973, 66974, 66975, 66976, 66977,
-        66978, 66979, 66980, 66981, 66982, 66983, 66984, 66985,
-        66986, 66987, 66988, 66989, 66990, 66991, 66992, 66993,
-        66994, 66995, 66996, 66997, 66998, 66999, 67000, 67001,
-        67002, 67003, 67004, 67005, 67006
-    ];
-
-    catIds.forEach((id, index) => {
-        stickers.push({
-            id: `cats/1-${id}-256b.png`,
-            name: `Кот ${index + 1}`
-        });
-    });
-
-    // Lol в исходном архиве не является изображением, поэтому его исключаем.
-    [
-        'IMG_20260620_104705.jpg',
-        'IMG_20260620_104806.jpg',
-        'IMG_20260620_104912.jpg',
-        'IMG_20260620_105004.jpg'
-    ].forEach((name, index) => {
-        stickers.push({
-            id: `memes/${name}`,
-            name: `Мем ${index + 1}`
-        });
-    });
+    const stickers = catIds.map((id, index) => ({
+        id: `cats/1-${id}-256b.png`,
+        name: `Кот ${index + 1}`
+    }));
 
     stickerPanel.innerHTML = '';
 
@@ -631,120 +608,86 @@ function appendMessageToChat(msg) {
 }
 
 // === 19. ФОТО-ЗОНА С РАМКОЙ ===
-function initPhotoFrame() {
-    const photoUploadBtn = document.getElementById('photo-upload');
-    if (!photoUploadBtn) return;
-
-    const frame = document.createElement('div');
-    frame.id = 'photo-frame';
-    frame.style.cssText = `
-        position: fixed;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        width: 300px;
-        height: 300px;
-        border: 15px solid transparent;
-        border-image: repeating-linear-gradient(45deg, #8b0000, #2d5a27, #1e3a5f, #c9a227) 30;
-        background: rgba(0,0,0,0.8);
-        display: none;
-        align-items: center;
-        justify-content: center;
-        z-index: 1000;
-        cursor: pointer;
-    `;
-    
-    const closeBtn = document.createElement('button');
-    closeBtn.textContent = '✕';
-    closeBtn.style.cssText = `
-        position: absolute;
-        top: -40px;
-        right: 0;
-        background: #8b0000;
-        color: white;
-        border: none;
-        width: 30px;
-        height: 30px;
-        border-radius: 50%;
-        cursor: pointer;
-        font-size: 1.2rem;
-    `;
-    closeBtn.onclick = (e) => {
-        e.stopPropagation();
-        frame.style.display = 'none';
-    };
-    frame.appendChild(closeBtn);
-    
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = 'image/*';
-    input.style.display = 'none';
-    
-    input.addEventListener('change', async function(e) {
-        const file = e.target.files[0];
-        if (!file) return;
-        
-        if (file.size > 5 * 1024 * 1024) {
-            toast.show('Файл слишком большой', 'Максимальный размер: 5MB', 'error');
-            return;
-        }
-        
+function compressImage(file, maxSize = 1600, quality = 0.82) {
+    return new Promise((resolve, reject) => {
         const reader = new FileReader();
-        reader.onload = async (ev) => {
-            const photoData = ev.target.result;
-            
-            frame.innerHTML = '';
-            frame.appendChild(closeBtn);
-            
-            const img = document.createElement('img');
-            img.src = photoData;
-            img.style.cssText = `
-                max-width: 100%;
-                max-height: 100%;
-                object-fit: contain;
-            `;
-            frame.appendChild(img);
-            frame.style.display = 'flex';
-            
-            if (db.currentNick) {
-                const result = await db.sendMessage(db.currentNick, '', null, photoData);
-                
-                if (result) {
-                    appendMessageToChat({
-                        nick: db.currentNick,
-                        text: '',
-                        photo: photoData,
-                        system: 0,
-                        time: Date.now()
-                    });
-                    
-                    toast.show('Фото отправлено!', 'Ваше фото добавлено в чат', 'success');
-                } else {
-                    toast.show('Ошибка', 'Не удалось отправить фото', 'error');
-                }
-            } else {
-                toast.show('Доступ запрещен', 'Войдите в чат, чтобы отправлять фото', 'warning');
-            }
+        reader.onerror = () => reject(new Error('Не удалось прочитать изображение'));
+        reader.onload = () => {
+            const img = new Image();
+            img.onerror = () => reject(new Error('Не удалось открыть изображение'));
+            img.onload = () => {
+                const scale = Math.min(1, maxSize / Math.max(img.width, img.height));
+                const canvas = document.createElement('canvas');
+                canvas.width = Math.max(1, Math.round(img.width * scale));
+                canvas.height = Math.max(1, Math.round(img.height * scale));
+                const ctx = canvas.getContext('2d', { alpha: false });
+                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                resolve(canvas.toDataURL('image/jpeg', quality));
+            };
+            img.src = reader.result;
         };
         reader.readAsDataURL(file);
     });
-    
-    frame.addEventListener('click', (e) => {
-        if (e.target === frame) input.click();
-    });
-    
-    document.body.appendChild(frame);
-    
-    photoUploadBtn.addEventListener('click', () => {
+}
+
+function initPhotoFrame() {
+    const photoUploadBtn = document.getElementById('photo-upload');
+    if (!photoUploadBtn || photoUploadBtn.dataset.initialized === 'true') return;
+    photoUploadBtn.dataset.initialized = 'true';
+
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/jpeg,image/png,image/webp,image/gif';
+    input.style.display = 'none';
+    document.body.appendChild(input);
+
+    input.addEventListener('change', async (event) => {
+        const file = event.target.files?.[0];
+        input.value = '';
+        if (!file) return;
         if (!db.currentNick) {
-            toast.show('Доступ запрещен', 'Войдите в чат, чтобы загружать фото', 'warning');
+            toast.show('Доступ запрещен', 'Войдите в чат, чтобы отправлять фото', 'warning');
             return;
         }
+        if (file.size > 15 * 1024 * 1024) {
+            toast.show('Файл слишком большой', 'Максимум 15 MB до сжатия', 'error');
+            return;
+        }
+
+        try {
+            toast.show('Подготовка фото', 'Сжимаю изображение…', 'info', 1800);
+            const photoData = await compressImage(file);
+            if (photoData.length > 3_500_000) {
+                toast.show('Фото слишком большое', 'Попробуйте изображение меньшего размера', 'error');
+                return;
+            }
+
+            const result = await db.sendMessage(db.currentNick, '📸 Фото', null, photoData);
+            if (!result) {
+                toast.show('Ошибка', 'Фото не удалось отправить', 'error');
+                return;
+            }
+
+            appendMessageToChat({
+                nick: db.currentNick,
+                text: '📸 Фото',
+                photo: photoData,
+                system: 0,
+                time: Date.now()
+            });
+            toast.show('Фото отправлено!', 'Изображение добавлено в чат', 'success', 2000);
+        } catch (error) {
+            console.error('Ошибка загрузки фото:', error);
+            toast.show('Ошибка', error.message || 'Не удалось обработать фото', 'error');
+        }
+    });
+
+    photoUploadBtn.addEventListener('click', (event) => {
+        event.preventDefault();
+        event.stopPropagation();
         input.click();
     });
 }
-
-
 
 // === 6. ТАЙМЕР ОБРАТНОГО ОТСЧЁТА ===
 function initTimer() {

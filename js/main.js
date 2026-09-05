@@ -25,7 +25,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         // === ФЕЙЕРВЕРК И СТЕНА СЛАВЫ ===
         if (typeof initFireworks === 'function') initFireworks();
-        if (typeof initWallOfFame === 'function') initWallOfFame();
+        if ('requestIdleCallback' in window) {
+            requestIdleCallback(() => {
+                if (typeof initWallOfFame === 'function') initWallOfFame();
+            }, { timeout: 1800 });
+        } else {
+            setTimeout(() => { if (typeof initWallOfFame === 'function') initWallOfFame(); }, 300);
+        }
 
         // === ТЕМЫ И ЭФФЕКТЫ ФОНА ===
         initThemeSwitcher();
@@ -45,32 +51,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const chatLoginBtn = document.getElementById('chat-login-btn');
                 if (chatLoginBtn) {
                     setTimeout(() => chatLoginBtn.click(), 500);
-                }
-            });
-        }
-
-        // === ОБРАБОТЧИК ЗАГРУЗКИ ФОТО (ИСПРАВЛЕНО) ===
-        const photoUpload = document.getElementById('photo-upload');
-        if (photoUpload) {
-            photoUpload.addEventListener('click', () => {
-                console.log('📸 Загрузка фото инициирована');
-                // Инициируем клик по скрытому input файла из initPhotoFrame
-                const hiddenInput = document.querySelector('#photo-frame input[type="file"]');
-                if (hiddenInput) {
-                    hiddenInput.click();
-                } else {
-                    // Fallback: создаем input на лету, если initPhotoFrame еще не отработал
-                    const input = document.createElement('input');
-                    input.type = 'file';
-                    input.accept = 'image/*';
-                    input.onchange = (e) => {
-                        const file = e.target.files[0];
-                        if (file) {
-                            console.log('📸 Фото выбрано:', file.name);
-                            alert('Фото выбрано: ' + file.name + '\n(Функция отправки в чат будет реализована при наличии бэкенда для загрузки файлов)');
-                        }
-                    };
-                    input.click();
                 }
             });
         }

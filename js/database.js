@@ -1,5 +1,4 @@
-// === МОДУЛЬ РАБОТЫ С CLOUDFLARE D1 БАЗОЙ ===
-
+// === МОДУЛЬ РАБОТЫ С CLOUDFLARE D1 ===
 class Database {
     constructor() {
         this.API_URL = '/api';
@@ -9,7 +8,7 @@ class Database {
 
     async getMessages(limit = 50) {
         try {
-            const response = await fetch(`${this.API_URL}/messages?limit=${limit}`);
+            const response = await fetch(`${this.API_URL}/messages?limit=${limit}`, { cache: 'no-store' });
             if (!response.ok) throw new Error('Failed to fetch messages');
             const data = await response.json();
             return data.messages || [];
@@ -19,21 +18,35 @@ class Database {
         }
     }
 
-    async sendMessage(nick, text, sticker = null, photo = null) {
+    async sendMessage(nick, text = '', sticker = null, photo = null) {
         try {
+            const safeNick = String(nick || '').trim();
+            const safeText = String(text || '').trim();
+            const safeSticker = sticker ? String(sticker) : null;
+            const safePhoto = photo ? String(photo) : null;
+
+            if (!safeNick) throw new Error('Не указан ник');
+            if (!safeText && !safeSticker && !safePhoto) {
+                throw new Error('Сообщение не содержит текста, стикера или изображения');
+            }
+
             const response = await fetch(`${this.API_URL}/messages`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    nick,
-                    text,
-                    sticker,
-                    photo,
+                    nick: safeNick,
+                    text: safeText,
+                    sticker: safeSticker,
+                    photo: safePhoto,
                     time: Date.now()
                 })
             });
-            if (!response.ok) throw new Error('Failed to send message');
-            return await response.json();
+
+            const data = await response.json().catch(() => ({}));
+            if (!response.ok || !data.success) {
+                throw new Error(data.message || data.error || 'Failed to send message');
+            }
+            return data;
         } catch (error) {
             console.error('Error sending message:', error);
             return null;
@@ -47,17 +60,12 @@ class Database {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ nick })
             });
-            if (!response.ok) {
-                const errorText = await response.text();
-                throw new Error('Login failed: ' + errorText);
-            }
+            if (!response.ok) throw new Error('Login failed: ' + await response.text());
             const data = await response.json();
-            
             this.sessionId = data.session_id;
             this.currentNick = nick;
             localStorage.setItem('sessionId', data.session_id);
             localStorage.setItem('currentNick', nick);
-            
             return data;
         } catch (error) {
             console.error('Login error:', error);
@@ -67,7 +75,6 @@ class Database {
 
     async checkSession() {
         if (!this.sessionId) return false;
-        
         try {
             const response = await fetch(`${this.API_URL}/auth/check`, {
                 method: 'POST',
@@ -75,7 +82,13 @@ class Database {
                 body: JSON.stringify({ session_id: this.sessionId })
             });
             const data = await response.json();
-            return data.valid || false;
+            if (!data.valid) {
+                this.sessionId = null;
+                this.currentNick = null;
+                localStorage.removeItem('sessionId');
+                localStorage.removeItem('currentNick');
+            }
+            return !!data.valid;
         } catch {
             return false;
         }
@@ -83,7 +96,7 @@ class Database {
 
     async checkConnection() {
         try {
-            const r = await fetch(`${this.API_URL}/health`);
+            const r = await fetch(`${this.API_URL}/health`, { cache: 'no-store' });
             const d = await r.json();
             return d.status === 'ok';
         } catch {
@@ -91,5 +104,4 @@ class Database {
         }
     }
 }
-
 const db = new Database();

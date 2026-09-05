@@ -85,20 +85,52 @@ function readTrackMetadata(url, fallbackNumber) {
 async function loadTracks() {
     const baseTracks = [];
     for (let i = 1; i <= TRACKS_COUNT; i++) {
-        baseTracks.push({ id: i - 1, number: i, url: getTrackUrl(i) });
+        baseTracks.push({
+            id: i - 1,
+            number: i,
+            url: getTrackUrl(i),
+            title: `🎄 Новогодний микс #${i}`,
+            artist: 'Праздничная атмосфера',
+            album: 'Winter Vibes 2027',
+            cover: generateFallbackCover(i)
+        });
     }
 
-    tracks = await Promise.all(baseTracks.map(async base => {
-        const meta = await readTrackMetadata(base.url, base.number);
-        return { ...base, ...meta };
-    }));
-
+    // Не блокируем первый экран ожиданием ID3 всех MP3.
+    tracks = baseTracks;
     buildPlaylist();
     updateMiniPlayer(0);
     if (tracks[0]) {
         audio.src = tracks[0].url;
         trackLoaded = true;
     }
+
+    // Метаданные подтягиваются постепенно и не тормозят интерфейс.
+    if (typeof jsmediatags === 'undefined') return;
+    const queue = [...baseTracks];
+    const concurrency = 3;
+    let cursor = 0;
+
+    const worker = async () => {
+        while (cursor < queue.length) {
+            const item = queue[cursor++];
+            const meta = await readTrackMetadata(item.url, item.number);
+            const index = tracks.findIndex(t => t.id === item.id);
+            if (index === -1) continue;
+            tracks[index] = { ...tracks[index], ...meta };
+            if (index === currentTrackIndex) updateMiniPlayer(index);
+            const listItem = document.querySelector(`.playlist-bangs li[data-index="${index}"]`);
+            if (listItem) {
+                const img = listItem.querySelector('img');
+                const title = listItem.querySelector('div > div:first-child');
+                const artist = listItem.querySelector('div > div:nth-child(2)');
+                if (img) img.src = tracks[index].cover;
+                if (title) title.textContent = tracks[index].title;
+                if (artist) artist.textContent = tracks[index].artist;
+            }
+        }
+    };
+    await Promise.all(Array.from({ length: concurrency }, worker));
 }
 
 function buildPlaylist() {
