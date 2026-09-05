@@ -16,7 +16,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (typeof initFreeze === 'function') initFreeze();
         if (typeof initGift === 'function') initGift();
         if (typeof initLetter === 'function') initLetter();
+        
+        // === ТЕМЫ И СТЕНА СЛАВЫ ===
         if (typeof initThemeSwitcher === 'function') initThemeSwitcher();
+        if (typeof initWallOfFame === 'function') initWallOfFame();
         
         // === ФЕЙЕРВЕРК ===
         if (typeof initFireworks === 'function') initFireworks();
@@ -81,13 +84,13 @@ const themes = [
     },
     // 🌌 Ночная зимняя магия
     { 
-        name: ' Ночная магия', 
+        name: '🌌 Ночная магия', 
         colors: ['#0F172A', '#1E3A8A', '#2E1065', '#312E81'],
         text: '#fff'
     },
     // 🔥 Уют и Тепло
     { 
-        name: ' Уют и Тепло', 
+        name: '🔥 Уют и Тепло', 
         colors: ['#3E2723', '#4E342E', '#78350F', '#FEF3C7'],
         text: '#fff'
     },
@@ -99,7 +102,7 @@ const themes = [
     },
     // 💜 Неон и Футуризм
     { 
-        name: '💜 Неон', 
+        name: ' Неон', 
         colors: ['#4C1D95', '#14532D', '#0284C7', '#0E7490'],
         text: '#fff'
     },
