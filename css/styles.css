@@ -901,6 +901,7 @@ header {
     }
 }
 /* === ПЛАВНАЯ СМЕНА ЦВЕТОВ ФОНА === */
+/* === ПЛАВНАЯ СМЕНА ЦВЕТОВ ФОНА === */
 @keyframes hue-rotate {
     0% {
         filter: hue-rotate(0deg);
@@ -911,5 +912,5 @@ header {
 }
 
 body {
-    animation: hue-rotate 60s linear infinite;
+    animation: hue-rotate 120s linear infinite; /* Медленнее — 2 минуты на полный круг */
 }
