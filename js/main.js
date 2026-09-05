@@ -20,7 +20,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (typeof initGift === 'function') initGift();
         if (typeof initLetter === 'function') initLetter();
         if (typeof initPhotoFrame === 'function') initPhotoFrame();// ИСПРАВЛЕНО: добавлена инициализация фото-рамки
-        if (typeof initStickers === 'function') initStikers();
         if (typeof initThemeSwitcher === 'function') initThemeSwitcher();
 
         // === КАСТОМНЫЙ КУРСОР ===
@@ -31,8 +30,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (typeof initWallOfFame === 'function') initWallOfFame();
 
         // === ТЕМЫ И ЭФФЕКТЫ ФОНА ===
-        initThemeSwitcher();
-        initBackgroundEffects();
+        if (typeof initBackgroundEffects === 'function') initBackgroundEffects();
 
         // === ОБРАБОТЧИК КНОПКИ ВХОДА В ШАПКЕ (ИСПРАВЛЕНО) ===
         const headerLoginBtn = document.getElementById('header-login-btn');
@@ -147,17 +145,59 @@ function getTimeBrightness() {
 
 function applyTheme(index) {
     try {
+        if (!themes[index]) index = 0;
+
         const theme = themes[index];
         const brightness = getTimeBrightness();
         const darkening = (1 - brightness) * 0.7;
-        const darkenedColors = theme.colors.map(color => lerpColor(color, '#000000', darkening));
-        const gradient = `linear-gradient(135deg, ${darkenedColors.join(', ')})`;
+
+        const darkenedColors = theme.colors.map(color =>
+            lerpColor(color, '#000000', darkening)
+        );
+
+        const gradient =
+            `linear-gradient(135deg, ${darkenedColors.join(', ')})`;
+
         document.body.style.background = gradient;
-        const textColor = brightness < 0.5 ? '#e0e0e0' : theme.text;
+
+        const textColor =
+            brightness < 0.5 ? '#e0e0e0' : theme.text;
+
         document.body.style.color = textColor;
-        document.documentElement.style.setProperty('--text-color', textColor);
-        localStorage.setItem('selectedTheme', index);
+
+        document.documentElement.style.setProperty(
+            '--text-color',
+            textColor
+        );
+
+        document.documentElement.style.setProperty(
+            '--bg-gradient-1',
+            darkenedColors[0]
+        );
+
+        document.documentElement.style.setProperty(
+            '--bg-gradient-2',
+            darkenedColors[1]
+        );
+
+        document.documentElement.style.setProperty(
+            '--bg-gradient-3',
+            darkenedColors[2] || darkenedColors[0]
+        );
+
+        document.documentElement.style.setProperty(
+            '--theme-color-1',
+            darkenedColors[0]
+        );
+
+        document.documentElement.style.setProperty(
+            '--theme-color-2',
+            darkenedColors[1]
+        );
+
+        localStorage.setItem('selectedTheme', String(index));
         currentThemeIndex = index;
+
     } catch (error) {
         console.error('Ошибка применения темы:', error);
     }
@@ -169,34 +209,89 @@ function initThemeSwitcher() {
         const themeSwitcher = document.getElementById('theme-switcher');
         const themeList = document.getElementById('theme-list');
 
+        if (!themeBtn || !themeSwitcher || !themeList) {
+            console.warn('Элементы переключателя тем не найдены в DOM');
+            return;
+        }
+
         const savedTheme = localStorage.getItem('selectedTheme');
-        if (savedTheme !== null) {
-            currentThemeIndex = parseInt(savedTheme);
-        }
+        const parsedTheme = savedTheme !== null ? Number(savedTheme) : 0;
+
+        currentThemeIndex =
+            Number.isInteger(parsedTheme) &&
+            parsedTheme >= 0 &&
+            parsedTheme < themes.length
+                ? parsedTheme
+                : 0;
+
         applyTheme(currentThemeIndex);
-        setInterval(() => applyTheme(currentThemeIndex), 60000);
 
-        if (themeList) {
-            themeList.innerHTML = '';
-            themes.forEach((theme, index) => {
-                const option = document.createElement('div');
-                option.className = 'switcher-option';
-                option.innerHTML = `<div class="theme-preview" style="background: linear-gradient(135deg, ${theme.colors[0]}, ${theme.colors[3]})"></div><span>${theme.name}</span>`;
-                option.addEventListener('click', () => {
-                    applyTheme(index);
-                    if (themeSwitcher) themeSwitcher.classList.remove('visible');
+        themeList.innerHTML = '';
+
+        themes.forEach((theme, index) => {
+            const option = document.createElement('button');
+            option.type = 'button';
+            option.className = 'switcher-option';
+            option.dataset.themeIndex = String(index);
+
+            option.innerHTML = `
+                <div
+                    class="theme-preview"
+                    style="background: linear-gradient(135deg, ${theme.colors[0]}, ${theme.colors[3]})"
+                ></div>
+                <span>${theme.name}</span>
+            `;
+
+            option.addEventListener('click', (event) => {
+                event.preventDefault();
+                event.stopPropagation();
+
+                applyTheme(index);
+
+                themeList.querySelectorAll('.switcher-option').forEach(item => {
+                    item.classList.toggle(
+                        'active',
+                        Number(item.dataset.themeIndex) === currentThemeIndex
+                    );
                 });
-                themeList.appendChild(option);
-            });
-        }
 
-        if (themeBtn && themeSwitcher) {
-            themeBtn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                themeSwitcher.classList.toggle('visible');
-                document.getElementById('bg-effects-switcher').classList.remove('visible');
+                themeSwitcher.classList.remove('visible');
             });
-        }
+
+            themeList.appendChild(option);
+        });
+
+        const updateActiveTheme = () => {
+            themeList.querySelectorAll('.switcher-option').forEach(option => {
+                option.classList.toggle(
+                    'active',
+                    Number(option.dataset.themeIndex) === currentThemeIndex
+                );
+            });
+        };
+
+        updateActiveTheme();
+
+        themeBtn.addEventListener('click', (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+
+            themeSwitcher.classList.toggle('visible');
+
+            const effectsSwitcher =
+                document.getElementById('bg-effects-switcher');
+
+            if (effectsSwitcher) {
+                effectsSwitcher.classList.remove('visible');
+            }
+        });
+
+        // Обновляем затемнение темы раз в минуту.
+        setInterval(() => {
+            applyTheme(currentThemeIndex);
+            updateActiveTheme();
+        }, 60000);
+
     } catch (error) {
         console.error('Ошибка инициализации тем:', error);
     }
@@ -496,78 +591,3 @@ function initBackgroundEffects() {
 // === ОБРАБОТКА ОШИБОК ===
 window.addEventListener('error', (e) => console.error('🔴 Глобальная ошибка:', e.error));
 window.addEventListener('unhandledrejection', (e) => console.error('🔴 Promise error:', e.reason));
-// === ГАРАНТИРОВАННОЕ ВОССТАНОВЛЕНИЕ КНОПОК (ТЕМА И СТИКЕРЫ) ===
-document.addEventListener('DOMContentLoaded', () => {
-    // 1. ЛОГИКА КНОПКИ ТЕМЫ
-    const themeBtn = document.getElementById('theme-btn');
-    if (themeBtn && typeof THEMES !== 'undefined') {
-        const savedTheme = localStorage.getItem('theme');
-        let currentIndex = (savedTheme && THEMES.includes(savedTheme)) ? THEMES.indexOf(savedTheme) : 0;
-        
-        // Применяем тему при загрузке
-        if (savedTheme && THEMES.includes(savedTheme)) {
-            document.body.className = savedTheme;
-        }
-
-        themeBtn.addEventListener('click', () => {
-            currentIndex = (currentIndex + 1) % THEMES.length;
-            const newTheme = THEMES[currentIndex];
-            document.body.className = newTheme;
-            localStorage.setItem('theme', newTheme);
-        });
-    }
-
-    // 2. ЛОГИКА КНОПКИ СТИКЕРОВ
-    const stickerBtn = document.getElementById('sticker-btn');
-    const stickerPanel = document.getElementById('sticker-panel');
-    
-    if (stickerBtn && stickerPanel) {
-        // Список стикеров (укажи здесь реальные имена файлов из твоей папки /stickers/)
-        const stickersList = [
-            { id: 'cats/1.png', name: 'Кот 1' },
-            { id: 'cats/2.png', name: 'Кот 2' },
-            { id: 'memes/1.png', name: 'Мем 1' },
-            { id: 'memes/2.png', name: 'Мем 2' }
-        ];
-
-        stickerPanel.innerHTML = '';
-        stickersList.forEach(sticker => {
-            const el = document.createElement('div');
-            el.className = 'sticker-item';
-            // onerror спасает от битой верстки, если картинка временно не найдена
-            el.innerHTML = `<img src="/stickers/${sticker.id}" alt="${sticker.name}" title="${sticker.name}" onerror="this.style.display='none'; this.parentElement.innerText='🎄'">`;
-            
-            el.addEventListener('click', async () => {
-                if (typeof db !== 'undefined' && db.currentNick) {
-                    const result = await db.sendMessage(db.currentNick, '', sticker.id);
-                    if (result && typeof appendMessageToChat === 'function') {
-                        appendMessageToChat({
-                            nick: db.currentNick,
-                            text: '',
-                            sticker: sticker.id,
-                            system: 0,
-                            time: Date.now()
-                        });
-                    }
-                    stickerPanel.classList.remove('visible');
-                } else {
-                    alert('Сначала войдите в чат, чтобы отправлять стикеры!');
-                }
-            });
-            stickerPanel.appendChild(el);
-        });
-
-        // Открытие/закрытие по клику на кнопку
-        stickerBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            stickerPanel.classList.toggle('visible');
-        });
-
-        // Закрытие при клике в пустое место
-        document.addEventListener('click', (e) => {
-            if (!e.target.closest('.sticker-panel') && !e.target.closest('#sticker-btn')) {
-                stickerPanel.classList.remove('visible');
-            }
-        });
-    }
-});
