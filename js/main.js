@@ -242,7 +242,21 @@ function initThemeSwitcher() {
         console.error('Ошибка инициализации переключателя тем:', error);
     }
 }
-
+// === ОБРАБОТЧИК КНОПКИ ВХОД ===
+        const headerLoginBtn = document.getElementById('header-login-btn');
+        if (headerLoginBtn) {
+            headerLoginBtn.addEventListener('click', () => {
+                console.log('🔑 Клик по входу в шапке');
+                // Открываем форму входа через существующую кнопку
+                const chatLoginBtn = document.getElementById('chat-login-btn');
+                if (chatLoginBtn) {
+                    chatLoginBtn.click();
+                } else {
+                    // Если кнопки нет, показываем алерт
+                    alert('Нажмите кнопку "🔑 Войти в чат" в разделе чата');
+                }
+            });
+        }
 // === ОБРАБОТКА ОШИБОК ===
 window.addEventListener('error', (e) => {
     console.error('Глобальная ошибка:', e.error);
