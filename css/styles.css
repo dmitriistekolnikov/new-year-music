@@ -1883,3 +1883,11 @@ body {
     object-fit: contain;
     pointer-events: none;
 }
+
+/* === FIX: интерактивные панели === */
+#theme-switcher, #bg-effects-switcher { z-index: 10001; }
+#theme-switcher { bottom: 150px; right: 30px; }
+#bg-effects-switcher { bottom: 85px; right: 30px; }
+#sticker-panel { z-index: 10002; }
+.sticker-item { border: 0; color: inherit; font: inherit; }
+.sticker-item img { display: block; }
