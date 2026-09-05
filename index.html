@@ -16,8 +16,12 @@
     <div id="clock-bg"></div>
     <div class="garland" id="garland"></div>
 
-    <!-- Canvas для эффектов фона (рисуется поверх градиента, но под UI) -->
+    <!-- Canvas для эффектов фона (z-index: 1, под всем UI) -->
     <canvas id="bg-effects-canvas"></canvas>
+
+    <!-- Кастомный курсор -->
+    <div class="custom-cursor" id="custom-cursor"></div>
+    <div class="cursor-trail" id="cursor-trail"></div>
 
     <!-- Плеер (челка) -->
     <div class="player-bangs" id="player-bangs">
@@ -54,14 +58,13 @@
         <header>
             <h1 class="main-title">🎄 НовыйГодЧат</h1>
             <div style="display: flex; gap: 10px;">
-                <!-- Кнопка тем убрана отсюда, чтобы не мешала -->
                 <button class="btn" id="header-login-btn">🔑 Вход</button>
             </div>
         </header>
 
         <main>
             <section class="glass-card freeze-target">
-                <h2 style="text-align: center; margin-bottom: 8px;">🎄 До Нового Года 🎄</h2>
+                <h2 style="text-align: center; margin-bottom: 8px;">🎄 До Нового Года </h2>
                 <p style="text-align: center; color: var(--text-secondary); margin-bottom: 20px; font-size: 0.9rem;">Волшебство совсем близко...</p>
                 <div class="countdown-timer">
                     <div class="time-block"><span class="number" id="days">0</span><span class="label">Дней</span></div>
@@ -72,7 +75,7 @@
             </section>
 
             <section class="glass-card freeze-target">
-                <h2 style="text-align: center; margin-bottom: 16px;">🎉 С Новым Годом! 🎉</h2>
+                <h2 style="text-align: center; margin-bottom: 16px;">🎉 С Новым Годом! </h2>
                 <div class="chat-status">
                     <span style="font-weight: 600;">💬 Новогодний чат</span>
                     <span class="status-badge status-offline" id="chat-status-badge">
@@ -90,26 +93,27 @@
                     <div class="locked-message" id="locked-msg">🔒 Войди, чтобы писать в чат</div>
                     <div class="letter-input-area" id="letter-area" style="display: none;">
                         <input type="text" class="letter-input" id="letter-text" placeholder="Напиши сообщение или желание...">
-                        <button class="btn" id="send-letter-btn">✉️</button>
+                        <button class="btn" id="send-letter-btn">️</button>
                     </div>
-                    <button class="btn" id="chat-login-btn" style="width: 100%; justify-content: center; margin-top: 10px;">🔑 Войти в чат</button>
-                    <div class="photo-upload" id="photo-upload">📸 Нажми, чтобы отправить фото</div>
+                    <button class="btn" id="chat-login-btn" style="width: 100%; justify-content: center; margin-top: 10px;"> Войти в чат</button>
+                    <div class="photo-upload" id="photo-upload"> Нажми, чтобы отправить фото</div>
                 </div>
             </section>
         </main>
 
         <footer style="text-align: center; padding: 30px 20px; color: var(--text-secondary); font-size: 0.9rem; opacity: 0.7;">
-            <p>❅ ✼ ❆ ✻ ❄ С Новым 2027 Годом! ❄ ✻ ❆  ❅</p>
+            <p>❅ ✼ ❆ ✻  С Новым 2027 Годом! ❄ ✻ ❆  ❅</p>
         </footer>
     </div>
 
-    <div class="magic-gift" id="magic-gift">
+    <!-- Волшебный подарок (z-index выше кнопок) -->
+    <div class="magic-gift" id="magic-gift" style="z-index: 10002;">
         <div class="gift-lid"></div>
         <div class="gift-box"></div>
     </div>
     <div class="prediction-toast" id="prediction-toast"></div>
 
-    <!-- Плавающие кнопки управления (справа внизу, чтобы не перекрывала челка) -->
+    <!-- Плавающие кнопки (z-index ниже подарка) -->
     <button class="floating-btn" id="wall-of-fame-btn" title="Итоги 2026">🏆</button>
     <button class="floating-btn" id="bg-effects-btn" title="Эффекты фона">✨</button>
     <button class="floating-btn" id="theme-btn" title="Сменить тему">🎨</button>
@@ -118,8 +122,8 @@
     <div class="switcher-panel" id="bg-effects-switcher">
         <h3>✨ Эффекты фона</h3>
         <div class="switcher-option" data-effect="none">🚫 Без эффектов</div>
-        <div class="switcher-option" data-effect="lines"> Неоновые линии</div>
-        <div class="switcher-option" data-effect="balls">⚽ Летающие шары</div>
+        <div class="switcher-option" data-effect="lines">📐 Неоновые линии</div>
+        <div class="switcher-option" data-effect="balls">⚽ Летающие шары + звёзды</div>
         <div class="switcher-option" data-effect="particles">💫 Пульсирующие частицы</div>
     </div>
 
