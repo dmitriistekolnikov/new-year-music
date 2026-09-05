@@ -13,6 +13,9 @@
     <div class="bg-orb orb-2"></div>
     <div class="snowflakes" id="snow-container"></div>
     
+    <!-- Канвас для фоновых эффектов -->
+    <canvas id="bg-effects-canvas"></canvas>
+
     <!-- Свечки на заднем фоне -->
     <div id="candles-bg"></div>
     
@@ -110,7 +113,7 @@
         </main>
 
         <footer style="text-align: center; padding: 30px 20px; color: var(--text-secondary); font-size: 0.9rem; opacity: 0.7;">
-            <p>❅ ✼ ❆ ✻ ❄ С Новым 2027 Годом! ❄ ✻ ❆  ❅</p>
+            <p>❅ ✼ ❆ ✻ ❄ С Новым 2027 Годом! ❄ ✻ ❆ ❅</p>
         </footer>
     </div>
 
@@ -120,6 +123,28 @@
         <div class="gift-box"></div>
     </div>
     <div class="prediction-toast" id="prediction-toast"></div>
+
+    <!-- Кнопка эффектов фона -->
+    <button class="floating-btn" id="bg-effects-btn" title="Эффекты фона">✨</button>
+
+    <!-- Панель переключения эффектов фона -->
+    <div class="switcher-panel" id="bg-effects-switcher">
+        <div class="switcher-header">✨ Эффекты фона</div>
+        <div class="switcher-list">
+            <div class="switcher-option" data-effect="none">
+                <span>🚫 Без эффектов</span>
+            </div>
+            <div class="switcher-option" data-effect="lines">
+                <span>🌈 Неоновые линии</span>
+            </div>
+            <div class="switcher-option" data-effect="balls">
+                <span>🎈 Шары и звёзды</span>
+            </div>
+            <div class="switcher-option" data-effect="particles">
+                <span>✨ Пульсирующие частицы</span>
+            </div>
+        </div>
+    </div>
 
     <!-- Скрипты -->
     <script src="js/config.js"></script>
