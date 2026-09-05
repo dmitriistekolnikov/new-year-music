@@ -496,3 +496,78 @@ function initBackgroundEffects() {
 // === ОБРАБОТКА ОШИБОК ===
 window.addEventListener('error', (e) => console.error('🔴 Глобальная ошибка:', e.error));
 window.addEventListener('unhandledrejection', (e) => console.error('🔴 Promise error:', e.reason));
+// === ГАРАНТИРОВАННОЕ ВОССТАНОВЛЕНИЕ КНОПОК (ТЕМА И СТИКЕРЫ) ===
+document.addEventListener('DOMContentLoaded', () => {
+    // 1. ЛОГИКА КНОПКИ ТЕМЫ
+    const themeBtn = document.getElementById('theme-btn');
+    if (themeBtn && typeof THEMES !== 'undefined') {
+        const savedTheme = localStorage.getItem('theme');
+        let currentIndex = (savedTheme && THEMES.includes(savedTheme)) ? THEMES.indexOf(savedTheme) : 0;
+        
+        // Применяем тему при загрузке
+        if (savedTheme && THEMES.includes(savedTheme)) {
+            document.body.className = savedTheme;
+        }
+
+        themeBtn.addEventListener('click', () => {
+            currentIndex = (currentIndex + 1) % THEMES.length;
+            const newTheme = THEMES[currentIndex];
+            document.body.className = newTheme;
+            localStorage.setItem('theme', newTheme);
+        });
+    }
+
+    // 2. ЛОГИКА КНОПКИ СТИКЕРОВ
+    const stickerBtn = document.getElementById('sticker-btn');
+    const stickerPanel = document.getElementById('sticker-panel');
+    
+    if (stickerBtn && stickerPanel) {
+        // Список стикеров (укажи здесь реальные имена файлов из твоей папки /stickers/)
+        const stickersList = [
+            { id: 'cats/1.png', name: 'Кот 1' },
+            { id: 'cats/2.png', name: 'Кот 2' },
+            { id: 'memes/1.png', name: 'Мем 1' },
+            { id: 'memes/2.png', name: 'Мем 2' }
+        ];
+
+        stickerPanel.innerHTML = '';
+        stickersList.forEach(sticker => {
+            const el = document.createElement('div');
+            el.className = 'sticker-item';
+            // onerror спасает от битой верстки, если картинка временно не найдена
+            el.innerHTML = `<img src="/stickers/${sticker.id}" alt="${sticker.name}" title="${sticker.name}" onerror="this.style.display='none'; this.parentElement.innerText='🎄'">`;
+            
+            el.addEventListener('click', async () => {
+                if (typeof db !== 'undefined' && db.currentNick) {
+                    const result = await db.sendMessage(db.currentNick, '', sticker.id);
+                    if (result && typeof appendMessageToChat === 'function') {
+                        appendMessageToChat({
+                            nick: db.currentNick,
+                            text: '',
+                            sticker: sticker.id,
+                            system: 0,
+                            time: Date.now()
+                        });
+                    }
+                    stickerPanel.classList.remove('visible');
+                } else {
+                    alert('Сначала войдите в чат, чтобы отправлять стикеры!');
+                }
+            });
+            stickerPanel.appendChild(el);
+        });
+
+        // Открытие/закрытие по клику на кнопку
+        stickerBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            stickerPanel.classList.toggle('visible');
+        });
+
+        // Закрытие при клике в пустое место
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.sticker-panel') && !e.target.closest('#sticker-btn')) {
+                stickerPanel.classList.remove('visible');
+            }
+        });
+    }
+});
