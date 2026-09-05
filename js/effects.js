@@ -280,15 +280,31 @@ function initTimer() {
 
 // === 12. КАСТОМНЫЙ КУРСОР ===
 function initCustomCursor() {
-function initCustomCursor() {
     const cursor = document.getElementById('custom-cursor');
-    const trail = document.getElementById('cursor-trail');
+    const trailContainer = document.getElementById('cursor-trail-container');
     
-    if (!cursor || !trail) return;
+    if (!cursor || !trailContainer) return;
+    
+    // Создаём контейнер для следа, если его нет
+    if (!trailContainer) {
+        const container = document.createElement('div');
+        container.id = 'cursor-trail-container';
+        container.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 9998;';
+        document.body.appendChild(container);
+    }
     
     let mouseX = 0, mouseY = 0;
     let cursorX = 0, cursorY = 0;
-    let trailX = 0, trailY = 0;
+    
+    // Массив точек следа (более частый)
+    const trailPoints = [];
+    const maxTrailPoints = 20;
+    const trailInterval = 30; // Обновление каждые 30мс (быстрее)
+    let lastTrailTime = 0;
+    
+    // Звёзды следа
+    const stars = [];
+    const maxStars = 15;
     
     // Отслеживание мыши
     document.addEventListener('mousemove', (e) => {
@@ -296,37 +312,133 @@ function initCustomCursor() {
         mouseY = e.clientY;
     });
     
-    // Анимация курсора (плавное следование)
-    function animateCursor() {
+    // Создание звезды
+    function createStar(x, y) {
+        if (stars.length >= maxStars) {
+            const oldStar = stars.shift();
+            if (oldStar && oldStar.el) {
+                oldStar.el.remove();
+            }
+        }
+        
+        const star = document.createElement('div');
+        star.style.cssText = `
+            position: fixed;
+            left: ${x}px;
+            top: ${y}px;
+            width: 12px;
+            height: 12px;
+            pointer-events: none;
+            z-index: 9998;
+            font-size: 12px;
+            color: #FFD700;
+            text-shadow: 0 0 10px #FFD700, 0 0 20px #FFA500;
+            animation: starFade 0.8s ease-out forwards;
+        `;
+        star.textContent = '✨';
+        document.body.appendChild(star);
+        
+        const starObj = { el: star, life: 1, x, y };
+        stars.push(starObj);
+        
+        setTimeout(() => {
+            if (star.parentNode) star.remove();
+            const index = stars.indexOf(starObj);
+            if (index > -1) stars.splice(index, 1);
+        }, 800);
+    }
+    
+    // Анимация курсора и следа
+    function animateCursor(timestamp) {
         // Плавное движение основного курсора
         cursorX += (mouseX - cursorX) * 0.2;
         cursorY += (mouseY - cursorY) * 0.2;
         cursor.style.left = cursorX - 10 + 'px';
         cursor.style.top = cursorY - 10 + 'px';
         
-        // Более быстрое следование для трейла (чаще обновляется)
-        trailX += (mouseX - trailX) * 0.4;
-        trailY += (mouseY - trailY) * 0.4;
-        trail.style.left = trailX - 4 + 'px';
-        trail.style.top = trailY - 4 + 'px';
+        // Добавление точек следа (чаще)
+        if (timestamp - lastTrailTime > trailInterval) {
+            trailPoints.push({ x: mouseX, y: mouseY, life: 1 });
+            
+            if (trailPoints.length > maxTrailPoints) {
+                trailPoints.shift();
+            }
+            
+            // Создание звезды каждые 100мс
+            if (Math.random() < 0.3) {
+                createStar(mouseX + (Math.random() - 0.5) * 20, mouseY + (Math.random() - 0.5) * 20);
+            }
+            
+            lastTrailTime = timestamp;
+        }
+        
+        // Обновление точек следа
+        trailContainer.innerHTML = '';
+        trailPoints.forEach((point, index) => {
+            point.life -= 0.05;
+            if (point.life <= 0) {
+                trailPoints.splice(index, 1);
+                return;
+            }
+            
+            const dot = document.createElement('div');
+            const size = 6 * point.life;
+            dot.style.cssText = `
+                position: fixed;
+                left: ${point.x - size/2}px;
+                top: ${point.y - size/2}px;
+                width: ${size}px;
+                height: ${size}px;
+                background: radial-gradient(circle, rgba(255,215,0,${point.life}), rgba(255,165,0,${point.life * 0.5}));
+                border-radius: 50%;
+                pointer-events: none;
+                z-index: 9998;
+                box-shadow: 0 0 ${10 * point.life}px rgba(255,215,0,${point.life});
+            `;
+            trailContainer.appendChild(dot);
+        });
         
         requestAnimationFrame(animateCursor);
     }
     
-    animateCursor();
+    requestAnimationFrame(animateCursor);
     
     // Эффект при клике
     document.addEventListener('mousedown', () => {
         cursor.style.transform = 'scale(0.8)';
+        // Создаём несколько звёзд при клике
+        for (let i = 0; i < 5; i++) {
+            setTimeout(() => {
+                createStar(
+                    mouseX + (Math.random() - 0.5) * 40,
+                    mouseY + (Math.random() - 0.5) * 40
+                );
+            }, i * 50);
+        }
     });
     
     document.addEventListener('mouseup', () => {
         cursor.style.transform = 'scale(1)';
     });
     
-    console.log('✅ Кастомный курсор инициализирован');
+    console.log('✅ Кастомный курсор со звёздами инициализирован');
 }
 
+// Добавляем анимацию для звёзд
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes starFade {
+        0% {
+            opacity: 1;
+            transform: scale(1) rotate(0deg);
+        }
+        100% {
+            opacity: 0;
+            transform: scale(0.3) rotate(180deg) translateY(-20px);
+        }
+    }
+`;
+document.head.appendChild(style);
 // === 17. ПАРАЛЛАКС ПРИ НАКЛОНЕ ===
 function initParallax() {
     if (window.DeviceOrientationEvent) {
