@@ -373,56 +373,212 @@ function initLetter() {
 }
 
 // === ПАНЕЛЬ СТИКЕРОВ ===
+function getStickerAssetUrl(stickerId) {
+    return `stickers/${stickerId.split('/').map(encodeURIComponent).join('/')}`;
+}
+
+function positionStickerPanel(button, panel) {
+    const rect = button.getBoundingClientRect();
+    const margin = 10;
+    const gap = 8;
+
+    panel.classList.add('visible');
+
+    const panelWidth = Math.min(
+        Math.max(panel.scrollWidth, 250),
+        window.innerWidth - margin * 2
+    );
+    const panelHeight = Math.min(
+        panel.scrollHeight,
+        Math.floor(window.innerHeight * 0.72)
+    );
+
+    let left = Math.max(
+        margin,
+        Math.min(rect.left, window.innerWidth - panelWidth - margin)
+    );
+
+    let top = rect.top - panelHeight - gap;
+
+    if (top < margin) {
+        top = rect.bottom + gap;
+    }
+
+    top = Math.max(
+        margin,
+        Math.min(top, window.innerHeight - panelHeight - margin)
+    );
+
+    panel.style.left = `${left}px`;
+    panel.style.top = `${top}px`;
+    panel.style.bottom = 'auto';
+}
+
 function initStickerPanel() {
     const stickerBtn = document.getElementById('sticker-btn');
     const stickerPanel = document.getElementById('sticker-panel');
-    if (!stickerBtn || !stickerPanel) return;
+
+    if (!stickerBtn || !stickerPanel) {
+        console.warn('Элементы стикеров не найдены');
+        return;
+    }
+
+    if (stickerPanel.dataset.initialized === 'true') return;
+    stickerPanel.dataset.initialized = 'true';
 
     const stickers = [];
-    for (let n = 66959; n <= 67006; n++) {
-        // В репозитории отсутствует 66961, поэтому проверяем фактический файл при загрузке.
-        stickers.push({ id: `cats/1-${n}-256b.png`, name: `Кот ${n - 66958}` });
-    }
-    ['IMG_20260620_104705.jpg','IMG_20260620_104806.jpg','IMG_20260620_104912.jpg','IMG_20260620_105004.jpg','Lol']
-        .forEach((name, i) => stickers.push({ id: `memes/${name}`, name: `Мем ${i + 1}` }));
+
+    // В архиве реально существуют именно эти 47 PNG-файлов.
+    const catIds = [
+        66959, 66960,
+        66962, 66963, 66964, 66965, 66966, 66967, 66968, 66969,
+        66970, 66971, 66972, 66973, 66974, 66975, 66976, 66977,
+        66978, 66979, 66980, 66981, 66982, 66983, 66984, 66985,
+        66986, 66987, 66988, 66989, 66990, 66991, 66992, 66993,
+        66994, 66995, 66996, 66997, 66998, 66999, 67000, 67001,
+        67002, 67003, 67004, 67005, 67006
+    ];
+
+    catIds.forEach((id, index) => {
+        stickers.push({
+            id: `cats/1-${id}-256b.png`,
+            name: `Кот ${index + 1}`
+        });
+    });
+
+    // Lol в исходном архиве не является изображением, поэтому его исключаем.
+    [
+        'IMG_20260620_104705.jpg',
+        'IMG_20260620_104806.jpg',
+        'IMG_20260620_104912.jpg',
+        'IMG_20260620_105004.jpg'
+    ].forEach((name, index) => {
+        stickers.push({
+            id: `memes/${name}`,
+            name: `Мем ${index + 1}`
+        });
+    });
 
     stickerPanel.innerHTML = '';
-    stickers.forEach(sticker => {
-        const el = document.createElement('button');
-        el.type = 'button';
-        el.className = 'sticker-item';
+
+    stickers.forEach((sticker) => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'sticker-item';
+        button.title = sticker.name;
+        button.setAttribute('aria-label', sticker.name);
+
         const img = document.createElement('img');
-        img.src = `stickers/${encodeURI(sticker.id)}`;
+        img.src = getStickerAssetUrl(sticker.id);
         img.alt = sticker.name;
-        img.title = sticker.name;
-        img.onerror = () => el.remove();
-        el.appendChild(img);
-        el.addEventListener('click', async (e) => {
-            e.preventDefault(); e.stopPropagation();
-            if (!db.currentNick) {
-                toast.show('Доступ запрещен', 'Войдите в чат, чтобы отправлять стикеры', 'warning');
+        img.loading = 'lazy';
+        img.decoding = 'async';
+
+        img.addEventListener('error', () => {
+            button.remove();
+            console.warn('Стикер не найден:', sticker.id);
+        }, { once: true });
+
+        button.appendChild(img);
+
+        button.addEventListener('click', async (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+
+            if (!db || !db.currentNick) {
+                toast.show(
+                    'Доступ запрещён',
+                    'Войдите в чат, чтобы отправлять стикеры',
+                    'warning'
+                );
                 return;
             }
-            const result = await db.sendMessage(db.currentNick, '', sticker.id);
-            if (!result) { toast.show('Ошибка', 'Не удалось отправить стикер', 'error'); return; }
-            appendMessageToChat({ nick: db.currentNick, text: '', sticker: sticker.id, system: 0, time: Date.now() });
-            stickerPanel.classList.remove('visible');
+
+            button.disabled = true;
+
+            try {
+                const result = await db.sendMessage(
+                    db.currentNick,
+                    '',
+                    sticker.id
+                );
+
+                if (!result || result.success === false) {
+                    throw new Error('Сервер не подтвердил отправку');
+                }
+
+                appendMessageToChat({
+                    nick: db.currentNick,
+                    text: '',
+                    sticker: sticker.id,
+                    system: 0,
+                    time: Date.now()
+                });
+
+                stickerPanel.classList.remove('visible');
+
+                toast.show(
+                    'Стикер отправлен!',
+                    `${sticker.name} добавлен в чат`,
+                    'success',
+                    2000
+                );
+            } catch (error) {
+                console.error('Ошибка отправки стикера:', error);
+                toast.show(
+                    'Ошибка',
+                    'Не удалось отправить стикер',
+                    'error'
+                );
+            } finally {
+                button.disabled = false;
+            }
         });
-        stickerPanel.appendChild(el);
+
+        stickerPanel.appendChild(button);
     });
 
-    stickerBtn.addEventListener('click', (e) => {
-        e.preventDefault(); e.stopPropagation();
-        stickerPanel.classList.toggle('visible');
-        const themePanel = document.getElementById('theme-switcher');
-        const effectsPanel = document.getElementById('bg-effects-switcher');
-        if (themePanel) themePanel.classList.remove('visible');
-        if (effectsPanel) effectsPanel.classList.remove('visible');
+    // ВАЖНО: .glass-card имеет overflow:hidden.
+    // Переносим панель в body, чтобы она не обрезалась карточкой.
+    if (stickerPanel.parentElement !== document.body) {
+        document.body.appendChild(stickerPanel);
+    }
+
+    stickerBtn.addEventListener('click', (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+
+        const wasOpen = stickerPanel.classList.contains('visible');
+
+        document
+            .querySelectorAll('.switcher-panel.visible')
+            .forEach(panel => panel.classList.remove('visible'));
+
+        if (wasOpen) {
+            stickerPanel.classList.remove('visible');
+            return;
+        }
+
+        positionStickerPanel(stickerBtn, stickerPanel);
     });
 
-    document.addEventListener('click', (e) => {
-        if (!e.target.closest('#sticker-panel') && !e.target.closest('#sticker-btn')) stickerPanel.classList.remove('visible');
+    document.addEventListener('click', (event) => {
+        if (
+            !event.target.closest('#sticker-panel') &&
+            !event.target.closest('#sticker-btn')
+        ) {
+            stickerPanel.classList.remove('visible');
+        }
     });
+
+    const reposition = () => {
+        if (stickerPanel.classList.contains('visible')) {
+            positionStickerPanel(stickerBtn, stickerPanel);
+        }
+    };
+
+    window.addEventListener('resize', reposition);
+    window.addEventListener('scroll', reposition, { passive: true });
 }
 
 
@@ -473,7 +629,7 @@ function appendMessageToChat(msg) {
     }
     
     if (msg.sticker) {
-        const stickerUrl = `/stickers/${msg.sticker}`;
+        const stickerUrl = getStickerAssetUrl(msg.sticker);
         content += `<img src="${stickerUrl}" style="max-width: 150px; border-radius: 8px; margin-top: 8px;">`;
     }
     

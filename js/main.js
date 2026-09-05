@@ -20,7 +20,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (typeof initGift === 'function') initGift();
         if (typeof initLetter === 'function') initLetter();
         if (typeof initPhotoFrame === 'function') initPhotoFrame();// ИСПРАВЛЕНО: добавлена инициализация фото-рамки
-        if (typeof initStickers === 'function') initStickers();
         // === КАСТОМНЫЙ КУРСОР ===
         if (typeof initCustomCursor === 'function') initCustomCursor();
 
