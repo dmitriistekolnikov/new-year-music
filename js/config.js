@@ -1,5 +1,4 @@
 // === КОНФИГУРАЦИЯ ПРОЕКТА ===
-
 const TRACKS_COUNT = 12;
 
 const PREDICTIONS = [
@@ -13,12 +12,19 @@ const PREDICTIONS = [
 ];
 
 const THEMES = ['', 'theme-party', 'theme-winter'];
-
 const PARTICLE_COLORS = ['#c9a227', '#8b0000', '#2d5a27', '#ffffff', '#1e3a5f', '#9333ea'];
-
 const SNOWFLAKES_CHARS = ['❅', '✼', '❆', '✻', '❄', '•'];
-
 const BULB_COLORS = ['#8b0000', '#2d5a27', '#1e3a5f', '#c9a227', '#9333ea'];
+
+// === СТИКЕРЫ ===
+const STICKERS_CATS_RANGE = { start: 66959, end: 67006 };
+const STICKERS_MEMES = [
+    'IMG_20260620_104705.jpg',
+    'IMG_20260620_104806.jpg',
+    'IMG_20260620_104912.jpg',
+    'IMG_20260620_105004.jpg',
+    'Lol'
+];
 
 function getTrackUrl(trackNumber) {
     return `/music/${trackNumber}.mp3`;
