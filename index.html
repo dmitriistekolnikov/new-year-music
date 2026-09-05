@@ -6,218 +6,157 @@
     <title>🎄 НовыйГодЧат</title>
     <link rel="stylesheet" href="css/styles.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jsmediatags/3.9.5/jsmediatags.min.js"></script>
-    <style>
-        /* Панели выбора темы/эффектов */
-        .switcher-panel {
-            display: none;
-            position: fixed;
-            top: 70px;
-            right: 16px;
-            background: rgba(10, 10, 25, 0.97);
-            border: 1px solid rgba(255,255,255,0.15);
-            border-radius: 14px;
-            padding: 12px;
-            min-width: 200px;
-            max-width: calc(100vw - 32px);
-            max-height: 70vh;
-            overflow-y: auto;
-            z-index: 2000;
-            backdrop-filter: blur(16px);
-            box-shadow: 0 8px 32px rgba(0,0,0,0.5);
-        }
-        .switcher-panel.visible { display: block; }
-        .switcher-panel-title {
-            font-size: 0.8rem;
-            color: rgba(255,255,255,0.4);
-            text-align: center;
-            margin-bottom: 10px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-        .switcher-option {
-            padding: 10px 14px;
-            border-radius: 8px;
-            cursor: pointer;
-            color: white;
-            font-size: 0.9rem;
-            margin-bottom: 4px;
-            transition: background 0.15s;
-        }
-        .switcher-option:hover, .switcher-option.active {
-            background: rgba(255,255,255,0.12);
-        }
-        .theme-preview-dot {
-            display: inline-block;
-            width: 14px; height: 14px;
-            border-radius: 50%;
-            margin-right: 8px;
-            vertical-align: middle;
-        }
-        /* Кнопки управления в шапке */
-        .header-controls {
-            display: flex;
-            gap: 8px;
-            align-items: center;
-        }
-        .ctrl-btn {
-            background: rgba(255,255,255,0.12);
-            border: none;
-            color: white;
-            width: 38px; height: 38px;
-            border-radius: 50%;
-            font-size: 1.1rem;
-            cursor: pointer;
-            display: flex; align-items: center; justify-content: center;
-            transition: background 0.2s;
-        }
-        .ctrl-btn:hover { background: rgba(255,255,255,0.2); }
-    </style>
 </head>
 <body>
+    <!-- Фоновые элементы (задний план) -->
+    <div class="bg-orb orb-1"></div>
+    <div class="bg-orb orb-2"></div>
+    <div class="snowflakes" id="snow-container"></div>
+    
+    <!-- Канвас для фоновых эффектов -->
+    <canvas id="bg-effects-canvas"></canvas>
 
-<!-- Фоновый canvas для эффектов -->
-<canvas id="bg-effects-canvas" style="position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:0;"></canvas>
+    <!-- Свечки на заднем фоне -->
+    <div id="candles-bg"></div>
 
-<!-- Canvas для фейерверков -->
-<canvas id="fireworks-canvas" style="position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:9999;"></canvas>
+    <!-- Часы с кукушкой на заднем фоне -->
+    <div id="clock-bg"></div>
 
-<div class="garland" id="garland"></div>
-<div class="bg-orb orb-1"></div>
-<div class="bg-orb orb-2"></div>
-<div class="snowflakes" id="snow-container"></div>
+    <!-- Гирлянда сверху -->
+    <div class="garland" id="garland"></div>
 
-<!-- Панель выбора эффектов фона -->
-<div id="bg-effects-switcher" class="switcher-panel">
-    <div class="switcher-panel-title">Эффекты фона</div>
-    <div class="switcher-option active" data-effect="none">⬛ Без эффектов</div>
-    <div class="switcher-option" data-effect="lines">〰️ Неоновые линии</div>
-    <div class="switcher-option" data-effect="balls">🎈 Шары и звёзды</div>
-    <div class="switcher-option" data-effect="particles">💫 Частицы</div>
-</div>
-
-<!-- Панель выбора темы -->
-<div id="theme-switcher" class="switcher-panel">
-    <div class="switcher-panel-title">Тема оформления</div>
-    <div id="theme-list"></div>
-</div>
-
-<div class="player-bangs" id="player-bangs">
-    <div class="player-bangs-header" id="player-bangs-header">
-        <div class="now-playing-mini">
-            <div style="display:flex;align-items:center;gap:8px;">
-                <div class="eq-container" id="eq-container" style="display:flex;gap:2px;height:15px;align-items:flex-end;"></div>
-                <div>
-                    <span class="track-mini" id="track-mini">Christmas Phonk</span>
-                    <span class="artist-mini" id="artist-mini">wi$$$uri</span>
+    <!-- ЧЕЛКА (плеер сверху) -->
+    <div class="player-bangs" id="player-bangs">
+        <div class="player-bangs-header" id="player-bangs-header">
+            <div class="now-playing-mini">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <div class="eq-container" id="eq-container" style="display: flex; gap: 2px; height: 15px; align-items: flex-end;"></div>
+                    <div>
+                        <span class="track-mini" id="track-mini">Загрузка...</span>
+                        <span class="artist-mini" id="artist-mini">—</span>
+                    </div>
                 </div>
             </div>
-        </div>
-        <div class="controls-mini">
-            <button id="prev-btn-mini">⏮</button>
-            <button class="play-btn-mini" id="play-btn-mini">▶</button>
-            <button id="next-btn-mini">⏭</button>
-            <span class="expand-indicator">▼</span>
-        </div>
-    </div>
-    <div class="player-bangs-body">
-        <div class="progress-bar-mini">
-            <span id="current-time-mini">0:00</span>
-            <div class="progress-track-mini"><div class="progress-fill-mini" id="progress-fill-mini"></div></div>
-            <span id="total-time-mini">3:45</span>
-        </div>
-        <ul class="playlist-bangs" id="playlist-bangs"></ul>
-    </div>
-</div>
-
-<div class="container">
-    <header>
-        <h1 class="main-title">🎄 НовыйГодЧат</h1>
-        <div class="header-controls">
-            <button class="ctrl-btn" id="bg-effects-btn" title="Эффекты фона">✨</button>
-            <button class="ctrl-btn" id="theme-btn" title="Тема">🎨</button>
-            <button class="btn" id="header-login-btn">🔑 Вход</button>
-        </div>
-    </header>
-
-    <main>
-        <section class="glass-card freeze-target">
-            <h2 style="text-align:center;margin-bottom:8px;">🎄 До Нового Года 🎄</h2>
-            <p style="text-align:center;color:var(--text-secondary);margin-bottom:20px;font-size:0.9rem;">Волшебство совсем близко...</p>
-            <div class="countdown-timer">
-                <div class="time-block"><span class="number" id="days">0</span><span class="label">Дней</span></div>
-                <div class="time-block"><span class="number" id="hours">0</span><span class="label">Часов</span></div>
-                <div class="time-block"><span class="number" id="minutes">0</span><span class="label">Минут</span></div>
-                <div class="time-block"><span class="number" id="seconds">0</span><span class="label">Секунд</span></div>
+            <div class="controls-mini">
+                <button id="prev-btn-mini">⏮</button>
+                <button class="play-btn-mini" id="play-btn-mini">▶</button>
+                <button id="next-btn-mini">⏭</button>
+                <span class="expand-indicator">▼</span>
             </div>
-        </section>
-
-        <section class="glass-card freeze-target">
-            <h2 style="text-align:center;margin-bottom:16px;">С Новым Годом! 🎉</h2>
-            <div class="chat-status">
-                <span style="font-weight:600;">💬 Новогодний чат</span>
-                <span id="chat-status-badge" class="status-badge status-offline"><span class="status-dot"></span> offline</span>
-            </div>
-            <div class="chat-messages" id="chat-messages">
-                <p style="text-align:center;color:var(--text-secondary);margin-top:100px;font-style:italic;">Здесь будет новогоднее настроение...<br>Войди, чтобы начать общение!</p>
-            </div>
-            <div class="chat-input-area" id="chat-input-area">
-                <div class="locked-message" id="locked-msg">🔒 Войди, чтобы писать в чат</div>
-                <div class="letter-input-area" id="letter-area" style="display:none;">
-                    <input type="text" class="letter-input" id="letter-text" placeholder="Напиши желание Деду Морозу...">
-                    <button class="btn" id="send-letter-btn">✉️</button>
+        </div>
+        <div class="player-bangs-body">
+            <div class="progress-bar-mini">
+                <span id="current-time-mini">0:00</span>
+                <div class="progress-track-mini" id="progress-track-mini">
+                    <div class="progress-fill-mini" id="progress-fill-mini"></div>
                 </div>
-                <button class="btn" id="chat-login-btn" style="width:100%;justify-content:center;">🔑 Войти в чат</button>
-                <div class="photo-upload" id="photo-upload">📸 Нажми или перетащи, чтобы отправить фото</div>
+                <span id="total-time-mini">0:00</span>
             </div>
-        </section>
-    </main>
+            <ul class="playlist-bangs" id="playlist-bangs"></ul>
+        </div>
+    </div>
 
-    <footer style="text-align:center;padding:30px 20px;color:var(--text-secondary);font-size:0.9rem;opacity:0.7;">
-        <p>❅ ✼ ❆ ✻ ❄ С Новым 2027 Годом! ❄ ✻ ❆ ✼ ❅</p>
-    </footer>
-</div>
+    <div class="container">
+        <header>
+            <h1 class="main-title">🎄 НовыйГодЧат</h1>
+            <div style="display: flex; gap: 10px;">
+                <button class="btn" id="theme-btn" title="Сменить тему">🎨</button>
+                <button class="btn" id="header-login-btn">🔑 Вход</button>
+            </div>
+        </header>
 
-<div class="magic-gift" id="magic-gift">
-    <div class="gift-lid"></div>
-    <div class="gift-box"></div>
-</div>
+        <main>
+            <!-- Таймер -->
+            <section class="glass-card freeze-target">
+                <h2 style="text-align: center; margin-bottom: 8px;">🎄 До Нового Года 🎄</h2>
+                <p style="text-align: center; color: var(--text-secondary); margin-bottom: 20px; font-size: 0.9rem;">Волшебство совсем близко...</p>
+                <div class="countdown-timer">
+                    <div class="time-block"><span class="number" id="days">0</span><span class="label">Дней</span></div>
+                    <div class="time-block"><span class="number" id="hours">0</span><span class="label">Часов</span></div>
+                    <div class="time-block"><span class="number" id="minutes">0</span><span class="label">Минут</span></div>
+                    <div class="time-block"><span class="number" id="seconds">0</span><span class="label">Секунд</span></div>
+                </div>
+            </section>
 
-<div class="prediction-toast" id="prediction-toast"></div>
+            <!-- Чат -->
+            <section class="glass-card freeze-target">
+                <h2 style="text-align: center; margin-bottom: 16px;">🎉 С Новым Годом! 🎉</h2>
+                <div class="chat-status">
+                    <span style="font-weight: 600;">💬 Новогодний чат</span>
+                    <span class="status-badge status-offline" id="chat-status-badge">
+                        <span class="status-dot"></span> offline
+                    </span>
+                </div>
+                <div class="chat-messages" id="chat-messages">
+                    <p style="text-align: center; color: var(--text-secondary); margin-top: 100px; font-style: italic;">
+                        Здесь будет новогоднее настроение...<br>Войди, чтобы начать общение!
+                    </p>
+                </div>
+                <div class="chat-input-area" id="chat-input-area">
+                    <div class="locked-message" id="locked-msg">🔒 Войди, чтобы писать в чат</div>
+                    <div class="letter-input-area" id="letter-area" style="display: none;">
+                        <input type="text" class="letter-input" id="letter-text" placeholder="Напиши сообщение или желание...">
+                        <button class="btn" id="send-letter-btn">✉️</button>
+                    </div>
+                    <button class="btn" id="chat-login-btn" style="width: 100%; justify-content: center; margin-top: 10px;">🔑 Войти в чат</button>
+                    <div class="photo-upload" id="photo-upload">📸 Нажми, чтобы отправить фото</div>
+                </div>
+            </section>
+        </main>
 
-<script src="js/config.js"></script>
-<script src="js/antimat.js"></script>
-<script src="js/database.js"></script>
-<script src="js/particles.js"></script>
-<script src="js/snow.js"></script>
-<script src="js/player.js"></script>
-<script src="js/effects.js"></script>
-<script src="js/main.js"></script>
+        <footer style="text-align: center; padding: 30px 20px; color: var(--text-secondary); font-size: 0.9rem; opacity: 0.7;">
+            <p>❅ ✼ ❆ ✻ ❄ С Новым 2027 Годом! ❄ ✻ ❆ ❅</p>
+        </footer>
+    </div>
 
-<script>
-// Логика открытия/закрытия панелей
-document.addEventListener('DOMContentLoaded', () => {
-    function togglePanel(btnId, panelId, otherPanelId) {
-        const btn = document.getElementById(btnId);
-        const panel = document.getElementById(panelId);
-        const other = document.getElementById(otherPanelId);
-        if (!btn || !panel) return;
-        btn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            const isVisible = panel.classList.contains('visible');
-            panel.classList.toggle('visible', !isVisible);
-            if (other) other.classList.remove('visible');
-        });
-    }
-    togglePanel('theme-btn', 'theme-switcher', 'bg-effects-switcher');
-    togglePanel('bg-effects-btn', 'bg-effects-switcher', 'theme-switcher');
+    <!-- Волшебный подарок -->
+    <div class="magic-gift" id="magic-gift">
+        <div class="gift-lid"></div>
+        <div class="gift-box"></div>
+    </div>
 
-    document.addEventListener('click', (e) => {
-        if (!e.target.closest('.switcher-panel') && !e.target.closest('.ctrl-btn')) {
-            document.querySelectorAll('.switcher-panel').forEach(p => p.classList.remove('visible'));
-        }
-    });
-});
-</script>
+    <!-- Старый тост предсказаний (оставлен для совместимости) -->
+    <div class="prediction-toast" id="prediction-toast"></div>
 
+    <!-- Панель переключения тем -->
+    <div class="switcher-panel" id="theme-switcher">
+        <div class="switcher-header">🎨 Выбор темы</div>
+        <div class="switcher-list" id="theme-list"></div>
+    </div>
+
+    <!-- Кнопка эффектов фона -->
+    <button class="floating-btn" id="bg-effects-btn" title="Эффекты фона">✨</button>
+
+    <!-- Панель переключения эффектов фона -->
+    <div class="switcher-panel" id="bg-effects-switcher">
+        <div class="switcher-header">✨ Эффекты фона</div>
+        <div class="switcher-list">
+            <div class="switcher-option" data-effect="none">
+                <span>🚫 Без эффектов</span>
+            </div>
+            <div class="switcher-option" data-effect="lines">
+                <span>🌈 Неоновые линии</span>
+            </div>
+            <div class="switcher-option" data-effect="balls">
+                <span>🎈 Шары и звёзды</span>
+            </div>
+            <div class="switcher-option" data-effect="particles">
+                <span>✨ Пульсирующие частицы</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Контейнер для тост-уведомлений -->
+    <div id="toast-container"></div>
+
+    <!-- Скрипты -->
+    <script src="js/config.js"></script>
+    <script src="js/antimat.js"></script>
+    <script src="js/database.js"></script>
+    <script src="js/particles.js"></script>
+    <script src="js/snow.js"></script>
+    <script src="js/player.js"></script>
+    <script src="js/effects.js"></script>
+    <script src="js/main.js"></script>
 </body>
 </html>
