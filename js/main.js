@@ -345,6 +345,48 @@ class BackgroundEffects {
         this.animate('aurora');
     }
 
+    // Эффект 5: Галактическая воронка — псевдо-3D спираль частиц
+    startGalaxy() {
+        this.items = [];
+        const count = Math.min(260, Math.max(150, Math.floor((window.innerWidth * window.innerHeight) / 5200)));
+        for (let i = 0; i < count; i++) {
+            const angle = Math.random() * Math.PI * 2;
+            const radius = Math.pow(Math.random(), 0.72) * Math.max(this.canvas.width, this.canvas.height) * 0.72;
+            this.items.push({
+                type: 'galaxy-star',
+                angle,
+                radius,
+                depth: 0.25 + Math.random() * 1.1,
+                speed: 0.0015 + Math.random() * 0.004,
+                size: 0.5 + Math.random() * 2.2,
+                phase: Math.random() * Math.PI * 2,
+                hue: 170 + Math.random() * 100
+            });
+        }
+        this.animate('galaxy');
+    }
+
+    // Эффект 6: Снежный вихрь — частицы закручиваются вокруг центра
+    startVortex() {
+        this.items = [];
+        const count = Math.min(190, Math.max(110, Math.floor(window.innerWidth / 7)));
+        for (let i = 0; i < count; i++) {
+            const angle = Math.random() * Math.PI * 2;
+            const radius = 30 + Math.random() * Math.max(this.canvas.width, this.canvas.height) * 0.65;
+            this.items.push({
+                type: 'vortex-snow',
+                angle,
+                radius,
+                speed: 0.002 + Math.random() * 0.006,
+                drift: (Math.random() - 0.5) * 0.35,
+                size: 1 + Math.random() * 3.5,
+                phase: Math.random() * Math.PI * 2,
+                opacity: 0.25 + Math.random() * 0.7
+            });
+        }
+        this.animate('vortex');
+    }
+
     // Главный цикл анимации
     animate(type) {
         if (currentBgEffect !== type) return;
@@ -540,6 +582,104 @@ class BackgroundEffects {
                 ctx.stroke();
             });
             ctx.restore();
+        } else if (type === 'galaxy') {
+            const t = performance.now() * 0.00035;
+            const cx = w * 0.5;
+            const cy = h * 0.5;
+            const maxR = Math.max(w, h) * 0.58;
+
+            // Две мягкие спиральные рукава
+            ctx.save();
+            ctx.globalCompositeOperation = 'screen';
+            for (let arm = 0; arm < 2; arm++) {
+                ctx.beginPath();
+                for (let r = 10; r < maxR; r += 9) {
+                    const a = r * 0.012 + arm * Math.PI + t;
+                    const x = cx + Math.cos(a) * r * (w / Math.max(w, h));
+                    const y = cy + Math.sin(a) * r * (h / Math.max(w, h));
+                    if (r === 10) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+                }
+                ctx.strokeStyle = arm ? 'rgba(130,190,255,0.09)' : 'rgba(120,255,210,0.10)';
+                ctx.lineWidth = 28;
+                ctx.shadowBlur = 35;
+                ctx.shadowColor = arm ? 'rgba(100,150,255,0.35)' : 'rgba(80,255,190,0.35)';
+                ctx.stroke();
+            }
+
+            this.items.forEach(star => {
+                star.angle += star.speed * (1.1 - Math.min(star.radius / maxR, 1) * 0.35);
+                const wobble = Math.sin(t * 2 + star.phase) * 5;
+                const r = Math.max(4, star.radius + wobble);
+                const x = cx + Math.cos(star.angle) * r * (w / Math.max(w, h));
+                const y = cy + Math.sin(star.angle) * r * (h / Math.max(w, h));
+                const perspective = 0.35 + star.depth * 0.65;
+                const size = star.size * perspective;
+                const alpha = Math.max(0.08, 1 - r / (maxR * 1.35));
+                ctx.fillStyle = `hsla(${star.hue}, 95%, 75%, ${alpha})`;
+                ctx.shadowBlur = 10 * perspective;
+                ctx.shadowColor = `hsla(${star.hue}, 100%, 70%, 0.7)`;
+                ctx.beginPath();
+                ctx.arc(x, y, size, 0, Math.PI * 2);
+                ctx.fill();
+            });
+
+            // Ядро галактики
+            const core = ctx.createRadialGradient(cx, cy, 0, cx, cy, Math.min(w, h) * 0.22);
+            core.addColorStop(0, 'rgba(255,255,255,0.28)');
+            core.addColorStop(0.12, 'rgba(180,255,235,0.12)');
+            core.addColorStop(1, 'rgba(80,180,255,0)');
+            ctx.fillStyle = core;
+            ctx.beginPath();
+            ctx.arc(cx, cy, Math.min(w, h) * 0.24, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+
+        } else if (type === 'vortex') {
+            const t = performance.now() * 0.001;
+            const cx = w * 0.5;
+            const cy = h * 0.52;
+            const maxR = Math.max(w, h) * 0.72;
+
+            ctx.save();
+            ctx.globalCompositeOperation = 'screen';
+            this.items.forEach(p => {
+                p.angle += p.speed * (1 + (1 - Math.min(p.radius / maxR, 1)) * 2.4);
+                p.radius -= p.drift;
+                if (p.radius < 20) {
+                    p.radius = maxR * (0.55 + Math.random() * 0.45);
+                    p.angle = Math.random() * Math.PI * 2;
+                }
+                const wave = Math.sin(p.angle * 3 + t * 2 + p.phase) * 14;
+                const r = p.radius + wave;
+                const x = cx + Math.cos(p.angle) * r * (w / Math.max(w, h));
+                const y = cy + Math.sin(p.angle) * r * (h / Math.max(w, h));
+                const twinkle = 0.55 + 0.45 * Math.sin(t * 4 + p.phase);
+                const alpha = p.opacity * twinkle * Math.min(1, r / 90);
+                ctx.fillStyle = `rgba(220,245,255,${alpha})`;
+                ctx.shadowBlur = 8;
+                ctx.shadowColor = 'rgba(160,220,255,0.75)';
+                ctx.beginPath();
+                ctx.arc(x, y, p.size * (0.7 + twinkle * 0.5), 0, Math.PI * 2);
+                ctx.fill();
+            });
+
+            // Светящийся центр и вращающиеся кольца
+            for (let i = 0; i < 4; i++) {
+                ctx.beginPath();
+                ctx.ellipse(cx, cy, 45 + i * 24, 18 + i * 12, t * (0.15 + i * 0.025), 0, Math.PI * 2);
+                ctx.strokeStyle = `rgba(150,220,255,${0.11 - i * 0.018})`;
+                ctx.lineWidth = 2;
+                ctx.stroke();
+            }
+            const glow = ctx.createRadialGradient(cx, cy, 0, cx, cy, 150);
+            glow.addColorStop(0, 'rgba(255,255,255,0.22)');
+            glow.addColorStop(0.18, 'rgba(150,225,255,0.12)');
+            glow.addColorStop(1, 'rgba(100,180,255,0)');
+            ctx.fillStyle = glow;
+            ctx.beginPath();
+            ctx.arc(cx, cy, 150, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
         }
 
         ctx.shadowBlur = 0;
@@ -578,6 +718,8 @@ function initBackgroundEffects() {
             else if (effect === 'balls') bgEffects.startBalls();
             else if (effect === 'particles') bgEffects.startParticles();
             else if (effect === 'aurora') bgEffects.startAurora();
+            else if (effect === 'galaxy') bgEffects.startGalaxy();
+            else if (effect === 'vortex') bgEffects.startVortex();
         }
 
         function updateActiveOption(activeEffect) {
