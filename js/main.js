@@ -19,6 +19,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (typeof initFreeze === 'function') initFreeze();
         if (typeof initGift === 'function') initGift();
         if (typeof initLetter === 'function') initLetter();
+        if (typeof initPhotoFrame === 'function') initPhotoFrame(); // ИСПРАВЛЕНО: добавлена инициализация фото-рамки
 
         // === КАСТОМНЫЙ КУРСОР ===
         if (typeof initCustomCursor === 'function') initCustomCursor();
@@ -31,14 +32,46 @@ document.addEventListener('DOMContentLoaded', async () => {
         initThemeSwitcher();
         initBackgroundEffects();
 
-        // === ОБРАБОТЧИК КНОПКИ ВХОДА В ШАПКЕ ===
+        // === ОБРАБОТЧИК КНОПКИ ВХОДА В ШАПКЕ (ИСПРАВЛЕНО) ===
         const headerLoginBtn = document.getElementById('header-login-btn');
         if (headerLoginBtn) {
             headerLoginBtn.addEventListener('click', () => {
                 console.log('🔑 Клик по входу в шапке');
+                // Плавная прокрутка к чату
+                const chatSection = document.querySelector('main > section:last-of-type');
+                if (chatSection) {
+                    chatSection.scrollIntoView({ behavior: 'smooth' });
+                }
+                // Имитация клика по кнопке входа в чате с небольшой задержкой для завершения скролла
                 const chatLoginBtn = document.getElementById('chat-login-btn');
                 if (chatLoginBtn) {
-                    chatLoginBtn.click();
+                    setTimeout(() => chatLoginBtn.click(), 500);
+                }
+            });
+        }
+
+        // === ОБРАБОТЧИК ЗАГРУЗКИ ФОТО (ИСПРАВЛЕНО) ===
+        const photoUpload = document.getElementById('photo-upload');
+        if (photoUpload) {
+            photoUpload.addEventListener('click', () => {
+                console.log('📸 Загрузка фото инициирована');
+                // Инициируем клик по скрытому input файла из initPhotoFrame
+                const hiddenInput = document.querySelector('#photo-frame input[type="file"]');
+                if (hiddenInput) {
+                    hiddenInput.click();
+                } else {
+                    // Fallback: создаем input на лету, если initPhotoFrame еще не отработал
+                    const input = document.createElement('input');
+                    input.type = 'file';
+                    input.accept = 'image/*';
+                    input.onchange = (e) => {
+                        const file = e.target.files[0];
+                        if (file) {
+                            console.log('📸 Фото выбрано:', file.name);
+                            alert('Фото выбрано: ' + file.name + '\n(Функция отправки в чат будет реализована при наличии бэкенда для загрузки файлов)');
+                        }
+                    };
+                    input.click();
                 }
             });
         }
