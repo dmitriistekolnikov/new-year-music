@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>🎄 НовыйГодЧат</title>
     <link rel="stylesheet" href="css/styles.css">
-    <!-- Библиотека для чтения метаданных из буфера (работает стабильнее jsmediatags на Cloudflare) -->
+    <!-- Библиотека для чтения метаданных из полного ArrayBuffer (работает стабильно, раз играет музыка) -->
     <script src="https://cdn.jsdelivr.net/npm/music-metadata-browser@2.5.10/lib/index.min.js"></script>
 </head>
 <body>
@@ -18,7 +18,8 @@
 
     <!-- ЧЕЛКА (плеер сверху) -->
     <div class="player-bangs" id="player-bangs">
-        <div class="player-bangs-header" id="player-bangs-header">
+        <!-- ДОБАВЛЕНЫ СТИЛИ ДЛЯ ГАРАНТИРОВАННОГО КЛИКА -->
+        <div class="player-bangs-header" id="player-bangs-header" style="cursor: pointer; position: relative; z-index: 10000; pointer-events: auto;">
             <div class="now-playing-mini">
                 <div style="display: flex; align-items: center; gap: 8px;">
                     <div class="eq-container" id="eq-container" style="display: flex; gap: 2px; height: 15px; align-items: flex-end;"></div>
@@ -28,7 +29,7 @@
                     </div>
                 </div>
             </div>
-            <div class="controls-mini">
+            <div class="controls-mini" style="pointer-events: auto;">
                 <button id="prev-btn-mini">⏮</button>
                 <button class="play-btn-mini" id="play-btn-mini">▶</button>
                 <button id="next-btn-mini">⏭</button>
