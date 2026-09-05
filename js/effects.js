@@ -280,26 +280,51 @@ function initTimer() {
 
 // === 12. КАСТОМНЫЙ КУРСОР ===
 function initCustomCursor() {
-    const cursor = document.createElement('div');
-    cursor.id = 'custom-cursor';
-    cursor.innerHTML = '❄️';
-    document.body.appendChild(cursor);
-
+function initCustomCursor() {
+    const cursor = document.getElementById('custom-cursor');
+    const trail = document.getElementById('cursor-trail');
+    
+    if (!cursor || !trail) return;
+    
+    let mouseX = 0, mouseY = 0;
+    let cursorX = 0, cursorY = 0;
+    let trailX = 0, trailY = 0;
+    
+    // Отслеживание мыши
     document.addEventListener('mousemove', (e) => {
-        cursor.style.left = e.clientX + 'px';
-        cursor.style.top = e.clientY + 'px';
+        mouseX = e.clientX;
+        mouseY = e.clientY;
     });
-
-    document.querySelectorAll('button, a, input, .playlist-bangs li').forEach(el => {
-        el.addEventListener('mouseenter', () => {
-            cursor.style.transform = 'scale(1.5)';
-            cursor.innerHTML = '🎄';
-        });
-        el.addEventListener('mouseleave', () => {
-            cursor.style.transform = 'scale(1)';
-            cursor.innerHTML = '❄️';
-        });
+    
+    // Анимация курсора (плавное следование)
+    function animateCursor() {
+        // Плавное движение основного курсора
+        cursorX += (mouseX - cursorX) * 0.2;
+        cursorY += (mouseY - cursorY) * 0.2;
+        cursor.style.left = cursorX - 10 + 'px';
+        cursor.style.top = cursorY - 10 + 'px';
+        
+        // Более быстрое следование для трейла (чаще обновляется)
+        trailX += (mouseX - trailX) * 0.4;
+        trailY += (mouseY - trailY) * 0.4;
+        trail.style.left = trailX - 4 + 'px';
+        trail.style.top = trailY - 4 + 'px';
+        
+        requestAnimationFrame(animateCursor);
+    }
+    
+    animateCursor();
+    
+    // Эффект при клике
+    document.addEventListener('mousedown', () => {
+        cursor.style.transform = 'scale(0.8)';
     });
+    
+    document.addEventListener('mouseup', () => {
+        cursor.style.transform = 'scale(1)';
+    });
+    
+    console.log('✅ Кастомный курсор инициализирован');
 }
 
 // === 17. ПАРАЛЛАКС ПРИ НАКЛОНЕ ===
