@@ -900,3 +900,16 @@ header {
         transform: translate(10%, 10%) rotate(12deg) scale(1.2);
     }
 }
+/* === ПЛАВНАЯ СМЕНА ЦВЕТОВ ФОНА === */
+@keyframes hue-rotate {
+    0% {
+        filter: hue-rotate(0deg);
+    }
+    100% {
+        filter: hue-rotate(360deg);
+    }
+}
+
+body {
+    animation: hue-rotate 60s linear infinite;
+}
