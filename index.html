@@ -3,157 +3,173 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title> НовыйГодЧат</title>
+    <title>🎄 НовыйГодЧат</title>
     <link rel="stylesheet" href="css/styles.css">
-    <script src="https://cdn.jsdelivr.net/npm/music-metadata-browser@2.5.10/lib/index.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jsmediatags/3.9.5/jsmediatags.min.js"></script>
 </head>
 <body>
-    <!-- Фоновые элементы -->
-    <div class="bg-orb orb-1"></div>
-    <div class="bg-orb orb-2"></div>
-    <div class="snowflakes" id="snow-container"></div>
-    <div id="candles-bg"></div>
-    <div id="clock-bg"></div>
-    <div class="garland" id="garland"></div>
 
-    <!-- Canvas для эффектов фона -->
-    <canvas id="bg-effects-canvas"></canvas>
+<!-- Фоновый canvas для эффектов -->
+<canvas id="bg-effects-canvas" style="position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:0;"></canvas>
 
-    <!-- Кастомный курсор -->
-    <div class="custom-cursor" id="custom-cursor"></div>
-    <div id="cursor-trail-container"></div>
+<!-- Canvas для фейерверков -->
+<canvas id="fireworks-canvas" style="position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:9999;"></canvas>
 
-    <!-- Плеер (челка) - поднят выше -->
-    <div class="player-bangs" id="player-bangs" style="z-index: 10005;">
-        <div class="player-bangs-header" id="player-bangs-header" style="cursor: pointer; position: relative; z-index: 10006; pointer-events: auto;">
-            <div class="now-playing-mini">
-                <div style="display: flex; align-items: center; gap: 8px;">
-                    <div class="eq-container" id="eq-container" style="display: flex; gap: 2px; height: 15px; align-items: flex-end;"></div>
-                    <div>
-                        <span class="track-mini" id="track-mini">Загрузка...</span>
-                        <span class="artist-mini" id="artist-mini">—</span>
-                    </div>
-                </div>
-            </div>
-            <div class="controls-mini" style="pointer-events: auto;">
-                <button id="prev-btn-mini">⏮</button>
-                <button class="play-btn-mini" id="play-btn-mini">▶</button>
-                <button id="next-btn-mini">⏭</button>
-                <span class="expand-indicator">▼</span>
-            </div>
-        </div>
-        <div class="player-bangs-body" id="player-bangs-body" style="display: none;">
-            <div class="progress-bar-mini">
-                <span id="current-time-mini">0:00</span>
-                <div class="progress-track-mini" id="progress-track-mini">
-                    <div class="progress-fill-mini" id="progress-fill-mini"></div>
-                </div>
-                <span id="total-time-mini">0:00</span>
-            </div>
-            <ul class="playlist-bangs" id="playlist-bangs"></ul>
+<div class="garland" id="garland"></div>
+<div class="bg-orb orb-1"></div>
+<div class="bg-orb orb-2"></div>
+<div class="snowflakes" id="snow-container"></div>
+
+<!-- Плавающие кнопки управления темой и эффектами -->
+<div style="position:fixed;top:70px;right:16px;z-index:1000;display:flex;flex-direction:column;gap:8px;">
+
+    <!-- Кнопка тем -->
+    <div style="position:relative;">
+        <button class="btn" id="bg-effects-btn" style="background:rgba(255,255,255,0.1);color:white;box-shadow:none;width:44px;height:44px;padding:0;border-radius:50%;font-size:1.2rem;" title="Эффекты фона">✨</button>
+        <div id="bg-effects-switcher" class="switcher-panel" style="display:none;position:absolute;right:52px;top:0;background:rgba(20,20,40,0.95);border:1px solid rgba(255,255,255,0.15);border-radius:12px;padding:12px;min-width:180px;backdrop-filter:blur(10px);">
+            <div style="font-size:0.8rem;color:rgba(255,255,255,0.5);margin-bottom:8px;text-align:center;">Эффекты фона</div>
+            <div class="switcher-option" data-effect="none" style="padding:8px 12px;border-radius:8px;cursor:pointer;color:white;font-size:0.9rem;margin-bottom:4px;">⬛ Без эффектов</div>
+            <div class="switcher-option" data-effect="lines" style="padding:8px 12px;border-radius:8px;cursor:pointer;color:white;font-size:0.9rem;margin-bottom:4px;">〰️ Неоновые линии</div>
+            <div class="switcher-option" data-effect="balls" style="padding:8px 12px;border-radius:8px;cursor:pointer;color:white;font-size:0.9rem;margin-bottom:4px;">🎈 Шары и звёзды</div>
+            <div class="switcher-option" data-effect="particles" style="padding:8px 12px;border-radius:8px;cursor:pointer;color:white;font-size:0.9rem;">💫 Частицы</div>
         </div>
     </div>
 
-    <div class="container" style="padding-top: 80px;">
-        <header>
-            <h1 class="main-title">🎄 НовыйГодЧат</h1>
-            <div style="display: flex; gap: 10px;">
-                <button class="btn" id="header-login-btn"> Вход</button>
+    <!-- Кнопка и панель тем -->
+    <div style="position:relative;">
+        <button class="btn" id="theme-btn" style="background:rgba(255,255,255,0.1);color:white;box-shadow:none;width:44px;height:44px;padding:0;border-radius:50%;font-size:1.2rem;" title="Тема оформления">🎨</button>
+        <div id="theme-switcher" class="switcher-panel" style="display:none;position:absolute;right:52px;top:0;background:rgba(20,20,40,0.95);border:1px solid rgba(255,255,255,0.15);border-radius:12px;padding:12px;min-width:220px;backdrop-filter:blur(10px);max-height:70vh;overflow-y:auto;">
+            <div style="font-size:0.8rem;color:rgba(255,255,255,0.5);margin-bottom:8px;text-align:center;">Тема оформления</div>
+            <div id="theme-list"></div>
+        </div>
+    </div>
+
+</div>
+
+<div class="player-bangs" id="player-bangs">
+    <div class="player-bangs-header" id="player-bangs-header">
+        <div class="now-playing-mini">
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <div class="eq-container" id="eq-container" style="display: flex; gap: 2px; height: 15px; align-items: flex-end;"></div>
+                <div>
+                    <span class="track-mini" id="track-mini">Christmas Phonk</span>
+                    <span class="artist-mini" id="artist-mini">wi$$$uri</span>
+                </div>
             </div>
-        </header>
+        </div>
+        <div class="controls-mini">
+            <button id="prev-btn-mini">⏮</button>
+            <button class="play-btn-mini" id="play-btn-mini">▶</button>
+            <button id="next-btn-mini">⏭</button>
+            <span class="expand-indicator">▼</span>
+        </div>
+    </div>
+    <div class="player-bangs-body">
+        <div class="progress-bar-mini">
+            <span id="current-time-mini">0:00</span>
+            <div class="progress-track-mini"><div class="progress-fill-mini" id="progress-fill-mini"></div></div>
+            <span id="total-time-mini">3:45</span>
+        </div>
+        <ul class="playlist-bangs" id="playlist-bangs"></ul>
+    </div>
+</div>
 
-        <main>
-            <section class="glass-card freeze-target">
-                <h2 style="text-align: center; margin-bottom: 8px;">🎄 До Нового Года </h2>
-                <p style="text-align: center; color: var(--text-secondary); margin-bottom: 20px; font-size: 0.9rem;">Волшебство совсем близко...</p>
-                <div class="countdown-timer">
-                    <div class="time-block"><span class="number" id="days">0</span><span class="label">Дней</span></div>
-                    <div class="time-block"><span class="number" id="hours">0</span><span class="label">Часов</span></div>
-                    <div class="time-block"><span class="number" id="minutes">0</span><span class="label">Минут</span></div>
-                    <div class="time-block"><span class="number" id="seconds">0</span><span class="label">Секунд</span></div>
+<div class="container">
+    <header>
+        <h1 class="main-title">🎄 НовыйГодЧат</h1>
+        <div style="display: flex; gap: 10px;">
+            <button class="btn" id="header-login-btn">🔑 Вход</button>
+        </div>
+    </header>
+
+    <main>
+        <section class="glass-card freeze-target">
+            <h2 style="text-align: center; margin-bottom: 8px;">🎄 До Нового Года 🎄</h2>
+            <p style="text-align: center; color: var(--text-secondary); margin-bottom: 20px; font-size: 0.9rem;">Волшебство совсем близко...</p>
+            <div class="countdown-timer">
+                <div class="time-block"><span class="number" id="days">0</span><span class="label">Дней</span></div>
+                <div class="time-block"><span class="number" id="hours">0</span><span class="label">Часов</span></div>
+                <div class="time-block"><span class="number" id="minutes">0</span><span class="label">Минут</span></div>
+                <div class="time-block"><span class="number" id="seconds">0</span><span class="label">Секунд</span></div>
+            </div>
+        </section>
+
+        <section class="glass-card freeze-target">
+            <h2 style="text-align: center; margin-bottom: 16px;"> С Новым Годом! 🎉</h2>
+            <div class="chat-status">
+                <span style="font-weight: 600;">💬 Новогодний чат</span>
+                <span id="chat-status-badge" class="status-badge status-offline"><span class="status-dot"></span> offline</span>
+            </div>
+            <div class="chat-messages" id="chat-messages">
+                <p style="text-align: center; color: var(--text-secondary); margin-top: 100px; font-style: italic;">Здесь будет новогоднее настроение...<br>Войди, чтобы начать общение!</p>
+            </div>
+            <div class="chat-input-area" id="chat-input-area">
+                <div class="locked-message" id="locked-msg">🔒 Войди, чтобы писать в чат</div>
+                <div class="letter-input-area" id="letter-area" style="display: none;">
+                    <input type="text" class="letter-input" id="letter-text" placeholder="Напиши желание Деду Морозу...">
+                    <button class="btn" id="send-letter-btn">✉️</button>
                 </div>
-            </section>
+                <button class="btn" id="chat-login-btn" style="width: 100%; justify-content: center;">🔑 Войти в чат</button>
+                <div class="photo-upload" id="photo-upload">📸 Нажми или перетащи, чтобы отправить фото</div>
+            </div>
+        </section>
+    </main>
 
-            <section class="glass-card freeze-target">
-                <h2 style="text-align: center; margin-bottom: 16px;">🎉 С Новым Годом! </h2>
-                <div class="chat-status">
-                    <span style="font-weight: 600;">💬 Новогодний чат</span>
-                    <span class="status-badge status-offline" id="chat-status-badge">
-                        <span class="status-dot"></span> offline
-                    </span>
-                </div>
-                
-                <div class="chat-messages" id="chat-messages">
-                    <p style="text-align: center; color: var(--text-secondary); margin-top: 100px; font-style: italic;">
-                        Здесь будет новогоднее настроение...<br>Войди, чтобы начать общение!
-                    </p>
-                </div>
-                
-                <div class="chat-input-area" id="chat-input-area">
-                    <div class="locked-message" id="locked-msg">🔒 Войди, чтобы писать в чат</div>
-                    <div class="letter-input-area" id="letter-area" style="display: none;">
-                        <input type="text" class="letter-input" id="letter-text" placeholder="Напиши сообщение или желание...">
-                        <button class="btn" id="send-letter-btn">✉️</button>
-                    </div>
-                    <button class="btn" id="chat-login-btn" style="width: 100%; justify-content: center; margin-top: 10px;">🔑 Войти в чат</button>
-                    <div class="photo-upload" id="photo-upload">📸 Нажми, чтобы отправить фото</div>
-                </div>
-            </section>
-        </main>
+    <footer style="text-align: center; padding: 30px 20px; color: var(--text-secondary); font-size: 0.9rem; opacity: 0.7;">
+        <p>❅ ✼ ❆ ✻ ❄ С Новым 2027 Годом! ❄ ✻ ❆ ✼ ❅</p>
+    </footer>
+</div>
 
-        <footer style="text-align: center; padding: 30px 20px; color: var(--text-secondary); font-size: 0.9rem; opacity: 0.7;">
-            <p>❅ ✼ ❆ ✻ ❄ С Новым 2027 Годом!  ✻ ❆  ❅</p>
-        </footer>
-    </div>
+<div class="magic-gift" id="magic-gift">
+    <div class="gift-lid"></div>
+    <div class="gift-box"></div>
+</div>
 
-    <!-- Волшебный подарок (перенесён в правый угол, выше кнопок) -->
-    <div class="magic-gift" id="magic-gift" style="position: fixed; bottom: 230px; right: 20px; z-index: 10003;">
-        <div class="gift-lid"></div>
-        <div class="gift-box"></div>
-    </div>
-    <div class="prediction-toast" id="prediction-toast"></div>
+<div class="prediction-toast" id="prediction-toast"></div>
 
-    <!-- Плавающие кнопки -->
-    <button class="floating-btn" id="wall-of-fame-btn" title="Итоги 2026">🏆</button>
-    <button class="floating-btn" id="bg-effects-btn" title="Эффекты фона">✨</button>
-    <button class="floating-btn" id="theme-btn" title="Сменить тему">🎨</button>
+<script src="js/config.js"></script>
+<script src="js/antimat.js"></script>
+<script src="js/database.js"></script>
+<script src="js/particles.js"></script>
+<script src="js/snow.js"></script>
+<script src="js/player.js"></script>
+<script src="js/effects.js"></script>
+<script src="js/main.js"></script>
 
-    <!-- Панель эффектов фона -->
-    <div class="switcher-panel" id="bg-effects-switcher">
-        <h3>✨ Эффекты фона</h3>
-        <div class="switcher-option" data-effect="none">🚫 Без эффектов</div>
-        <div class="switcher-option" data-effect="lines"> Неоновые линии</div>
-        <div class="switcher-option" data-effect="balls">⚽ Летающие шары + звёзды</div>
-        <div class="switcher-option" data-effect="particles">💫 Пульсирующие частицы</div>
-    </div>
+<script>
+// Простая логика открытия/закрытия панелей (без зависимости от main.js)
+document.addEventListener('DOMContentLoaded', () => {
+    const togglePanel = (btnId, panelId, otherPanelId) => {
+        const btn = document.getElementById(btnId);
+        const panel = document.getElementById(panelId);
+        const other = document.getElementById(otherPanelId);
+        if (!btn || !panel) return;
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const isVisible = panel.style.display !== 'none';
+            panel.style.display = isVisible ? 'none' : 'block';
+            if (other) other.style.display = 'none';
+        });
+    };
+    togglePanel('theme-btn', 'theme-switcher', 'bg-effects-switcher');
+    togglePanel('bg-effects-btn', 'bg-effects-switcher', 'theme-switcher');
 
-    <!-- Панель тем -->
-    <div class="switcher-panel" id="theme-switcher">
-        <h3>🎨 Выбери тему</h3>
-        <div id="theme-list"></div>
-    </div>
+    document.addEventListener('click', () => {
+        const p1 = document.getElementById('theme-switcher');
+        const p2 = document.getElementById('bg-effects-switcher');
+        if (p1) p1.style.display = 'none';
+        if (p2) p2.style.display = 'none';
+    });
 
-    <!-- Оверлей обратного отсчёта -->
-    <div id="countdown-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 10010; justify-content: center; align-items: center; flex-direction: column;">
-        <div id="countdown-number" style="font-size: 20vw; font-weight: bold; color: #fff; text-shadow: 0 0 50px #FFD700, 0 0 100px #FF6B6B; transition: transform 0.2s;">30</div>
-        <div style="font-size: 3vw; color: #FFD700; margin-top: 20px;">До Нового Года осталось...</div>
-    </div>
+    // Подсветка активного эффекта
+    document.querySelectorAll('.switcher-option[data-effect]').forEach(opt => {
+        opt.addEventListener('mouseenter', () => opt.style.background = 'rgba(255,255,255,0.1)');
+        opt.addEventListener('mouseleave', () => {
+            opt.style.background = opt.classList.contains('active') ? 'rgba(255,255,255,0.15)' : '';
+        });
+    });
+});
+</script>
 
-    <!-- Модальное окно Стены Славы -->
-    <div id="wall-of-fame-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 10010; overflow-y: auto; justify-content: center; align-items: flex-start;">
-        <div id="wall-of-fame-content" style="max-width: 800px; width: 100%; padding: 40px 20px; min-height: 100vh;"></div>
-    </div>
-
-    <!-- Скрипты -->
-    <script src="js/config.js"></script>
-    <script src="js/antimat.js"></script>
-    <script src="js/database.js"></script>
-    <script src="js/particles.js"></script>
-    <script src="js/snow.js"></script>
-    <script src="js/player.js"></script>
-    <script src="js/effects.js"></script>
-    <script src="js/fireworks.js"></script>
-    <script src="js/wall-of-fame.js"></script>
-    <script src="js/main.js"></script>
 </body>
 </html>
