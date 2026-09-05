@@ -111,6 +111,16 @@ function updateBackgroundByTime() {
     const textColor = brightness > 0.6 ? '#111' : '#e0e0e0';
     document.body.style.color = textColor;
     document.documentElement.style.setProperty('--text-color', textColor);
+    
+    // === СЕВЕРНОЕ СИЯНИЕ ===
+    const aurora = document.getElementById('aurora');
+    if (aurora) {
+        if (brightness < 0.3) {
+            aurora.classList.add('visible');
+        } else {
+            aurora.classList.remove('visible');
+        }
+    }
 }
 
 // === ОБРАБОТКА ОШИБОК ===
