@@ -1,4 +1,54 @@
-:root {
+/* === ПЕРЕКЛЮЧАТЕЛЬ ТЕМ === */
+.theme-switcher {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(10px);
+    border-radius: 12px;
+    padding: 15px;
+    z-index: 10001;
+    max-height: 400px;
+    overflow-y: auto;
+    display: none;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.theme-switcher.visible {
+    display: block;
+}
+
+.theme-switcher h3 {
+    margin: 0 0 10px 0;
+    color: #fff;
+    font-size: 14px;
+    text-align: center;
+}
+
+.theme-option {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px;
+    margin: 5px 0;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.2s;
+    color: #fff;
+    font-size: 13px;
+}
+
+.theme-option:hover {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.theme-preview {
+    width: 30px;
+    height: 30px;
+    border-radius: 6px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+}:root {
     --bg-dark: #0a0a0f;
     --bg-gradient-1: #0a0a0f;
     --bg-gradient-2: #151525;
@@ -909,7 +959,7 @@ body {
     position: fixed;
     bottom: 20px;
     right: 20px;
-    background: rgba(0, 0, 0, 0.8);
+    background: rgba(0, 0, 0, 0.85);
     backdrop-filter: blur(10px);
     border-radius: 12px;
     padding: 15px;
@@ -917,7 +967,8 @@ body {
     max-height: 400px;
     overflow-y: auto;
     display: none;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .theme-switcher.visible {
@@ -945,7 +996,7 @@ body {
 }
 
 .theme-option:hover {
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.15);
 }
 
 .theme-preview {
