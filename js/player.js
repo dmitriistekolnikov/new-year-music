@@ -3,66 +3,83 @@
 let currentTrackIndex = 0;
 let isPlaying = false;
 let tracks = [];
+
 const audio = new Audio();
 audio.volume = 0.7;
 
 const DEFAULT_COVER = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyMDAiIGhlaWdodD0iMjAwIj48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iIzFhMWExYSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LXNpemU9IjgwIiBmaWxsPSIjYzlhMjI3IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkeT0iLjNlbSI+8J+OgDwvdGV4dD48L3N2Zz4=';
 
-// Генератор красивой цветной заглушки с номером трека (если в MP3 нет тегов)
+// Генератор красивой цветной заглушки с номером трека
 function generateFallbackCover(fileNumber) {
-    const hue = (fileNumber * 47) % 360; // Разные цвета для разных треков
+    const hue = (fileNumber * 47) % 360;
     const svg = `
-    <svg xmlns="http://www.w3.org/2000/svg" width="200" height="200">
-        <defs>
-            <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" style="stop-color:hsl(${hue}, 70%, 30%)"/>
-                <stop offset="100%" style="stop-color:hsl(${hue}, 70%, 15%)"/>
-            </linearGradient>
-        </defs>
-        <rect width="200" height="200" fill="url(#g)"/>
-        <text x="50%" y="50%" font-size="70" fill="rgba(255,255,255,0.9)" text-anchor="middle" dy=".3em" font-family="sans-serif" font-weight="bold">${fileNumber}</text>
-    </svg>`;
+<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200">
+<defs>
+<linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%">
+<stop offset="0%" style="stop-color:hsl(${hue}, 70%, 30%)"/>
+<stop offset="100%" style="stop-color:hsl(${hue}, 70%, 15%)"/>
+</linearGradient>
+</defs>
+<rect width="200" height="200" fill="url(#g)"/>
+<text x="50%" y="50%" font-size="70" fill="rgba(255,255,255,0.9)" text-anchor="middle" dy=".3em" font-family="sans-serif" font-weight="bold">${fileNumber}</text>
+</svg>`;
     return 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svg)));
 }
 
-async function readMetadata(fileNumber) {
+// ИСПРАВЛЕНО: используем jsmediatags вместо musicMetadata
+function readMetadata(fileNumber) {
     const url = getTrackUrl(fileNumber);
-    try {
-        // Честный fetch без Range. Раз <audio> играет этот файл, значит, сеть и CORS позволяют его скачать.
-        const response = await fetch(url);
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        
-        const buffer = await response.arrayBuffer();
-        const metadata = await musicMetadata.parseBuffer(buffer, 'audio/mpeg');
-        
-        let coverUrl = DEFAULT_COVER;
-        if (metadata.common.picture && metadata.common.picture.length > 0) {
-            const pic = metadata.common.picture[0];
-            const base64 = btoa(String.fromCharCode(...new Uint8Array(pic.data)));
-            coverUrl = `data:${pic.format};base64,${base64}`;
-        }
+    return new Promise((resolve) => {
+        try {
+            jsmediatags.read(url, {
+                onSuccess: function(tag) {
+                    const tags = tag.tags;
+                    let coverUrl = generateFallbackCover(fileNumber);
 
-        return {
-            id: fileNumber - 1,
-            title: metadata.common.title || `🎄 Новогодний микс #${fileNumber}`,
-            artist: metadata.common.artist || 'Праздничный плейлист',
-            album: metadata.common.album || 'Winter Vibes 2027',
-            cover: coverUrl,
-            url: url
-        };
-    } catch (error) {
-        // Если тегов нет или произошла ошибка, мы НЕ показываем "Неизвестный исполнитель".
-        // Мы выдаем красивую, сгенерированную заглушку. Это выглядит как дизайнерское решение.
-        console.log(`Трек ${fileNumber}: метаданные не прочитаны, используем умную заглушку.`);
-        return {
-            id: fileNumber - 1,
-            title: `🎄 Новогодний микс #${fileNumber}`,
-            artist: 'Праздничная атмосфера',
-            album: 'Winter Vibes 2027',
-            cover: generateFallbackCover(fileNumber),
-            url: url
-        };
-    }
+                    if (tags.picture) {
+                        try {
+                            const pic = tags.picture;
+                            const base64 = btoa(
+                                String.fromCharCode.apply(null, new Uint8Array(pic.data))
+                            );
+                            coverUrl = `data:${pic.format};base64,${base64}`;
+                        } catch (e) {
+                            console.log(`Трек ${fileNumber}: ошибка обложки, используем заглушку`);
+                        }
+                    }
+
+                    resolve({
+                        id: fileNumber - 1,
+                        title: tags.title || `🎄 Новогодний микс #${fileNumber}`,
+                        artist: tags.artist || 'Праздничная атмосфера',
+                        album: tags.album || 'Winter Vibes 2027',
+                        cover: coverUrl,
+                        url: url
+                    });
+                },
+                onError: function(error) {
+                    console.log(`Трек ${fileNumber}: метаданные не прочитаны, используем умную заглушку.`);
+                    resolve({
+                        id: fileNumber - 1,
+                        title: `🎄 Новогодний микс #${fileNumber}`,
+                        artist: 'Праздничная атмосфера',
+                        album: 'Winter Vibes 2027',
+                        cover: generateFallbackCover(fileNumber),
+                        url: url
+                    });
+                }
+            });
+        } catch (e) {
+            resolve({
+                id: fileNumber - 1,
+                title: `🎄 Новогодний микс #${fileNumber}`,
+                artist: 'Праздничная атмосфера',
+                album: 'Winter Vibes 2027',
+                cover: generateFallbackCover(fileNumber),
+                url: url
+            });
+        }
+    });
 }
 
 async function loadTracks() {
@@ -74,13 +91,13 @@ async function loadTracks() {
     tracks = loadedTracks;
     buildPlaylist();
     updateMiniPlayer(0);
+    console.log(`🎵 Загружено треков: ${tracks.length}`);
 }
 
 function buildPlaylist() {
     const list = document.getElementById('playlist-bangs');
     if (!list) return;
     list.innerHTML = '';
-    
     tracks.forEach((track, i) => {
         const li = document.createElement('li');
         li.dataset.index = i;
@@ -105,19 +122,20 @@ function selectTrack(index) {
     currentTrackIndex = index;
     const track = tracks[index];
     if (!track) return;
-    
+
     document.querySelectorAll('.playlist-bangs li').forEach(li => li.classList.remove('active'));
     const activeLi = document.querySelector(`.playlist-bangs li[data-index="${index}"]`);
     if (activeLi) activeLi.classList.add('active');
-    
+
     updateMiniPlayer(index);
     audio.src = track.url;
-    
+
     if (isPlaying) {
         audio.play().catch(err => {
             console.error('Ошибка воспроизведения:', err);
             isPlaying = false;
-            document.getElementById('play-btn-mini').textContent = '▶';
+            const btn = document.getElementById('play-btn-mini');
+            if (btn) btn.textContent = '▶';
         });
     }
 }
@@ -125,8 +143,10 @@ function selectTrack(index) {
 function updateMiniPlayer(index) {
     const track = tracks[index];
     if (!track) return;
-    document.getElementById('track-mini').textContent = track.title;
-    document.getElementById('artist-mini').textContent = track.artist;
+    const trackMini = document.getElementById('track-mini');
+    const artistMini = document.getElementById('artist-mini');
+    if (trackMini) trackMini.textContent = track.title;
+    if (artistMini) artistMini.textContent = track.artist;
 }
 
 function togglePlay() {
@@ -134,12 +154,12 @@ function togglePlay() {
     if (isPlaying) {
         audio.pause();
         isPlaying = false;
-        btn.textContent = '▶';
+        if (btn) btn.textContent = '▶';
     } else {
         if (!audio.src) selectTrack(currentTrackIndex);
         audio.play().then(() => {
             isPlaying = true;
-            btn.textContent = '⏸';
+            if (btn) btn.textContent = '⏸';
         }).catch(err => console.error('Play error:', err));
     }
 }
@@ -158,18 +178,11 @@ function initPlayer() {
         const player = document.getElementById('player-bangs');
         const body = document.getElementById('player-bangs-body');
         const indicator = document.querySelector('.expand-indicator');
-        
+
         if (header) {
             header.addEventListener('click', (e) => {
-                console.log('ШАПКА ПЛЕЕРА КЛИКНУТА'); // Для отладки в консоли браузера (F12)
-                
-                // Игнорируем клики по кнопкам управления (⏮, ▶, ⏭)
-                if (e.target.closest('.controls-mini')) {
-                    console.log('Клик по кнопкам, игнорируем сворачивание');
-                    return;
-                }
-                
-                // ЖЕСТКОЕ управление развертыванием с !important, чтобы перебить любой CSS
+                if (e.target.closest('.controls-mini')) return;
+
                 if (player.classList.contains('expanded')) {
                     player.classList.remove('expanded');
                     if (body) body.style.setProperty('display', 'none', 'important');
@@ -180,30 +193,31 @@ function initPlayer() {
                     if (indicator) indicator.textContent = '▲';
                 }
             });
-        } else {
-            console.error('Элемент player-bangs-header не найден в DOM!');
         }
-        
+
         document.getElementById('play-btn-mini')?.addEventListener('click', (e) => { e.stopPropagation(); togglePlay(); });
         document.getElementById('next-btn-mini')?.addEventListener('click', (e) => { e.stopPropagation(); nextTrack(); });
         document.getElementById('prev-btn-mini')?.addEventListener('click', (e) => { e.stopPropagation(); prevTrack(); });
-        
+
         audio.addEventListener('ended', nextTrack);
         audio.addEventListener('timeupdate', () => {
             if (audio.duration) {
                 const progress = (audio.currentTime / audio.duration) * 100;
-                document.getElementById('progress-fill-mini').style.width = progress + '%';
-                document.getElementById('current-time-mini').textContent = formatTime(audio.currentTime);
-                document.getElementById('total-time-mini').textContent = formatTime(audio.duration);
+                const fill = document.getElementById('progress-fill-mini');
+                const cur = document.getElementById('current-time-mini');
+                const tot = document.getElementById('total-time-mini');
+                if (fill) fill.style.width = progress + '%';
+                if (cur) cur.textContent = formatTime(audio.currentTime);
+                if (tot) tot.textContent = formatTime(audio.duration);
             }
         });
-        
+
         document.getElementById('progress-track-mini')?.addEventListener('click', (e) => {
             const rect = e.currentTarget.getBoundingClientRect();
             const percent = (e.clientX - rect.left) / rect.width;
             if (audio.duration) audio.currentTime = percent * audio.duration;
         });
-        
+
         initEqualizer();
     });
 }
