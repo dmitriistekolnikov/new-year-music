@@ -19,6 +19,11 @@ export default {
             return handleApi(request, env, path, corsHeaders);
         }
 
+        // Мемы больше не являются частью публичных стикеров.
+        if (path.startsWith('/stickers/memes/')) {
+            return new Response('Not found', { status: 404 });
+        }
+
         // Статика (HTML, CSS, JS, MP3, изображения стикеров)
         const response = await env.ASSETS.fetch(request);
         const newHeaders = new Headers(response.headers);
@@ -26,6 +31,7 @@ export default {
         const isSticker = /^\/stickers\//i.test(path);
 
         if (isAudio || isSticker) {
+            newHeaders.set('Cache-Control', 'public, max-age=86400');
             newHeaders.set('Access-Control-Allow-Origin', '*');
             newHeaders.set('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS');
             newHeaders.set('Access-Control-Allow-Headers', 'Range, Content-Type');
@@ -73,12 +79,43 @@ async function handleApi(request, env, path, headers) {
 
         if (path === '/api/messages' && request.method === 'POST') {
             const body = await request.json();
+            const nick = String(body.nick || '').trim();
+            const text = String(body.text || '').trim();
+            const sticker = body.sticker ? String(body.sticker) : null;
+            const photo = body.photo ? String(body.photo) : null;
+
+            if (!nick) {
+                return new Response(JSON.stringify({ success: false, error: 'Ник не указан' }), {
+                    status: 400,
+                    headers: { ...headers, 'Content-Type': 'application/json' }
+                });
+            }
+
+            // Пустой текст разрешён, если это стикер или фото.
+            if (!text && !sticker && !photo) {
+                return new Response(JSON.stringify({
+                    success: false,
+                    error: 'Сообщение не заполнено',
+                    message: 'Добавьте текст, стикер или изображение'
+                }), {
+                    status: 400,
+                    headers: { ...headers, 'Content-Type': 'application/json' }
+                });
+            }
+
+            if (photo && photo.length > 4_500_000) {
+                return new Response(JSON.stringify({ success: false, error: 'Изображение слишком большое' }), {
+                    status: 413,
+                    headers: { ...headers, 'Content-Type': 'application/json' }
+                });
+            }
+
             await env.DB.prepare(
                 'INSERT INTO messages (nick, text, system, time, sticker, photo) VALUES (?, ?, ?, ?, ?, ?)'
-            ).bind(body.nick, body.text, body.system || 0, body.time, body.sticker || null, body.photo || null).run();
-            
-            return new Response(JSON.stringify({ success: true }), { 
-                headers: { ...headers, 'Content-Type': 'application/json' } 
+            ).bind(nick, text, body.system || 0, Number(body.time) || Date.now(), sticker, photo).run();
+
+            return new Response(JSON.stringify({ success: true }), {
+                headers: { ...headers, 'Content-Type': 'application/json' }
             });
         }
 
