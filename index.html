@@ -8,21 +8,18 @@
     <script src="https://cdn.jsdelivr.net/npm/music-metadata-browser@2.5.10/lib/index.min.js"></script>
 </head>
 <body>
-    <!-- Фоновые элементы (задний план) -->
+    <!-- Фоновые элементы -->
     <div class="bg-orb orb-1"></div>
     <div class="bg-orb orb-2"></div>
     <div class="snowflakes" id="snow-container"></div>
-    
-    <!-- Свечки на заднем фоне -->
     <div id="candles-bg"></div>
-    
-    <!-- Часы с кукушкой на заднем фоне -->
     <div id="clock-bg"></div>
-
-    <!-- Гирлянда сверху -->
     <div class="garland" id="garland"></div>
 
-    <!-- ЧЕЛКА (плеер сверху) -->
+    <!-- Canvas для эффектов фона (рисуется поверх градиента, но под UI) -->
+    <canvas id="bg-effects-canvas"></canvas>
+
+    <!-- Плеер (челка) -->
     <div class="player-bangs" id="player-bangs">
         <div class="player-bangs-header" id="player-bangs-header" style="cursor: pointer; position: relative; z-index: 10000; pointer-events: auto;">
             <div class="now-playing-mini">
@@ -57,15 +54,14 @@
         <header>
             <h1 class="main-title">🎄 НовыйГодЧат</h1>
             <div style="display: flex; gap: 10px;">
-                <button class="btn" id="theme-btn" title="Сменить тему">🎨</button>
-                <button class="btn" id="header-login-btn"> Вход</button>
+                <!-- Кнопка тем убрана отсюда, чтобы не мешала -->
+                <button class="btn" id="header-login-btn">🔑 Вход</button>
             </div>
         </header>
 
         <main>
-            <!-- Таймер -->
             <section class="glass-card freeze-target">
-                <h2 style="text-align: center; margin-bottom: 8px;"> До Нового Года 🎄</h2>
+                <h2 style="text-align: center; margin-bottom: 8px;">🎄 До Нового Года 🎄</h2>
                 <p style="text-align: center; color: var(--text-secondary); margin-bottom: 20px; font-size: 0.9rem;">Волшебство совсем близко...</p>
                 <div class="countdown-timer">
                     <div class="time-block"><span class="number" id="days">0</span><span class="label">Дней</span></div>
@@ -75,9 +71,8 @@
                 </div>
             </section>
 
-            <!-- Чат -->
             <section class="glass-card freeze-target">
-                <h2 style="text-align: center; margin-bottom: 16px;">🎉 С Новым Годом! </h2>
+                <h2 style="text-align: center; margin-bottom: 16px;">🎉 С Новым Годом! 🎉</h2>
                 <div class="chat-status">
                     <span style="font-weight: 600;">💬 Новогодний чат</span>
                     <span class="status-badge status-offline" id="chat-status-badge">
@@ -93,14 +88,12 @@
                 
                 <div class="chat-input-area" id="chat-input-area">
                     <div class="locked-message" id="locked-msg">🔒 Войди, чтобы писать в чат</div>
-                    
                     <div class="letter-input-area" id="letter-area" style="display: none;">
                         <input type="text" class="letter-input" id="letter-text" placeholder="Напиши сообщение или желание...">
                         <button class="btn" id="send-letter-btn">✉️</button>
                     </div>
-                    
                     <button class="btn" id="chat-login-btn" style="width: 100%; justify-content: center; margin-top: 10px;">🔑 Войти в чат</button>
-                    <div class="photo-upload" id="photo-upload"> Нажми, чтобы отправить фото</div>
+                    <div class="photo-upload" id="photo-upload">📸 Нажми, чтобы отправить фото</div>
                 </div>
             </section>
         </main>
@@ -110,37 +103,42 @@
         </footer>
     </div>
 
-    <!-- Волшебный подарок -->
     <div class="magic-gift" id="magic-gift">
         <div class="gift-lid"></div>
         <div class="gift-box"></div>
     </div>
     <div class="prediction-toast" id="prediction-toast"></div>
 
-    <!-- Переключатель тем -->
-    <div class="theme-switcher" id="theme-switcher">
+    <!-- Плавающие кнопки управления (справа внизу, чтобы не перекрывала челка) -->
+    <button class="floating-btn" id="wall-of-fame-btn" title="Итоги 2026">🏆</button>
+    <button class="floating-btn" id="bg-effects-btn" title="Эффекты фона">✨</button>
+    <button class="floating-btn" id="theme-btn" title="Сменить тему">🎨</button>
+
+    <!-- Панель эффектов фона -->
+    <div class="switcher-panel" id="bg-effects-switcher">
+        <h3>✨ Эффекты фона</h3>
+        <div class="switcher-option" data-effect="none">🚫 Без эффектов</div>
+        <div class="switcher-option" data-effect="lines"> Неоновые линии</div>
+        <div class="switcher-option" data-effect="balls">⚽ Летающие шары</div>
+        <div class="switcher-option" data-effect="particles">💫 Пульсирующие частицы</div>
+    </div>
+
+    <!-- Панель тем -->
+    <div class="switcher-panel" id="theme-switcher">
         <h3>🎨 Выбери тему</h3>
         <div id="theme-list"></div>
     </div>
 
-    <!-- Canvas для фейерверка -->
-    <canvas id="fireworks-canvas" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 9999;"></canvas>
-    
     <!-- Оверлей обратного отсчёта -->
     <div id="countdown-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 10000; justify-content: center; align-items: center; flex-direction: column;">
         <div id="countdown-number" style="font-size: 20vw; font-weight: bold; color: #fff; text-shadow: 0 0 50px #FFD700, 0 0 100px #FF6B6B; transition: transform 0.2s;">30</div>
         <div style="font-size: 3vw; color: #FFD700; margin-top: 20px;">До Нового Года осталось...</div>
     </div>
-    
+
     <!-- Модальное окно Стены Славы -->
     <div id="wall-of-fame-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 10003; overflow-y: auto; justify-content: center; align-items: flex-start;">
         <div id="wall-of-fame-content" style="max-width: 800px; width: 100%; padding: 40px 20px; min-height: 100vh;"></div>
     </div>
-    
-    <!-- Кнопка Стены Славы -->
-    <button class="btn" id="wall-of-fame-btn" style="position: fixed; bottom: 100px; right: 20px; z-index: 10001; background: linear-gradient(135deg, #FFD700, #FFA500); color: #000; font-weight: bold; padding: 12px 20px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
-        🏆 Итоги 2026
-    </button>
 
     <!-- Скрипты -->
     <script src="js/config.js"></script>
@@ -153,25 +151,5 @@
     <script src="js/fireworks.js"></script>
     <script src="js/wall-of-fame.js"></script>
     <script src="js/main.js"></script>
-<!-- Переключатель эффектов фона -->
-    <div class="bg-effects-switcher" id="bg-effects-switcher">
-        <h3>✨ Эффекты фона</h3>
-        <div class="effect-option" data-effect="none">
-            <span>🚫 Без эффектов</span>
-        </div>
-        <div class="effect-option" data-effect="lines">
-            <span>📐 Неоновые линии</span>
-        </div>
-        <div class="effect-option" data-effect="balls">
-            <span>⚽ Летающие шары</span>
-        </div>
-        <div class="effect-option" data-effect="particles">
-            <span> Пульсирующие частицы</span>
-        </div>
-    </div>
-
-    <!-- Canvas для эффектов фона -->
-    <canvas id="bg-effects-canvas" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 2;"></canvas>
-    <button class="btn" id="bg-effects-btn" title="Эффекты фона">✨</button>
 </body>
 </html>
