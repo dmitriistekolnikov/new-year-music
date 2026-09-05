@@ -49,138 +49,359 @@ function initGift() {
 }
 
 // === 7. ПИСЬМО / ЧАТ С АНТИ-МАТОМ ===
+// === 7. ЧАТ С ОТПРАВКОЙ СТИКЕРОВ И ФОТО ===
 function initLetter() {
     let isLoggedIn = false;
-    const chatInput = document.getElementById('letter-text');
-    const sendBtn = document.getElementById('send-letter-btn');
-    const chatContainer = document.getElementById('chat-messages');
-    const loginBtn = document.getElementById('chat-login-btn');
-    const lockedMsg = document.getElementById('locked-msg');
-    const letterArea = document.getElementById('letter-area');
+    let currentNick = '';
 
-    console.log('initLetter: элементы найдены:', {
-        chatInput: !!chatInput,
-        sendBtn: !!sendBtn,
-        chatContainer: !!chatContainer,
-        loginBtn: !!loginBtn,
-        lockedMsg: !!lockedMsg,
-        letterArea: !!letterArea
-    });
+    const chatInput     = document.getElementById('letter-text');
+    const sendBtn       = document.getElementById('send-letter-btn');
+    const chatContainer = document.getElementById('chat-messages');
+    const loginBtn      = document.getElementById('chat-login-btn');
+    const lockedMsg     = document.getElementById('locked-msg');
+    const letterArea    = document.getElementById('letter-area');
 
     if (!chatInput || !sendBtn || !chatContainer || !loginBtn) {
         console.error('initLetter: не найдены обязательные элементы!');
         return;
     }
 
+    // Стиль единой кнопки тулбара
+    function mkBtn(emoji, title, color) {
+        const btn = document.createElement('button');
+        btn.textContent = emoji;
+        btn.title = title;
+        btn.style.cssText = `
+            background: rgba(255,255,255,0.06);
+            border: 1px solid var(--glass-border);
+            border-radius: 10px;
+            color: var(--text-primary);
+            font-size: 1.15rem;
+            width: 40px;
+            height: 40px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s, transform 0.15s, border-color 0.2s;
+            flex-shrink: 0;
+        `;
+        btn.addEventListener('mouseenter', () => {
+            btn.style.background = color || 'rgba(201,162,39,0.18)';
+            btn.style.borderColor = 'var(--accent-gold)';
+            btn.style.transform = 'scale(1.08)';
+        });
+        btn.addEventListener('mouseleave', () => {
+            btn.style.background = 'rgba(255,255,255,0.06)';
+            btn.style.borderColor = 'var(--glass-border)';
+            btn.style.transform = 'scale(1)';
+        });
+        return btn;
+    }
+
+    // === Тулбар ===
+    function buildToolbar() {
+        if (document.getElementById('chat-toolbar')) return;
+
+        // Скрываем старый photo-upload если есть
+        const old = document.getElementById('photo-upload');
+        if (old) old.style.display = 'none';
+
+        const toolbar = document.createElement('div');
+        toolbar.id = 'chat-toolbar';
+        toolbar.style.cssText = `
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px solid var(--glass-border);
+            position: relative;
+        `;
+
+        // --- Панель стикеров ---
+        const stickerPanel = buildStickerPanel();
+        toolbar.appendChild(stickerPanel);
+
+        // --- Кнопка фото ---
+        const photoInput = document.createElement('input');
+        photoInput.type = 'file';
+        photoInput.accept = 'image/*';
+        photoInput.style.display = 'none';
+        toolbar.appendChild(photoInput);
+
+        const photoBtn = mkBtn('📷', 'Фото', 'rgba(14,165,233,0.2)');
+        photoBtn.addEventListener('click', () => photoInput.click());
+        photoInput.addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                const dataUrl = ev.target.result;
+                appendMessageToChat({ nick: currentNick, text: '', photo: dataUrl, system: 0, time: Date.now() });
+                // Отправка на сервер (если поддерживается)
+                if (typeof db !== 'undefined') {
+                    db.sendMessage(currentNick, '', null, dataUrl).catch(() => {});
+                }
+            };
+            reader.readAsDataURL(file);
+            photoInput.value = '';
+        });
+
+        // --- Кнопка стикеров ---
+        const stickerBtn = mkBtn('🎭', 'Стикеры', 'rgba(147,51,234,0.2)');
+        stickerBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            stickerPanel.style.display = stickerPanel.style.display === 'block' ? 'none' : 'block';
+        });
+
+        // --- Кнопка отправки (единый стиль) ---
+        sendBtn.textContent = '➤';
+        sendBtn.title = 'Отправить';
+        sendBtn.style.cssText = `
+            background: linear-gradient(135deg, var(--accent-green), #1a3d1a);
+            border: 1px solid rgba(45,90,39,0.5);
+            border-radius: 10px;
+            color: #fff;
+            font-size: 1.15rem;
+            width: 40px;
+            height: 40px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.15s, box-shadow 0.2s;
+            flex-shrink: 0;
+            box-shadow: 0 2px 8px rgba(45,90,39,0.3);
+        `;
+        sendBtn.addEventListener('mouseenter', () => {
+            sendBtn.style.transform = 'scale(1.08)';
+            sendBtn.style.boxShadow = '0 4px 16px rgba(45,90,39,0.5)';
+        });
+        sendBtn.addEventListener('mouseleave', () => {
+            sendBtn.style.transform = 'scale(1)';
+            sendBtn.style.boxShadow = '0 2px 8px rgba(45,90,39,0.3)';
+        });
+
+        toolbar.appendChild(photoBtn);
+        toolbar.appendChild(stickerBtn);
+        toolbar.appendChild(sendBtn);
+
+        if (letterArea) letterArea.appendChild(toolbar);
+
+        // Закрывать панель стикеров кликом снаружи
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('#chat-toolbar')) {
+                stickerPanel.style.display = 'none';
+            }
+        });
+    }
+
     loadChatMessages();
 
-    loginBtn.addEventListener('click', async function() {
-        console.log('Клик по кнопке входа');
+    // === ЛОГИН ===
+    loginBtn.addEventListener('click', async function () {
         const nick = prompt('Введи свой ник (минимум 2 символа):');
-        if (!nick || nick.trim().length < 2) {
-            alert('Ник должен быть минимум 2 символа!');
-            return;
-        }
+        if (!nick || nick.trim().length < 2) { alert('Ник должен быть минимум 2 символа!'); return; }
         const nickCheck = antiMat.check(nick);
-        if (nickCheck.isBanned) {
-            alert('Ник содержит запрещенные слова!');
-            return;
-        }
-        console.log('Попытка входа под ником:', nick.trim());
+        if (nickCheck.isBanned) { alert('Ник содержит запрещённые слова!'); return; }
+
         try {
             const result = await db.login(nick.trim());
-            console.log('Результат логина:', result);
             if (result && result.session_id) {
                 isLoggedIn = true;
+                currentNick = nick.trim();
                 loginBtn.style.display = 'none';
                 if (lockedMsg) lockedMsg.style.display = 'none';
-                if (letterArea) {
-                    letterArea.style.display = 'flex';
-                    console.log('letterArea показан');
-                }
+                if (letterArea) letterArea.style.display = 'flex';
+
                 const statusBadge = document.getElementById('chat-status-badge');
                 if (statusBadge) {
                     statusBadge.className = 'status-badge';
-                    statusBadge.style.background = 'rgba(45, 90, 39, 0.2)';
+                    statusBadge.style.background = 'rgba(45,90,39,0.2)';
                     statusBadge.style.color = '#2d5a27';
-                    statusBadge.innerHTML = '<span class="status-dot" style="background: #2d5a27;"></span> online';
+                    statusBadge.innerHTML = '<span class="status-dot" style="background:#2d5a27;"></span> online';
                 }
-                appendMessageToChat({
-                    nick: '🎅 Система',
-                    text: `${nick} присоединился к чату!`,
-                    system: 1,
-                    time: Date.now()
-                });
-                console.log('Вход выполнен успешно');
+                appendMessageToChat({ nick: '🎅 Система', text: `${currentNick} присоединился к чату!`, system: 1, time: Date.now() });
+                buildToolbar();
             } else {
                 alert('Ошибка входа: сервер не вернул session_id. Проверь консоль (F12).');
-                console.error('Результат логина без session_id:', result);
             }
         } catch (error) {
             console.error('КРИТИЧЕСКАЯ ОШИБКА ЛОГИНА:', error);
-            alert('Ошибка входа: ' + error.message + '\n\nПроверь консоль (F12).');
+            alert('Ошибка входа: ' + error.message);
         }
     });
 
-    sendBtn.addEventListener('click', async function() {
-        console.log('Клик по кнопке отправки, isLoggedIn:', isLoggedIn);
-        if (!isLoggedIn) {
-            console.warn('Пользователь не залогинен');
-            return;
-        }
+    // === ОТПРАВКА ТЕКСТА ===
+    sendBtn.addEventListener('click', async function () {
+        if (!isLoggedIn) return;
         const text = chatInput.value.trim();
-        if (!text) {
-            console.warn('Пустое сообщение');
-            return;
-        }
+        if (!text) return;
         const check = antiMat.check(text);
-        if (check.isBanned) {
-            alert('Сообщение содержит запрещенное слово!');
-            chatInput.value = '';
-            return;
-        }
-        const nick = db.currentNick;
-        console.log('Отправка сообщения от', nick, ':', text);
-        const result = await db.sendMessage(nick, text);
-        console.log('Результат отправки:', result);
+        if (check.isBanned) { alert('Сообщение содержит запрещённое слово!'); chatInput.value = ''; return; }
+
+        const result = await db.sendMessage(currentNick, text);
         if (result && result.success) {
-            appendMessageToChat({
-                nick: nick,
-                text: text,
-                system: 0,
-                time: Date.now()
-            });
+            appendMessageToChat({ nick: currentNick, text, system: 0, time: Date.now() });
             chatInput.value = '';
             createClickParticles(
                 sendBtn.getBoundingClientRect().left + 20,
                 sendBtn.getBoundingClientRect().top,
-                15,
-                ['#2d5a27', '#c9a227']
+                15, ['#2d5a27', '#c9a227']
             );
-            console.log('Сообщение отправлено и отображено');
         } else {
-            alert('Ошибка отправки сообщения. Проверь консоль (F12).');
-            console.error('Ошибка отправки:', result);
+            alert('Ошибка отправки. Проверь консоль (F12).');
         }
     });
 
-    chatInput.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') {
-            sendBtn.click();
-        }
-    });
-}
+    chatInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') sendBtn.click(); });
 
-async function loadChatMessages() {
-    const messages = await db.getMessages(50);
-    const chatContainer = document.getElementById('chat-messages');
-    if (messages.length > 0) {
-        chatContainer.innerHTML = '';
-        messages.reverse().forEach(msg => {
-            appendMessageToChat(msg);
-        });
+    // Если сессия уже есть — показываем тулбар сразу
+    if (typeof db !== 'undefined') {
+        db.checkSession && db.checkSession().then(has => {
+            if (has) {
+                isLoggedIn = true;
+                currentNick = db.currentNick || '';
+                if (letterArea) letterArea.style.display = 'flex';
+                buildToolbar();
+            }
+        }).catch(() => {});
     }
 }
+
+// === ПАНЕЛЬ СТИКЕРОВ ===
+function buildStickerPanel() {
+    const panel = document.createElement('div');
+    panel.id = 'sticker-panel';
+    panel.style.cssText = `
+        display: none;
+        position: absolute;
+        bottom: 50px;
+        left: 0;
+        width: 100%;
+        max-height: 220px;
+        background: rgba(10,10,15,0.97);
+        backdrop-filter: blur(20px);
+        border: 1px solid var(--glass-border);
+        border-radius: 14px;
+        padding: 10px;
+        z-index: 200;
+        overflow-y: auto;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+    `;
+
+    // --- Вкладки ---
+    const tabs = document.createElement('div');
+    tabs.style.cssText = 'display:flex;gap:6px;margin-bottom:8px;';
+
+    function makeTab(label, active) {
+        const t = document.createElement('button');
+        t.textContent = label;
+        t.style.cssText = `
+            padding: 4px 12px;
+            border-radius: 8px;
+            border: 1px solid ${active ? 'var(--accent-gold)' : 'var(--glass-border)'};
+            background: ${active ? 'rgba(201,162,39,0.18)' : 'transparent'};
+            color: ${active ? 'var(--accent-gold)' : 'var(--text-secondary)'};
+            cursor: pointer;
+            font-size: 0.78rem;
+            transition: all 0.2s;
+        `;
+        return t;
+    }
+
+    const catTab  = makeTab('🐱 Коты', true);
+    const memeTab = makeTab('😂 Мемы', false);
+    tabs.appendChild(catTab);
+    tabs.appendChild(memeTab);
+    panel.appendChild(tabs);
+
+    // --- Грид ---
+    const grid = document.createElement('div');
+    grid.style.cssText = 'display:grid;grid-template-columns:repeat(auto-fill,60px);gap:6px;';
+    panel.appendChild(grid);
+
+    function setActiveTab(active, inactive) {
+        active.style.borderColor = 'var(--accent-gold)';
+        active.style.background  = 'rgba(201,162,39,0.18)';
+        active.style.color       = 'var(--accent-gold)';
+        inactive.style.borderColor = 'var(--glass-border)';
+        inactive.style.background  = 'transparent';
+        inactive.style.color       = 'var(--text-secondary)';
+    }
+
+    function addSticker(url, stickerPath) {
+        const img = document.createElement('img');
+        img.loading = 'lazy';
+        img.src = url;
+        img.style.cssText = `
+            width: 60px; height: 60px;
+            object-fit: cover;
+            border-radius: 8px;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: border-color 0.15s, transform 0.15s;
+        `;
+        img.addEventListener('mouseenter', () => {
+            img.style.borderColor = 'var(--accent-gold)';
+            img.style.transform = 'scale(1.12)';
+        });
+        img.addEventListener('mouseleave', () => {
+            img.style.borderColor = 'transparent';
+            img.style.transform = 'scale(1)';
+        });
+        img.addEventListener('click', () => {
+            sendStickerMessage(stickerPath);
+            panel.style.display = 'none';
+        });
+        grid.appendChild(img);
+    }
+
+    function loadCats() {
+        setActiveTab(catTab, memeTab);
+        grid.innerHTML = '';
+        for (let i = STICKERS_CATS_RANGE.start; i <= STICKERS_CATS_RANGE.end; i++) {
+            const path = `cats/1-${i}-256b.png`;
+            addSticker(`/stickers/${path}`, path);
+        }
+    }
+
+    function loadMemes() {
+        setActiveTab(memeTab, catTab);
+        grid.innerHTML = '';
+        STICKERS_MEMES.forEach(filename => {
+            const path = `memes/${filename}`;
+            addSticker(`/stickers/${path}`, path);
+        });
+    }
+
+    catTab.addEventListener('click',  loadCats);
+    memeTab.addEventListener('click', loadMemes);
+    loadCats();
+
+    return panel;
+}
+
+async function sendStickerMessage(stickerPath) {
+    const nick = (typeof db !== 'undefined' && db.currentNick) ? db.currentNick : null;
+    if (!nick) return;
+
+    // Показываем локально сразу
+    appendMessageToChat({ nick, text: '', sticker: stickerPath, system: 0, time: Date.now() });
+
+    // Отправляем на сервер
+    try {
+        const sessionId = db.sessionId || db.currentSession || '';
+        await fetch('/api/message', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ nick, text: '', sticker: stickerPath, session_id: sessionId })
+        });
+    } catch (e) {
+        console.warn('Стикер отправлен локально, но не сохранён на сервере:', e);
+    }
+                          }
 
 function appendMessageToChat(msg) {
     const chatContainer = document.getElementById('chat-messages');
