@@ -900,17 +900,7 @@ header {
         transform: translate(10%, 10%) rotate(12deg) scale(1.2);
     }
 }
-/* === ПЛАВНАЯ СМЕНА ЦВЕТОВ ФОНА === */
-/* === ПЛАВНАЯ СМЕНА ЦВЕТОВ ФОНА === */
-@keyframes hue-rotate {
-    0% {
-        filter: hue-rotate(0deg);
-    }
-    100% {
-        filter: hue-rotate(360deg);
-    }
-}
-
+/* === ПЛАВНАЯ СМЕНА ЦВЕТОВ ФОНА (через JS, без filter) === */
 body {
-    animation: hue-rotate 120s linear infinite; /* Медленнее — 2 минуты на полный круг */
+    transition: background 3s ease;
 }
