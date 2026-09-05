@@ -860,3 +860,70 @@ animStyle.textContent = `
     }
 `;
 document.head.appendChild(animStyle);
+// === TOAST УВЕДОМЛЕНИЯ ===
+(function () {
+    const style = document.createElement('style');
+    style.textContent = `
+        #toast-container {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            flex-direction: column-reverse;
+            gap: 10px;
+            z-index: 99999;
+            pointer-events: none;
+            align-items: center;
+        }
+        .toast {
+            padding: 12px 20px;
+            border-radius: 12px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255,255,255,0.1);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+            animation: toastIn 0.3s cubic-bezier(0.175,0.885,0.32,1.275) forwards;
+            max-width: 320px;
+            text-align: center;
+            pointer-events: none;
+        }
+        .toast.removing {
+            animation: toastOut 0.3s ease forwards;
+        }
+        .toast-success { background: rgba(45,90,39,0.9);  color: #a7f3d0; border-color: rgba(45,90,39,0.5); }
+        .toast-error   { background: rgba(139,0,0,0.9);   color: #fca5a5; border-color: rgba(139,0,0,0.5); }
+        .toast-info    { background: rgba(30,58,95,0.9);   color: #bae6fd; border-color: rgba(30,58,95,0.5); }
+        .toast-warn    { background: rgba(120,80,0,0.9);   color: #fde68a; border-color: rgba(120,80,0,0.5); }
+        @keyframes toastIn {
+            from { opacity: 0; transform: translateY(20px) scale(0.9); }
+            to   { opacity: 1; transform: translateY(0)    scale(1);   }
+        }
+        @keyframes toastOut {
+            from { opacity: 1; transform: translateY(0)    scale(1);   }
+            to   { opacity: 0; transform: translateY(10px) scale(0.9); }
+        }
+    `;
+    document.head.appendChild(style);
+
+    const container = document.createElement('div');
+    container.id = 'toast-container';
+    document.body.appendChild(container);
+})();
+
+function showToast(message, type = 'info', duration = 3000) {
+    const container = document.getElementById('toast-container');
+    if (!container) return;
+
+    const icons = { success: '✅', error: '❌', info: 'ℹ️', warn: '⚠️' };
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+    toast.textContent = (icons[type] || '') + ' ' + message;
+    container.appendChild(toast);
+
+    setTimeout(() => {
+        toast.classList.add('removing');
+        setTimeout(() => toast.remove(), 300);
+    }, duration);
+}
