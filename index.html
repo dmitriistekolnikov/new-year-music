@@ -60,11 +60,7 @@
         <header>
             <h1 class="main-title">🎄 НовыйГодЧат</h1>
             <div style="display: flex; gap: 10px;">
-                <button class="btn" id="theme-btn" title="Сменить тему">🎨</button>
-                <div class="switcher-panel" id="theme-switcher">
-                    <div class="switcher-header">🎨 Темы оформления</div>
-                    <div class="switcher-list" id="theme-list"></div>
-                </div>
+                <button class="btn" id="theme-btn" type="button" title="Сменить тему">🎨</button>
                 <button class="btn" id="header-login-btn">🔑 Вход</button>
             </div>
         </header>
@@ -127,6 +123,12 @@
         <div class="gift-box"></div>
     </div>
     <div class="prediction-toast" id="prediction-toast"></div>
+
+    <!-- Панель тем -->
+    <div class="switcher-panel" id="theme-switcher" aria-hidden="true">
+        <div class="switcher-header">🎨 Темы оформления</div>
+        <div class="switcher-list" id="theme-list"></div>
+    </div>
 
     <!-- Кнопка эффектов фона -->
     <button class="floating-btn" id="bg-effects-btn" title="Эффекты фона">✨</button>
