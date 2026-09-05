@@ -31,13 +31,17 @@ function initGift() {
     const gift = document.getElementById('magic-gift');
     const toast = document.getElementById('prediction-toast');
     if (!gift || !toast) return;
+    
     gift.addEventListener('click', (e) => {
         e.stopPropagation();
         gift.classList.add('opened');
         const rect = gift.getBoundingClientRect();
         createClickParticles(rect.left + rect.width / 2, rect.top + rect.height / 2, 30, ['#c9a227', '#8b0000', '#ffffff']);
+        
         toast.textContent = PREDICTIONS[Math.floor(Math.random() * PREDICTIONS.length)];
         toast.classList.add('show');
+        showToast('🎁 Предсказание получено!', 'success');
+        
         setTimeout(() => {
             gift.classList.remove('opened');
             toast.classList.remove('show');
@@ -55,6 +59,7 @@ function initTimer() {
         const hours = document.getElementById('hours');
         const minutes = document.getElementById('minutes');
         const seconds = document.getElementById('seconds');
+        
         if (days) days.textContent = Math.floor(diff / (1000 * 60 * 60 * 24));
         if (hours) hours.textContent = Math.floor((diff / (1000 * 60 * 60)) % 24).toString().padStart(2, '0');
         if (minutes) minutes.textContent = Math.floor((diff / 1000 / 60) % 60).toString().padStart(2, '0');
@@ -83,11 +88,16 @@ function initLetter() {
 
     loginBtn.addEventListener('click', async function() {
         const nick = prompt('Введи свой ник (минимум 2 символа):');
-        if (!nick || nick.trim().length < 2) { alert('Ник должен быть минимум 2 символа!'); return; }
-
+        if (!nick || nick.trim().length < 2) {
+            showToast('Ник должен быть минимум 2 символа!', 'warning');
+            return;
+        }
         if (typeof antiMat !== 'undefined') {
             const nickCheck = antiMat.check(nick);
-            if (nickCheck.isBanned) { alert('Ник содержит запрещенные слова!'); return; }
+            if (nickCheck.isBanned) {
+                showToast('Ник содержит запрещенные слова!', 'error');
+                return;
+            }
         }
 
         try {
@@ -97,7 +107,7 @@ function initLetter() {
                 loginBtn.style.display = 'none';
                 if (lockedMsg) lockedMsg.style.display = 'none';
                 if (letterArea) letterArea.style.display = 'flex';
-
+                
                 const statusBadge = document.getElementById('chat-status-badge');
                 if (statusBadge) {
                     statusBadge.className = 'status-badge';
@@ -105,15 +115,16 @@ function initLetter() {
                     statusBadge.style.color = '#2d5a27';
                     statusBadge.innerHTML = '<span class="status-dot" style="background: #2d5a27;"></span> online';
                 }
-
+                
+                showToast(`Добро пожаловать, ${nick}!`, 'success');
                 appendMessageToChat({ nick: '🎅 Система', text: `${nick} присоединился к чату!`, system: 1, time: Date.now() });
             } else {
-                alert('Ошибка входа. Проверь консоль (F12).');
+                showToast('Ошибка входа. Проверьте консоль (F12).', 'error');
                 console.error('Результат логина:', result);
             }
         } catch (error) {
             console.error('ОШИБКА ЛОГИНА:', error);
-            alert('Ошибка входа: ' + error.message);
+            showToast('Ошибка входа: ' + error.message, 'error');
         }
     });
 
@@ -124,7 +135,11 @@ function initLetter() {
 
         if (typeof antiMat !== 'undefined') {
             const check = antiMat.check(text);
-            if (check.isBanned) { alert('Сообщение содержит запрещенное слово!'); chatInput.value = ''; return; }
+            if (check.isBanned) {
+                showToast('Сообщение содержит запрещенное слово!', 'error');
+                chatInput.value = '';
+                return;
+            }
         }
 
         const result = await db.sendMessage(db.currentNick, text);
@@ -134,11 +149,13 @@ function initLetter() {
             const rect = sendBtn.getBoundingClientRect();
             createClickParticles(rect.left + 20, rect.top, 15, ['#2d5a27', '#c9a227']);
         } else {
-            alert('Ошибка отправки. Проверь консоль (F12).');
+            showToast('Ошибка отправки. Проверьте консоль (F12).', 'error');
         }
     });
 
-    chatInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') sendBtn.click(); });
+    chatInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') sendBtn.click();
+    });
 
     // Автообновление чата каждые 5 секунд
     setInterval(loadChatMessages, 5000);
@@ -149,6 +166,7 @@ async function loadChatMessages() {
         const messages = await db.getMessages(50);
         const chatContainer = document.getElementById('chat-messages');
         if (!chatContainer) return;
+        
         if (messages && messages.length > 0) {
             chatContainer.innerHTML = '';
             messages.reverse().forEach(msg => appendMessageToChat(msg));
@@ -161,10 +179,11 @@ async function loadChatMessages() {
 function appendMessageToChat(msg) {
     const chatContainer = document.getElementById('chat-messages');
     if (!chatContainer) return;
+    
     const msgDiv = document.createElement('div');
     const isSystem = msg.system === 1;
     const time = new Date(msg.time).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
-
+    
     msgDiv.style.cssText = `
         padding: 10px; margin-bottom: 8px;
         background: ${isSystem ? 'rgba(201, 162, 39, 0.1)' : 'rgba(255,255,255,0.05)'};
@@ -172,7 +191,7 @@ function appendMessageToChat(msg) {
         border-left: 3px solid ${isSystem ? '#c9a227' : '#2d5a27'};
         animation: fadeIn 0.3s ease;
     `;
-
+    
     let content = `
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
             <span style="font-weight:bold;color:${isSystem ? '#c9a227' : '#2d5a27'};">${msg.nick}</span>
@@ -180,9 +199,10 @@ function appendMessageToChat(msg) {
         </div>
         <div style="color:var(--text-primary);word-wrap:break-word;">${msg.text || ''}</div>
     `;
+    
     if (msg.sticker) content += `<img src="/stickers/${msg.sticker}" style="max-width:150px;border-radius:8px;margin-top:8px;">`;
     if (msg.photo) content += `<img src="${msg.photo}" style="max-width:100%;border-radius:8px;margin-top:8px;">`;
-
+    
     msgDiv.innerHTML = content;
     chatContainer.appendChild(msgDiv);
     chatContainer.scrollTop = chatContainer.scrollHeight;
@@ -196,7 +216,7 @@ function createClickParticles(x, y, count = 20, colors = PARTICLE_COLORS) {
         const size = 4 + Math.random() * 8;
         const angle = (Math.random() * Math.PI * 2);
         const speed = 50 + Math.random() * 100;
-
+        
         particle.style.cssText = `
             position: fixed; left: ${x}px; top: ${y}px;
             width: ${size}px; height: ${size}px;
@@ -204,19 +224,17 @@ function createClickParticles(x, y, count = 20, colors = PARTICLE_COLORS) {
             pointer-events: none; z-index: 9999;
         `;
         document.body.appendChild(particle);
-
+        
         particle.animate([
             { transform: 'translate(0,0) scale(1)', opacity: 1 },
-            { transform: `translate(${Math.cos(angle)*speed}px, ${Math.sin(angle)*speed}px) scale(0)`, opacity: 0 }
+            { transform: `translate(${Math.cos(angle) * speed}px, ${Math.sin(angle) * speed}px) scale(0)`, opacity: 0 }
         ], { duration: 600 + Math.random() * 400, fill: 'forwards' }).onfinish = () => particle.remove();
     }
 }
 
 // === КАСТОМНЫЙ КУРСОР ===
 function initCustomCursor() {
-    // Только для десктопа
     if ('ontouchstart' in window) return;
-
     const cursor = document.getElementById('custom-cursor');
     const trailContainer = document.getElementById('cursor-trail-container');
     if (!cursor || !trailContainer) return;
@@ -248,7 +266,11 @@ function initCustomCursor() {
         document.body.appendChild(star);
         const starObj = { el: star };
         stars.push(starObj);
-        setTimeout(() => { star.remove(); const i = stars.indexOf(starObj); if (i > -1) stars.splice(i, 1); }, 800);
+        setTimeout(() => {
+            star.remove();
+            const i = stars.indexOf(starObj);
+            if (i > -1) stars.splice(i, 1);
+        }, 800);
     }
 
     function animateCursor(timestamp) {
@@ -260,7 +282,7 @@ function initCustomCursor() {
         if (timestamp - lastTrailTime > trailInterval) {
             trailPoints.push({ x: mouseX, y: mouseY, life: 1 });
             if (trailPoints.length > maxTrailPoints) trailPoints.shift();
-            if (Math.random() < 0.3) createStar(mouseX + (Math.random()-0.5)*20, mouseY + (Math.random()-0.5)*20);
+            if (Math.random() < 0.3) createStar(mouseX + (Math.random() - 0.5) * 20, mouseY + (Math.random() - 0.5) * 20);
             lastTrailTime = timestamp;
         }
 
@@ -273,26 +295,26 @@ function initCustomCursor() {
             dot.style.cssText = `
                 position:fixed; left:${point.x - size/2}px; top:${point.y - size/2}px;
                 width:${size}px; height:${size}px;
-                background: radial-gradient(circle, rgba(255,215,0,${point.life}), rgba(255,165,0,${point.life*0.5}));
+                background: radial-gradient(circle, rgba(255,215,0,${point.life}), rgba(255,165,0,${point.life * 0.5}));
                 border-radius:50%; pointer-events:none; z-index:9998;
-                box-shadow: 0 0 ${10*point.life}px rgba(255,215,0,${point.life});
+                box-shadow: 0 0 ${10 * point.life}px rgba(255,215,0,${point.life});
             `;
             trailContainer.appendChild(dot);
         });
 
         requestAnimationFrame(animateCursor);
     }
+
     requestAnimationFrame(animateCursor);
 
     document.addEventListener('mousedown', () => {
         cursor.style.transform = 'scale(0.8)';
         for (let i = 0; i < 5; i++) {
-            setTimeout(() => createStar(mouseX + (Math.random()-0.5)*40, mouseY + (Math.random()-0.5)*40), i * 50);
+            setTimeout(() => createStar(mouseX + (Math.random() - 0.5) * 40, mouseY + (Math.random() - 0.5) * 40), i * 50);
         }
     });
     document.addEventListener('mouseup', () => { cursor.style.transform = 'scale(1)'; });
 }
-// === КОНЕЦ initCustomCursor ===
 
 // === ПАРАЛЛАКС ПРИ НАКЛОНЕ (мобильный) ===
 function initParallax() {
@@ -351,7 +373,6 @@ function initSparkWaterfall() {
 
 // === ФЕЙЕРВЕРК ===
 function initFireworks() {
-    // Простой фейерверк на canvas
     const canvas = document.getElementById('fireworks-canvas');
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
@@ -368,7 +389,7 @@ function initFireworks() {
         for (let i = 0; i < 40; i++) {
             const angle = (i / 40) * Math.PI * 2;
             const speed = 2 + Math.random() * 4;
-            particles.push({ x, y, vx: Math.cos(angle)*speed, vy: Math.sin(angle)*speed, life: 1, color });
+            particles.push({ x, y, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed, life: 1, color });
         }
     }
 
@@ -388,7 +409,6 @@ function initFireworks() {
         requestAnimationFrame(animateFireworks);
     }
 
-    // Запускать фейерверк только в новогоднюю ночь (31 дек - 1 янв)
     const now = new Date();
     const isNY = (now.getMonth() === 11 && now.getDate() === 31) || (now.getMonth() === 0 && now.getDate() === 1);
     if (isNY) {
@@ -408,7 +428,6 @@ function initThemeSwitcher() {
 }
 
 // === СТИЛИ АНИМАЦИЙ ===
-// starFade для курсора
 (function() {
     const s1 = document.createElement('style');
     s1.textContent = `
