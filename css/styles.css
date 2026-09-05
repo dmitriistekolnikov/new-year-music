@@ -1982,3 +1982,19 @@ body { padding-top: 104px; }
     opacity: .8;
     z-index: -1;
 }
+
+
+/* V7 — сложные фоновые эффекты */
+.switcher-option[data-effect] { position: relative; overflow: hidden; }
+.switcher-option[data-effect]::after {
+    content: ''; position: absolute; inset: 0; pointer-events: none;
+    background: linear-gradient(110deg, transparent 20%, rgba(255,255,255,.10) 50%, transparent 80%);
+    transform: translateX(-120%); transition: transform .6s ease;
+}
+.switcher-option[data-effect]:hover::after { transform: translateX(120%); }
+.switcher-option[data-effect].active {
+    border-color: rgba(255, 215, 100, .45) !important;
+    box-shadow: inset 0 0 22px rgba(255,255,255,.05), 0 0 16px rgba(100,190,255,.12);
+}
+#bg-effects-canvas { mix-blend-mode: screen; }
+@media (prefers-reduced-motion: reduce) { #bg-effects-canvas { opacity: .45; } }
