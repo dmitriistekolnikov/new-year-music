@@ -153,5 +153,24 @@
     <script src="js/fireworks.js"></script>
     <script src="js/wall-of-fame.js"></script>
     <script src="js/main.js"></script>
+<!-- Переключатель эффектов фона -->
+    <div class="bg-effects-switcher" id="bg-effects-switcher">
+        <h3>✨ Эффекты фона</h3>
+        <div class="effect-option" data-effect="none">
+            <span>🚫 Без эффектов</span>
+        </div>
+        <div class="effect-option" data-effect="lines">
+            <span>📐 Неоновые линии</span>
+        </div>
+        <div class="effect-option" data-effect="balls">
+            <span>⚽ Летающие шары</span>
+        </div>
+        <div class="effect-option" data-effect="particles">
+            <span> Пульсирующие частицы</span>
+        </div>
+    </div>
+
+    <!-- Canvas для эффектов фона -->
+    <canvas id="bg-effects-canvas" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 2;"></canvas>
 </body>
 </html>
