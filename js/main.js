@@ -265,3 +265,233 @@ window.addEventListener('error', (e) => {
 window.addEventListener('unhandledrejection', (e) => {
     console.error('Необработанная ошибка Promise:', e.reason);
 });
+// === ЭФФЕКТЫ ФОНА ===
+
+class BackgroundEffects {
+    constructor() {
+        this.canvas = document.getElementById('bg-effects-canvas');
+        this.ctx = this.canvas ? this.canvas.getContext('2d') : null;
+        this.particles = [];
+        this.lines = [];
+        this.balls = [];
+        this.animationId = null;
+        this.resize();
+        
+        if (window) {
+            window.addEventListener('resize', () => this.resize());
+        }
+    }
+    
+    resize() {
+        if (this.canvas) {
+            this.canvas.width = window.innerWidth;
+            this.canvas.height = window.innerHeight;
+        }
+    }
+    
+    // Эффект 1: Неоновые линии
+    startLines() {
+        this.lines = [];
+        const lineCount = 5;
+        
+        for (let i = 0; i < lineCount; i++) {
+            this.lines.push({
+                x1: Math.random() * this.canvas.width,
+                y1: Math.random() * this.canvas.height,
+                x2: Math.random() * this.canvas.width,
+                y2: Math.random() * this.canvas.height,
+                color: `hsl(${Math.random() * 60 + 240}, 100%, 50%)`, // Сине-фиолетовые
+                speed: 0.5 + Math.random() * 0.5,
+                angle: Math.random() * Math.PI * 2
+            });
+        }
+        
+        this.animateLines();
+    }
+    
+    animateLines() {
+        if (currentBgEffect !== 'lines') return;
+        
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        this.ctx.lineCap = 'round';
+        this.ctx.lineJoin = 'round';
+        
+        this.lines.forEach(line => {
+            // Двигаем линию
+            line.x1 += Math.cos(line.angle) * line.speed;
+            line.y1 += Math.sin(line.angle) * line.speed;
+            line.x2 += Math.cos(line.angle + 0.5) * line.speed;
+            line.y2 += Math.sin(line.angle + 0.5) * line.speed;
+            
+            // Отражаем от границ
+            if (line.x1 < 0 || line.x1 > this.canvas.width) line.angle = Math.PI - line.angle;
+            if (line.y1 < 0 || line.y1 > this.canvas.height) line.angle = -line.angle;
+            
+            // Рисуем линию с glow эффектом
+            this.ctx.shadowBlur = 20;
+            this.ctx.shadowColor = line.color;
+            this.ctx.strokeStyle = line.color;
+            this.ctx.lineWidth = 2;
+            this.ctx.beginPath();
+            this.ctx.moveTo(line.x1, line.y1);
+            this.ctx.lineTo(line.x2, line.y2);
+            this.ctx.stroke();
+            this.ctx.shadowBlur = 0;
+        });
+        
+        this.animationId = requestAnimationFrame(() => this.animateLines());
+    }
+    
+    // Эффект 2: Летающие шары
+    startBalls() {
+        this.balls = [];
+        const ballCount = 20;
+        
+        for (let i = 0; i < ballCount; i++) {
+            this.balls.push({
+                x: Math.random() * this.canvas.width,
+                y: this.canvas.height + Math.random() * 200,
+                size: 10 + Math.random() * 30,
+                color: `hsla(${Math.random() * 360}, 70%, 60%, 0.6)`,
+                speed: 1 + Math.random() * 2,
+                wobble: Math.random() * Math.PI * 2
+            });
+        }
+        
+        this.animateBalls();
+    }
+    
+    animateBalls() {
+        if (currentBgEffect !== 'balls') return;
+        
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        
+        this.balls.forEach(ball => {
+            // Двигаем вверх
+            ball.y -= ball.speed;
+            ball.wobble += 0.02;
+            ball.x += Math.sin(ball.wobble) * 0.5;
+            
+            // Возвращаем вниз если улетел
+            if (ball.y < -50) {
+                ball.y = this.canvas.height + 50;
+                ball.x = Math.random() * this.canvas.width;
+            }
+            
+            // Рисуем шар с glow
+            this.ctx.shadowBlur = 30;
+            this.ctx.shadowColor = ball.color;
+            this.ctx.fillStyle = ball.color;
+            this.ctx.beginPath();
+            this.ctx.arc(ball.x, ball.y, ball.size, 0, Math.PI * 2);
+            this.ctx.fill();
+            this.ctx.shadowBlur = 0;
+        });
+        
+        this.animationId = requestAnimationFrame(() => this.animateBalls());
+    }
+    
+    // Эффект 3: Пульсирующие частицы
+    startParticles() {
+        this.particles = [];
+        const particleCount = 50;
+        
+        for (let i = 0; i < particleCount; i++) {
+            this.particles.push({
+                x: Math.random() * this.canvas.width,
+                y: Math.random() * this.canvas.height,
+                size: 2 + Math.random() * 5,
+                color: `hsla(${Math.random() * 60 + 180}, 100%, 70%, 0.8)`, // Голубые-бирюзовые
+                pulseSpeed: 0.02 + Math.random() * 0.03,
+                pulsePhase: Math.random() * Math.PI * 2
+            });
+        }
+        
+        this.animateParticles();
+    }
+    
+    animateParticles() {
+        if (currentBgEffect !== 'particles') return;
+        
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        
+        this.particles.forEach(particle => {
+            // Пульсация
+            particle.pulsePhase += particle.pulseSpeed;
+            const pulseSize = particle.size * (1 + Math.sin(particle.pulsePhase) * 0.5);
+            
+            // Рисуем частицу с glow
+            this.ctx.shadowBlur = 15;
+            this.ctx.shadowColor = particle.color;
+            this.ctx.fillStyle = particle.color;
+            this.ctx.beginPath();
+            this.ctx.arc(particle.x, particle.y, pulseSize, 0, Math.PI * 2);
+            this.ctx.fill();
+            this.ctx.shadowBlur = 0;
+        });
+        
+        this.animationId = requestAnimationFrame(() => this.animateParticles());
+    }
+    
+    stop() {
+        if (this.animationId) {
+            cancelAnimationFrame(this.animationId);
+        }
+        if (this.ctx) {
+            this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        }
+    }
+}
+
+const bgEffects = new BackgroundEffects();
+
+function initBackgroundEffects() {
+    const switcher = document.getElementById('bg-effects-switcher');
+    const options = document.querySelectorAll('.effect-option');
+    
+    // Загружаем сохраненный эффект
+    const savedEffect = localStorage.getItem('bgEffect');
+    if (savedEffect) {
+        currentBgEffect = savedEffect;
+        applyBackgroundEffect(savedEffect);
+        updateActiveOption(savedEffect);
+    }
+    
+    options.forEach(option => {
+        option.addEventListener('click', () => {
+            const effect = option.dataset.effect;
+            currentBgEffect = effect;
+            localStorage.setItem('bgEffect', effect);
+            applyBackgroundEffect(effect);
+            updateActiveOption(effect);
+        });
+    });
+    
+    function applyBackgroundEffect(effect) {
+        bgEffects.stop();
+        
+        switch(effect) {
+            case 'lines':
+                bgEffects.startLines();
+                break;
+            case 'balls':
+                bgEffects.startBalls();
+                break;
+            case 'particles':
+                bgEffects.startParticles();
+                break;
+            default:
+                bgEffects.stop();
+        }
+    }
+    
+    function updateActiveOption(activeEffect) {
+        options.forEach(opt => {
+            if (opt.dataset.effect === activeEffect) {
+                opt.classList.add('active');
+            } else {
+                opt.classList.remove('active');
+            }
+        });
+    }
+}
