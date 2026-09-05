@@ -1,3 +1,31 @@
+// === ГЛОБАЛЬНАЯ ФУНКЦИЯ ТОСТ-УВЕДОМЛЕНИЙ ===
+function showToast(message, type = 'info') {
+    let container = document.getElementById('toast-container');
+    if (!container) {
+        container = document.createElement('div');
+        container.id = 'toast-container';
+        document.body.appendChild(container);
+    }
+
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    
+    let icon = 'ℹ️';
+    if (type === 'success') icon = '✅';
+    if (type === 'error') icon = '❌';
+    if (type === 'warning') icon = '⚠️';
+
+    toast.innerHTML = `<span>${icon}</span><span>${message}</span>`;
+    container.appendChild(toast);
+
+    setTimeout(() => {
+        toast.style.animation = 'toastOut 0.3s ease-in forwards';
+        setTimeout(() => {
+            if (toast.parentNode) toast.remove();
+        }, 300);
+    }, 3000);
+}
+
 // === ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ===
 let currentBgEffect = 'none';
 let currentThemeIndex = 0;
@@ -5,7 +33,6 @@ let currentThemeIndex = 0;
 // === ТОЧКА ВХОДА ===
 document.addEventListener('DOMContentLoaded', async () => {
     console.log('🎄 НовыйГодЧат загружается...');
-    
     try {
         // === БАЗОВЫЕ ЭФФЕКТЫ ===
         if (typeof initSnow === 'function') initSnow();
@@ -35,11 +62,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         const headerLoginBtn = document.getElementById('header-login-btn');
         if (headerLoginBtn) {
             headerLoginBtn.addEventListener('click', () => {
-                console.log('🔑 Клик по входу в шапке');
                 const chatLoginBtn = document.getElementById('chat-login-btn');
-                if (chatLoginBtn) {
-                    chatLoginBtn.click();
-                }
+                if (chatLoginBtn) chatLoginBtn.click();
             });
         }
         
@@ -48,7 +72,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             const isConnected = await db.checkConnection();
             if (isConnected) {
                 console.log('✅ База данных подключена');
-                
                 const hasSession = await db.checkSession();
                 if (hasSession) {
                     console.log('✅ Сессия активна:', db.currentNick);
@@ -61,12 +84,14 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
             } else {
                 console.log('⚠️ База данных недоступна. Чат работает в офлайн-режиме.');
+                showToast('Чат работает в офлайн-режиме', 'warning');
             }
         }
         
         console.log('✨ Все системы активны!');
     } catch (error) {
         console.error('❌ Ошибка инициализации:', error);
+        showToast('Ошибка загрузки приложения', 'error');
     }
 });
 
@@ -117,6 +142,7 @@ function applyTheme(index) {
         const darkening = (1 - brightness) * 0.7;
         const darkenedColors = theme.colors.map(color => lerpColor(color, '#000000', darkening));
         const gradient = `linear-gradient(135deg, ${darkenedColors.join(', ')})`;
+        
         document.body.style.background = gradient;
         const textColor = brightness < 0.5 ? '#e0e0e0' : theme.text;
         document.body.style.color = textColor;
@@ -133,8 +159,8 @@ function initThemeSwitcher() {
         const themeBtn = document.getElementById('theme-btn');
         const themeSwitcher = document.getElementById('theme-switcher');
         const themeList = document.getElementById('theme-list');
-        
         const savedTheme = localStorage.getItem('selectedTheme');
+        
         if (savedTheme !== null) {
             currentThemeIndex = parseInt(savedTheme);
         }
@@ -151,6 +177,7 @@ function initThemeSwitcher() {
                 option.addEventListener('click', () => {
                     applyTheme(index);
                     if (themeSwitcher) themeSwitcher.classList.remove('visible');
+                    showToast(`Тема "${theme.name}" применена`, 'success');
                 });
                 themeList.appendChild(option);
             });
@@ -171,7 +198,6 @@ function initThemeSwitcher() {
 // ==========================================
 // === СИСТЕМА ЭФФЕКТОВ ФОНА ===
 // ==========================================
-
 class BackgroundEffects {
     constructor() {
         this.canvas = document.getElementById('bg-effects-canvas');
@@ -183,14 +209,14 @@ class BackgroundEffects {
             window.addEventListener('resize', () => this.resize());
         }
     }
-    
+
     resize() {
         if (this.canvas) {
             this.canvas.width = window.innerWidth;
             this.canvas.height = window.innerHeight;
         }
     }
-    
+
     stop() {
         if (this.animId) {
             cancelAnimationFrame(this.animId);
@@ -200,246 +226,126 @@ class BackgroundEffects {
         }
         this.items = [];
     }
-    
-    // Эффект 1: Неоновые линии (25-30 штук, от края до края, повороты на 90°, сильное свечение)
+
     startLines() {
         this.items = [];
-        const lineCount = 28; // От 25 до 30
-        
+        const lineCount = 28;
         for (let i = 0; i < lineCount; i++) {
-            // Случайно выбираем: горизонтальная или вертикальная
             const isHorizontal = Math.random() > 0.5;
-            
             if (isHorizontal) {
-                // Горизонтальная линия: от левого края до правого
                 this.items.push({
-                    x1: 0,
-                    y1: Math.random() * this.canvas.height,
-                    x2: this.canvas.width,
-                    y2: Math.random() * this.canvas.height,
+                    x1: 0, y1: Math.random() * this.canvas.height,
+                    x2: this.canvas.width, y2: Math.random() * this.canvas.height,
                     color: `hsl(${Math.random() * 60 + 240}, 100%, 60%)`,
-                    speed: 0.3 + Math.random() * 0.5,
-                    angle: 0, // Горизонтальная
-                    isHorizontal: true,
-                    turnTimer: Math.random() * 300 + 200 // Случайный таймер до поворота
+                    speed: 0.3 + Math.random() * 0.5, angle: 0, isHorizontal: true,
+                    turnTimer: Math.random() * 300 + 200
                 });
             } else {
-                // Вертикальная линия: от верхнего края до нижнего
                 this.items.push({
-                    x1: Math.random() * this.canvas.width,
-                    y1: 0,
-                    x2: Math.random() * this.canvas.width,
-                    y2: this.canvas.height,
+                    x1: Math.random() * this.canvas.width, y1: 0,
+                    x2: Math.random() * this.canvas.width, y2: this.canvas.height,
                     color: `hsl(${Math.random() * 60 + 240}, 100%, 60%)`,
-                    speed: 0.3 + Math.random() * 0.5,
-                    angle: Math.PI / 2, // Вертикальная
-                    isHorizontal: false,
+                    speed: 0.3 + Math.random() * 0.5, angle: Math.PI / 2, isHorizontal: false,
                     turnTimer: Math.random() * 300 + 200
                 });
             }
         }
-        
         this.animate('lines');
     }
-    
-    // Эффект 2: Летающие шары + звёзды
+
     startBalls() {
         this.items = [];
-        const ballCount = 20;
-        const starCount = 30;
-        
-        // Шары
-        for (let i = 0; i < ballCount; i++) {
+        for (let i = 0; i < 20; i++) {
             this.items.push({
-                type: 'ball',
-                x: Math.random() * this.canvas.width,
-                y: this.canvas.height + Math.random() * 200,
-                size: 10 + Math.random() * 30,
-                color: `hsla(${Math.random() * 360}, 80%, 60%, 0.6)`,
-                speed: 1 + Math.random() * 2,
-                wobble: Math.random() * Math.PI * 2
+                type: 'ball', x: Math.random() * this.canvas.width, y: this.canvas.height + Math.random() * 200,
+                size: 10 + Math.random() * 30, color: `hsla(${Math.random() * 360}, 80%, 60%, 0.6)`,
+                speed: 1 + Math.random() * 2, wobble: Math.random() * Math.PI * 2
             });
         }
-        
-        // Звёзды
-        for (let i = 0; i < starCount; i++) {
+        for (let i = 0; i < 30; i++) {
             this.items.push({
-                type: 'star',
-                x: Math.random() * this.canvas.width,
-                y: this.canvas.height + Math.random() * 200,
-                size: 3 + Math.random() * 8,
-                color: `hsla(${Math.random() * 60 + 40}, 100%, 80%, 0.8)`,
-                speed: 1.5 + Math.random() * 2.5,
-                rotation: Math.random() * Math.PI * 2,
+                type: 'star', x: Math.random() * this.canvas.width, y: this.canvas.height + Math.random() * 200,
+                size: 3 + Math.random() * 8, color: `hsla(${Math.random() * 60 + 40}, 100%, 80%, 0.8)`,
+                speed: 1.5 + Math.random() * 2.5, rotation: Math.random() * Math.PI * 2,
                 rotationSpeed: (Math.random() - 0.5) * 0.1
             });
         }
-        
         this.animate('balls');
     }
-    
-    // Эффект 3: Пульсирующие частицы
+
     startParticles() {
         this.items = [];
-        const particleCount = 60;
-        
-        for (let i = 0; i < particleCount; i++) {
+        for (let i = 0; i < 60; i++) {
             this.items.push({
-                x: Math.random() * this.canvas.width,
-                y: Math.random() * this.canvas.height,
-                size: 2 + Math.random() * 4,
-                color: `hsla(${Math.random() * 60 + 180}, 100%, 70%, 0.8)`,
-                pulseSpeed: 0.02 + Math.random() * 0.03,
-                phase: Math.random() * Math.PI * 2
+                x: Math.random() * this.canvas.width, y: Math.random() * this.canvas.height,
+                size: 2 + Math.random() * 4, color: `hsla(${Math.random() * 60 + 180}, 100%, 70%, 0.8)`,
+                pulseSpeed: 0.02 + Math.random() * 0.03, phase: Math.random() * Math.PI * 2
             });
         }
-        
         this.animate('particles');
     }
-    
-    // Главный цикл анимации
+
     animate(type) {
         if (currentBgEffect !== type) return;
-        
         const ctx = this.ctx;
         const w = this.canvas.width;
         const h = this.canvas.height;
-        
         ctx.clearRect(0, 0, w, h);
-        
+
         if (type === 'lines') {
-            ctx.lineCap = 'round';
-            ctx.lineJoin = 'round';
-            
+            ctx.lineCap = 'round'; ctx.lineJoin = 'round';
             this.items.forEach(line => {
-                // Движение линии
                 if (line.isHorizontal) {
-                    line.y1 += line.speed;
-                    line.y2 += line.speed;
-                    
-                    // Если вышла за нижний край, возвращаем наверх
-                    if (line.y1 > h && line.y2 > h) {
-                        line.y1 = 0;
-                        line.y2 = Math.random() * h * 0.3;
-                    }
+                    line.y1 += line.speed; line.y2 += line.speed;
+                    if (line.y1 > h && line.y2 > h) { line.y1 = 0; line.y2 = Math.random() * h * 0.3; }
                 } else {
-                    line.x1 += line.speed;
-                    line.x2 += line.speed;
-                    
-                    // Если вышла за правый край, возвращаем налево
-                    if (line.x1 > w && line.x2 > w) {
-                        line.x1 = 0;
-                        line.x2 = Math.random() * w * 0.3;
-                    }
+                    line.x1 += line.speed; line.x2 += line.speed;
+                    if (line.x1 > w && line.x2 > w) { line.x1 = 0; line.x2 = Math.random() * w * 0.3; }
                 }
-                
-                // Поворот на 90 градусов
                 line.turnTimer--;
                 if (line.turnTimer <= 0) {
                     line.isHorizontal = !line.isHorizontal;
                     line.turnTimer = Math.random() * 300 + 200;
-                    
-                    // Пересчитываем координаты для нового направления
                     if (line.isHorizontal) {
-                        line.x1 = 0;
-                        line.x2 = w;
-                        line.y1 = Math.random() * h;
-                        line.y2 = Math.random() * h;
+                        line.x1 = 0; line.x2 = w; line.y1 = Math.random() * h; line.y2 = Math.random() * h;
                     } else {
-                        line.y1 = 0;
-                        line.y2 = h;
-                        line.x1 = Math.random() * w;
-                        line.x2 = Math.random() * w;
+                        line.y1 = 0; line.y2 = h; line.x1 = Math.random() * w; line.x2 = Math.random() * w;
                     }
                 }
-                
-                // Рисование с ОЧЕНЬ СИЛЬНЫМ свечением
-                ctx.shadowBlur = 40; // Сильное свечение
-                ctx.shadowColor = line.color;
-                ctx.strokeStyle = line.color;
-                ctx.lineWidth = 3;
-                
-                ctx.beginPath();
-                ctx.moveTo(line.x1, line.y1);
-                ctx.lineTo(line.x2, line.y2);
-                ctx.stroke();
-                
-                // Дополнительное свечение (второй проход)
-                ctx.shadowBlur = 60;
-                ctx.lineWidth = 1;
-                ctx.stroke();
+                ctx.shadowBlur = 40; ctx.shadowColor = line.color; ctx.strokeStyle = line.color; ctx.lineWidth = 3;
+                ctx.beginPath(); ctx.moveTo(line.x1, line.y1); ctx.lineTo(line.x2, line.y2); ctx.stroke();
+                ctx.shadowBlur = 60; ctx.lineWidth = 1; ctx.stroke();
             });
-            
         } else if (type === 'balls') {
             this.items.forEach(item => {
                 if (item.type === 'ball') {
-                    // Движение шара вверх с покачиванием
-                    item.y -= item.speed;
-                    item.wobble += 0.02;
-                    item.x += Math.sin(item.wobble) * 0.5;
-                    
-                    // Возврат вниз
-                    if (item.y < -50) {
-                        item.y = h + 50;
-                        item.x = Math.random() * w;
-                    }
-                    
-                    // Рисование шара с glow
-                    ctx.shadowBlur = 30;
-                    ctx.shadowColor = item.color;
-                    ctx.fillStyle = item.color;
-                    ctx.beginPath();
-                    ctx.arc(item.x, item.y, item.size, 0, Math.PI * 2);
-                    ctx.fill();
-                    
+                    item.y -= item.speed; item.wobble += 0.02; item.x += Math.sin(item.wobble) * 0.5;
+                    if (item.y < -50) { item.y = h + 50; item.x = Math.random() * w; }
+                    ctx.shadowBlur = 30; ctx.shadowColor = item.color; ctx.fillStyle = item.color;
+                    ctx.beginPath(); ctx.arc(item.x, item.y, item.size, 0, Math.PI * 2); ctx.fill();
                 } else if (item.type === 'star') {
-                    // Движение звезды
-                    item.y -= item.speed;
-                    item.rotation += item.rotationSpeed;
-                    
-                    // Возврат вниз
-                    if (item.y < -20) {
-                        item.y = h + 20;
-                        item.x = Math.random() * w;
-                    }
-                    
-                    // Рисование звезды
-                    ctx.save();
-                    ctx.translate(item.x, item.y);
-                    ctx.rotate(item.rotation);
-                    ctx.shadowBlur = 20;
-                    ctx.shadowColor = item.color;
-                    ctx.fillStyle = item.color;
-                    
-                    // Рисуем 5-конечную звезду
+                    item.y -= item.speed; item.rotation += item.rotationSpeed;
+                    if (item.y < -20) { item.y = h + 20; item.x = Math.random() * w; }
+                    ctx.save(); ctx.translate(item.x, item.y); ctx.rotate(item.rotation);
+                    ctx.shadowBlur = 20; ctx.shadowColor = item.color; ctx.fillStyle = item.color;
                     ctx.beginPath();
                     for (let i = 0; i < 5; i++) {
                         const angle = (i * 4 * Math.PI) / 5 - Math.PI / 2;
                         const x = Math.cos(angle) * item.size;
                         const y = Math.sin(angle) * item.size;
-                        if (i === 0) ctx.moveTo(x, y);
-                        else ctx.lineTo(x, y);
+                        if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
                     }
-                    ctx.closePath();
-                    ctx.fill();
-                    ctx.restore();
+                    ctx.closePath(); ctx.fill(); ctx.restore();
                 }
             });
-            
         } else if (type === 'particles') {
             this.items.forEach(particle => {
                 particle.phase += particle.pulseSpeed;
                 const size = particle.size * (1 + Math.sin(particle.phase) * 0.5);
-                
-                ctx.shadowBlur = 15;
-                ctx.shadowColor = particle.color;
-                ctx.fillStyle = particle.color;
-                ctx.beginPath();
-                ctx.arc(particle.x, particle.y, size, 0, Math.PI * 2);
-                ctx.fill();
+                ctx.shadowBlur = 15; ctx.shadowColor = particle.color; ctx.fillStyle = particle.color;
+                ctx.beginPath(); ctx.arc(particle.x, particle.y, size, 0, Math.PI * 2); ctx.fill();
             });
         }
-        
         ctx.shadowBlur = 0;
         this.animId = requestAnimationFrame(() => this.animate(type));
     }
@@ -452,8 +358,8 @@ function initBackgroundEffects() {
         const btn = document.getElementById('bg-effects-btn');
         const panel = document.getElementById('bg-effects-switcher');
         const options = document.querySelectorAll('.switcher-option[data-effect]');
-        
         const savedEffect = localStorage.getItem('bgEffect');
+        
         if (savedEffect) {
             currentBgEffect = savedEffect;
             applyBackgroundEffect(savedEffect);
@@ -467,6 +373,14 @@ function initBackgroundEffects() {
                 localStorage.setItem('bgEffect', effect);
                 applyBackgroundEffect(effect);
                 updateActiveOption(effect);
+                
+                const effectNames = {
+                    'none': 'Эффекты отключены',
+                    'lines': 'Неоновые линии',
+                    'balls': 'Шары и звёзды',
+                    'particles': 'Пульсирующие частицы'
+                };
+                showToast(`Эффект: ${effectNames[effect] || effect}`, 'info');
             });
         });
         
@@ -493,17 +407,16 @@ function initBackgroundEffects() {
         
         document.addEventListener('click', (e) => {
             const isPanel = e.target.closest('.switcher-panel');
-            const isButton = e.target.closest('.floating-btn');
-            if (!isPanel && !isButton) {
+            const isButton = e.target.closest('.floating-btn') || e.target.closest('#theme-btn');
+            idocumentnel && !isButton) {
                 document.querySelectorAll('.switcher-panel').forEach(p => p.classList.remove('visible'));
             }
         });
-        
     } catch (error) {
         console.error('Ошибка инициализации эффектов:', error);
     }
 }
 
-// правыйРАБОТКА ОШИБОК ===
+// === ОБРАБОТКА ОШИБОК ===
 window.addEventListener('error', (e) => console.error('🔴 Глобальная ошибка:', e.error));
 window.addEventListener('unhandledrejection', (e) => console.error('🔴 Promise error:', e.reason));
