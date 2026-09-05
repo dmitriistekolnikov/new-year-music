@@ -1,4 +1,4 @@
-// === ПЛЕЕР С УМНЫМИ ЗАГЛУШКАМИ ===
+// === ПЛЕЕР С УМНЫМИ ЗАГЛУШКАМИ И НАДЕЖНЫМ ЧТЕНИЕМ ===
 
 let currentTrackIndex = 0;
 let isPlaying = false;
@@ -8,7 +8,7 @@ audio.volume = 0.7;
 
 const DEFAULT_COVER = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyMDAiIGhlaWdodD0iMjAwIj48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iIzFhMWExYSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LXNpemU9IjgwIiBmaWxsPSIjYzlhMjI3IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkeT0iLjNlbSI+8J+OgDwvdGV4dD48L3N2Zz4=';
 
-// Генератор красивой цветной заглушки с номером трека (если нет обложки)
+// Генератор красивой цветной заглушки с номером трека (если в MP3 нет тегов)
 function generateFallbackCover(fileNumber) {
     const hue = (fileNumber * 47) % 360; // Разные цвета для разных треков
     const svg = `
@@ -20,7 +20,7 @@ function generateFallbackCover(fileNumber) {
             </linearGradient>
         </defs>
         <rect width="200" height="200" fill="url(#g)"/>
-        <text x="50%" y="50%" font-size="70" fill="rgba(255,255,255,0.8)" text-anchor="middle" dy=".3em" font-family="sans-serif" font-weight="bold">${fileNumber}</text>
+        <text x="50%" y="50%" font-size="70" fill="rgba(255,255,255,0.9)" text-anchor="middle" dy=".3em" font-family="sans-serif" font-weight="bold">${fileNumber}</text>
     </svg>`;
     return 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svg)));
 }
@@ -28,20 +28,11 @@ function generateFallbackCover(fileNumber) {
 async function readMetadata(fileNumber) {
     const url = getTrackUrl(fileNumber);
     try {
-        // ХИТРОСТЬ: Запрашиваем только первые 64 КБ файла. Там живут ID3-теги.
-        // Это работает в 100 раз быстрее и не ломается на Cloudflare, как загрузка целого файла.
-        const response = await fetch(url, {
-            headers: { 'Range': 'bytes=0-65535' }
-        });
-
-        let buffer;
-        if (response.status === 206 || response.status === 200) {
-            buffer = await response.arrayBuffer();
-        } else {
-            throw new Error("Range request failed");
-        }
-
-        // Парсим буфер через music-metadata-browser
+        // Честный fetch без Range. Раз <audio> играет этот файл, значит, сеть и CORS позволяют его скачать.
+        const response = await fetch(url);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        
+        const buffer = await response.arrayBuffer();
         const metadata = await musicMetadata.parseBuffer(buffer, 'audio/mpeg');
         
         let coverUrl = DEFAULT_COVER;
@@ -53,16 +44,16 @@ async function readMetadata(fileNumber) {
 
         return {
             id: fileNumber - 1,
-            title: metadata.common.title || `🎄 Новогодний микс #${fileNumber}`, // Умная заглушка
-            artist: metadata.common.artist || 'Праздничный плейлист',          // Умная заглушка
+            title: metadata.common.title || `🎄 Новогодний микс #${fileNumber}`,
+            artist: metadata.common.artist || 'Праздничный плейлист',
             album: metadata.common.album || 'Winter Vibes 2027',
             cover: coverUrl,
             url: url
         };
     } catch (error) {
-        // Если теги не найдены или произошла ошибка, мы НЕ показываем "Неизвестный исполнитель".
-        // Мы выдаем красивую, сгенерированную заглушку.
-        console.log(`Трек ${fileNumber}: метаданные отсутствуют, используем умную заглушку.`);
+        // Если тегов нет или произошла ошибка, мы НЕ показываем "Неизвестный исполнитель".
+        // Мы выдаем красивую, сгенерированную заглушку. Это выглядит как дизайнерское решение.
+        console.log(`Трек ${fileNumber}: метаданные не прочитаны, используем умную заглушку.`);
         return {
             id: fileNumber - 1,
             title: `🎄 Новогодний микс #${fileNumber}`,
@@ -170,19 +161,27 @@ function initPlayer() {
         
         if (header) {
             header.addEventListener('click', (e) => {
-                if (e.target.closest('.controls-mini')) return;
+                console.log('ШАПКА ПЛЕЕРА КЛИКНУТА'); // Для отладки в консоли браузера (F12)
                 
-                // ЖЕСТКОЕ управление развертыванием, чтобы работало 100%
+                // Игнорируем клики по кнопкам управления (⏮, ▶, ⏭)
+                if (e.target.closest('.controls-mini')) {
+                    console.log('Клик по кнопкам, игнорируем сворачивание');
+                    return;
+                }
+                
+                // ЖЕСТКОЕ управление развертыванием с !important, чтобы перебить любой CSS
                 if (player.classList.contains('expanded')) {
                     player.classList.remove('expanded');
-                    if (body) body.style.display = 'none';
+                    if (body) body.style.setProperty('display', 'none', 'important');
                     if (indicator) indicator.textContent = '▼';
                 } else {
                     player.classList.add('expanded');
-                    if (body) body.style.display = 'block';
+                    if (body) body.style.setProperty('display', 'block', 'important');
                     if (indicator) indicator.textContent = '▲';
                 }
             });
+        } else {
+            console.error('Элемент player-bangs-header не найден в DOM!');
         }
         
         document.getElementById('play-btn-mini')?.addEventListener('click', (e) => { e.stopPropagation(); togglePlay(); });
