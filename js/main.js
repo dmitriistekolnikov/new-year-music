@@ -3,6 +3,9 @@
 document.addEventListener('DOMContentLoaded', async () => {
     console.log('🎄 НовыйГодЧат загружается...');
     
+    // === ИНИЦИАЛИЗАЦИЯ ТЕМ ===
+    initThemeSwitcher();
+    
     // === БАЗОВЫЕ ЭФФЕКТЫ ===
     initSnow();
     initGarland();
@@ -15,7 +18,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     initFreeze();
     initGift();
     initLetter();
-    initThemeSwitcher();
     
     // === ДОПОЛНИТЕЛЬНЫЕ ЭФФЕКТЫ ===
     initCustomCursor();
@@ -62,61 +64,117 @@ document.addEventListener('DOMContentLoaded', async () => {
     console.log('✨ Все системы активны!');
 });
 
-// === ТЕМЫ ФОНА ===
+// === ТЕМЫ ФОНА (группы по 4 цвета из твоего списка) ===
 const themes = [
     // 🎄 Классика и Елка
-    { name: 'Темный хвойный', colors: ['#0A3D2E', '#064E3B', '#065F46', '#047857'], text: '#fff' },
-    { name: 'Изумрудный', colors: ['#14532D', '#166534', '#15803D', '#16A34A'], text: '#fff' },
-    { name: 'Мятный градиент', colors: ['#A7F3D0', '#6EE7B7', '#34D399', '#10B981'], text: '#1a1a1a' },
-    { name: 'Оливковый', colors: ['#4D5E37', '#556B2F', '#6B8E23', '#808000'], text: '#fff' },
-    { name: 'Салатовый с дымкой', colors: ['#DCFCE7', '#86EFAC', '#4ADE80', '#22C55E'], text: '#1a1a1a' },
-    { name: 'Морской зеленый', colors: ['#2E4F4F', '#365314', '#3F6212', '#4D7C0F'], text: '#fff' },
-    
+    { 
+        name: '🎄 Классика и Елка', 
+        colors: ['#0A3D2E', '#14532D', '#A7F3D0', '#4D5E37'],
+        text: '#fff'
+    },
     // 🌌 Ночная зимняя магия
-    { name: 'Полночь', colors: ['#0F172A', '#1E293B', '#334155', '#475569'], text: '#fff' },
-    { name: 'Темный синий', colors: ['#1E3A8A', '#1E40AF', '#1D4ED8', '#2563EB'], text: '#fff' },
-    { name: 'Глубокий фиолетовый', colors: ['#2E1065', '#4C1D95', '#5B21B6', '#6D28D9'], text: '#fff' },
-    { name: 'Индиго', colors: ['#312E81', '#3730A3', '#4338CA', '#4F46E5'], text: '#fff' },
-    { name: 'Темная бирюза', colors: ['#134E4A', '#115E59', '#0F766E', '#0D9488'], text: '#fff' },
-    { name: 'Графит', colors: ['#1F2937', '#374151', '#4B5563', '#6B7280'], text: '#fff' },
-    { name: 'Черный с синевой', colors: ['#020617', '#0F172A', '#1E293B', '#334155'], text: '#fff' },
-    
+    { 
+        name: ' Ночная магия', 
+        colors: ['#0F172A', '#1E3A8A', '#2E1065', '#312E81'],
+        text: '#fff'
+    },
     // 🔥 Уют и Тепло
-    { name: 'Теплый шоколад', colors: ['#3E2723', '#4E342E', '#5D4037', '#6D4C41'], text: '#fff' },
-    { name: 'Кофейный', colors: ['#4E342E', '#5D4037', '#6D4C41', '#795548'], text: '#fff' },
-    { name: 'Янтарный', colors: ['#78350F', '#92400E', '#B45309', '#D97706'], text: '#fff' },
-    { name: 'Кремовый', colors: ['#FEF3C7', '#FDE68A', '#FCD34D', '#FBBF24'], text: '#1a1a1a' },
-    { name: 'Песочный', colors: ['#D6C28B', '#C9B037', '#B8860B', '#A0522D'], text: '#1a1a1a' },
-    { name: 'Терракотовый', colors: ['#7C2D12', '#9A3412', '#C2410C', '#EA580C'], text: '#fff' },
-    
+    { 
+        name: '🔥 Уют и Тепло', 
+        colors: ['#3E2723', '#4E342E', '#78350F', '#FEF3C7'],
+        text: '#fff'
+    },
     // 🎅 Праздничный Красно-Бордовый
-    { name: 'Бордо', colors: ['#4C0519', '#701A75', '#831843', '#9D174D'], text: '#fff' },
-    { name: 'Темно-красный', colors: ['#7F1D1D', '#991B1B', '#B91C1C', '#DC2626'], text: '#fff' },
-    { name: 'Рубиновый', colors: ['#881337', '#9F1239', '#BE123C', '#E11D48'], text: '#fff' },
-    { name: 'Ярко-красный', colors: ['#DC2626', '#EF4444', '#F87171', '#FCA5A5'], text: '#fff' },
-    
+    { 
+        name: '🎅 Праздничный', 
+        colors: ['#4C0519', '#7F1D1D', '#881337', '#DC2626'],
+        text: '#fff'
+    },
     // 💜 Неон и Футуризм
-    { name: 'Неоновый фиолетовый', colors: ['#4C1D95', '#5B21B6', '#6D28D9', '#7C3AED'], text: '#fff' },
-    { name: 'Кислотный зеленый', colors: ['#14532D', '#166534', '#15803D', '#16A34A'], text: '#fff' },
-    { name: 'Небесно-голубой', colors: ['#0284C7', '#0369A1', '#075985', '#0C4A6E'], text: '#fff' },
-    { name: 'Бирюзовый', colors: ['#0E7490', '#0891B2', '#06B6D4', '#22D3EE'], text: '#fff' },
-    
+    { 
+        name: '💜 Неон', 
+        colors: ['#4C1D95', '#14532D', '#0284C7', '#0E7490'],
+        text: '#fff'
+    },
     // ✨ Волшебные и Нежные
-    { name: 'Светлая лаванда', colors: ['#DDD6FE', '#C4B5FD', '#A78BFA', '#8B5CF6'], text: '#1a1a1a' },
-    { name: 'Морозное утро', colors: ['#E0F2FE', '#BAE6FD', '#7DD3FC', '#38BDF8'], text: '#1a1a1a' },
-    { name: 'Розовый зефир', colors: ['#FBCFE8', '#F9A8D4', '#F472B6', '#EC4899'], text: '#1a1a1a' },
-    { name: 'Серо-голубой туман', colors: ['#64748B', '#475569', '#334155', '#1E293B'], text: '#fff' },
+    { 
+        name: '✨ Нежные', 
+        colors: ['#DDD6FE', '#E0F2FE', '#FBCFE8', '#64748B'],
+        text: '#1a1a1a'
+    },
+    //  Морские оттенки
+    { 
+        name: '🌊 Морские', 
+        colors: ['#2E4F4F', '#134E4A', '#0284C7', '#0E7490'],
+        text: '#fff'
+    },
+    // 🌙 Глубокая ночь
+    { 
+        name: '🌙 Глубокая ночь', 
+        colors: ['#020617', '#0F172A', '#1F2937', '#1E293B'],
+        text: '#fff'
+    },
 ];
 
 let currentThemeIndex = 0;
 
+// Интерполяция между двумя HEX-цветами
+function lerpColor(colorA, colorB, t) {
+    const ah = parseInt(colorA.replace(/#/g, ''), 16);
+    const ar = ah >> 16, ag = (ah >> 8) & 0xff, ab = ah & 0xff;
+    const bh = parseInt(colorB.replace(/#/g, ''), 16);
+    const br = bh >> 16, bg = (bh >> 8) & 0xff, bb = bh & 0xff;
+    const rr = ar + t * (br - ar);
+    const rg = ag + t * (bg - ag);
+    const rb = ab + t * (bb - ab);
+    return '#' + ((1 << 24) + (Math.round(rr) << 16) + (Math.round(rg) << 8) + Math.round(rb)).toString(16).slice(1);
+}
+
+// Затемнение цвета (mix с чёрным)
+function darkenColor(hex, amount) {
+    // amount: 0 = оригинал, 1 = полностью чёрный
+    return lerpColor(hex, '#000000', amount);
+}
+
+// Вычисление яркости времени суток (0 = ночь, 1 = день)
+function getTimeBrightness() {
+    const now = new Date();
+    const h = now.getHours();
+    const m = now.getMinutes();
+    const mins = h * 60 + m;
+    
+    const shifted = (mins - 60 + 1440) % 1440;
+    let brightness = 0;
+    
+    if (shifted <= 780) {
+        brightness = shifted / 780;
+    } else {
+        brightness = 1 - ((shifted - 780) / 660);
+    }
+    
+    return Math.max(0, Math.min(1, brightness));
+}
+
+// Применение темы с учётом времени суток
 function applyTheme(index) {
     const theme = themes[index];
-    const gradient = `linear-gradient(135deg, ${theme.colors[0]}, ${theme.colors[1]}, ${theme.colors[2]}, ${theme.colors[3]})`;
+    const brightness = getTimeBrightness();
+    
+    // Ночью затемняем цвета (brightness=0 → mix с чёрным на 70%)
+    // Днём оставляем оригинальные (brightness=1 → mix с чёрным на 0%)
+    const darkening = 1 - brightness; // 1 ночью, 0 днём
+    const nightDarkenAmount = 0.7; // Насколько сильно затемнять ночью (0.7 = 70% чёрного)
+    const actualDarken = darkening * nightDarkenAmount;
+    
+    const darkenedColors = theme.colors.map(color => darkenColor(color, actualDarken));
+    const gradient = `linear-gradient(135deg, ${darkenedColors[0]}, ${darkenedColors[1]}, ${darkenedColors[2]}, ${darkenedColors[3]})`;
     
     document.body.style.background = gradient;
-    document.body.style.color = theme.text;
-    document.documentElement.style.setProperty('--text-color', theme.text);
+    
+    // Цвет текста: ночью всегда светлый, днём зависит от темы
+    const textColor = brightness < 0.5 ? '#e0e0e0' : theme.text;
+    document.body.style.color = textColor;
+    document.documentElement.style.setProperty('--text-color', textColor);
     
     // Сохраняем выбор
     localStorage.setItem('selectedTheme', index);
@@ -132,11 +190,15 @@ function initThemeSwitcher() {
     const savedTheme = localStorage.getItem('selectedTheme');
     if (savedTheme !== null) {
         currentThemeIndex = parseInt(savedTheme);
-        applyTheme(currentThemeIndex);
-    } else {
-        // По умолчанию — первая тема (Темный хвойный)
-        applyTheme(0);
     }
+    
+    // Применяем тему (с учётом времени суток)
+    applyTheme(currentThemeIndex);
+    
+    // Обновляем фон каждую минуту (для плавной смены дня/ночи)
+    setInterval(() => {
+        applyTheme(currentThemeIndex);
+    }, 60000);
     
     // Создаем список тем
     if (themeList) {
