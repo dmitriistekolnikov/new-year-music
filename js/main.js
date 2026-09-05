@@ -21,8 +21,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (typeof initLetter === 'function') initLetter();
         if (typeof initPhotoFrame === 'function') initPhotoFrame();// ИСПРАВЛЕНО: добавлена инициализация фото-рамки
         if (typeof initStickers === 'function') initStickers();
-        if (typeof initThemeSwitcher === 'function') initThemeSwitcher();
-
         // === КАСТОМНЫЙ КУРСОР ===
         if (typeof initCustomCursor === 'function') initCustomCursor();
 
@@ -109,36 +107,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 // ==========================================
 
 const themes = [
-    {
-        name: '🎄 Классика и Елка',
-        colors: ['#0A3D2E', '#14532D', '#A7F3D0', '#4D5E37', '#DCFCE7', '#2E4F4F'],
-        text: '#ffffff'
-    },
-    {
-        name: '🌌 Ночная зимняя магия',
-        colors: ['#0F172A', '#1E3A8A', '#2E1065', '#312E81', '#134E4A', '#1F2937', '#020617'],
-        text: '#ffffff'
-    },
-    {
-        name: '🔥 Уют и Тепло',
-        colors: ['#3E2723', '#4E342E', '#78350F', '#FEF3C7', '#D6C28B', '#7C2D12'],
-        text: '#ffffff'
-    },
-    {
-        name: '🎅 Праздничный Красно-Бордовый',
-        colors: ['#4C0519', '#7F1D1D', '#881337', '#DC2626'],
-        text: '#ffffff'
-    },
-    {
-        name: '💜 Неон и Футуризм',
-        colors: ['#4C1D95', '#14532D', '#0284C7', '#0E7490'],
-        text: '#ffffff'
-    },
-    {
-        name: '✨ Волшебные и Нежные',
-        colors: ['#DDD6FE', '#E0F2FE', '#FBCFE8', '#64748B'],
-        text: '#1a1a1a'
-    }
+    { name: '🎄 Классика и Елка', colors: ['#0A3D2E','#14532D','#A7F3D0','#4D5E37','#DCFCE7','#86EFAC','#2E4F4F'], text: '#ffffff' },
+    { name: '🌌 Ночная зимняя магия', colors: ['#0F172A','#1E3A8A','#2E1065','#312E81','#134E4A','#1F2937','#020617'], text: '#ffffff' },
+    { name: '🔥 Уют и Тепло', colors: ['#3E2723','#4E342E','#78350F','#FEF3C7','#D6C28B','#7C2D12'], text: '#ffffff' },
+    { name: '🎅 Праздничный Красно-Бордовый', colors: ['#4C0519','#7F1D1D','#881337','#DC2626'], text: '#ffffff' },
+    { name: '💜 Неон и Футуризм', colors: ['#4C1D95','#14532D','#0284C7','#0E7490'], text: '#ffffff' },
+    { name: '✨ Волшебные и Нежные', colors: ['#DDD6FE','#C4B5FD','#E0F2FE','#BAE6FD','#FBCFE8','#F9A8D4','#64748B'], text: '#172033' }
 ];
 
 function lerpColor(colorA, colorB, t) {
@@ -169,91 +143,69 @@ function getTimeBrightness() {
 
 function applyTheme(index) {
     try {
-        index = Number(index);
-        if (!Number.isInteger(index) || index < 0 || index >= themes.length) index = 0;
-
+        index = Number.isInteger(Number(index)) ? Number(index) : 0;
+        if (index < 0 || index >= themes.length) index = 0;
         const theme = themes[index];
         const brightness = getTimeBrightness();
-        // Ночью фон становится темнее, но порядок и цвета выбранной темы не меняются.
-        const darkening = (1 - brightness) * 0.7;
+        const darkening = (1 - brightness) * 0.55;
         const colors = theme.colors.map(color => lerpColor(color, '#000000', darkening));
-        const gradient = `linear-gradient(135deg, ${colors.join(', ')})`;
-
-        document.body.style.background = gradient;
-        document.body.style.color = brightness < 0.5 ? '#e0e0e0' : theme.text;
-        document.documentElement.style.setProperty('--text-color', brightness < 0.5 ? '#e0e0e0' : theme.text);
-        document.documentElement.style.setProperty('--theme-color-1', colors[0]);
-        document.documentElement.style.setProperty('--theme-color-2', colors[colors.length - 1]);
-
-        currentThemeIndex = index;
+        const stops = colors.map((c, i) => `${c} ${(i / (colors.length - 1)) * 100}%`).join(', ');
+        document.body.style.background = `linear-gradient(135deg, ${stops})`;
+        document.body.style.backgroundAttachment = 'fixed';
+        document.body.style.color = theme.text;
+        document.documentElement.style.setProperty('--text-color', theme.text);
         localStorage.setItem('selectedTheme', String(index));
-    } catch (error) {
-        console.error('Ошибка применения темы:', error);
-    }
+        currentThemeIndex = index;
+    } catch (error) { console.error('Ошибка применения темы:', error); }
 }
 
+
 function initThemeSwitcher() {
-    try {
-        const themeBtn = document.getElementById('theme-btn');
-        const themeSwitcher = document.getElementById('theme-switcher');
-        const themeList = document.getElementById('theme-list');
+    const themeBtn = document.getElementById('theme-btn');
+    const themeSwitcher = document.getElementById('theme-switcher');
+    const themeList = document.getElementById('theme-list');
+    if (!themeBtn || !themeSwitcher || !themeList) {
+        console.warn('Переключатель тем: элементы не найдены');
+        return;
+    }
 
-        if (!themeBtn || !themeSwitcher || !themeList) {
-            console.warn('Переключатель тем: элементы не найдены');
-            return;
-        }
+    const saved = Number.parseInt(localStorage.getItem('selectedTheme') || '0', 10);
+    currentThemeIndex = Number.isInteger(saved) && saved >= 0 && saved < themes.length ? saved : 0;
 
-        const saved = Number(localStorage.getItem('selectedTheme'));
-        currentThemeIndex = Number.isInteger(saved) && saved >= 0 && saved < themes.length ? saved : 0;
-        applyTheme(currentThemeIndex);
-
+    function render() {
         themeList.innerHTML = '';
         themes.forEach((theme, index) => {
-            const option = document.createElement('div');
+            const option = document.createElement('button');
+            option.type = 'button';
             option.className = 'switcher-option';
-            option.dataset.themeIndex = String(index);
-
-            const preview = document.createElement('div');
-            preview.className = 'theme-preview';
-            preview.style.background = `linear-gradient(135deg, ${theme.colors.join(', ')})`;
-
-            const label = document.createElement('span');
-            label.textContent = theme.name;
-
-            option.append(preview, label);
-            option.addEventListener('click', (event) => {
-                event.preventDefault();
-                event.stopPropagation();
+            option.innerHTML = `<span class="theme-preview" style="background: linear-gradient(135deg, ${theme.colors.slice(0, Math.min(3, theme.colors.length)).join(',')})"></span><span>${theme.name}</span>`;
+            option.classList.toggle('active', index === currentThemeIndex);
+            option.addEventListener('click', (e) => {
+                e.stopPropagation();
                 applyTheme(index);
-                themeList.querySelectorAll('.switcher-option').forEach(el => {
-                    el.classList.toggle('active', el === option);
-                });
+                render();
                 themeSwitcher.classList.remove('visible');
+                themeSwitcher.setAttribute('aria-hidden', 'true');
             });
             themeList.appendChild(option);
         });
-
-        const updateActive = () => {
-            themeList.querySelectorAll('.switcher-option').forEach(el => {
-                el.classList.toggle('active', Number(el.dataset.themeIndex) === currentThemeIndex);
-            });
-        };
-        updateActive();
-
-        themeBtn.addEventListener('click', (event) => {
-            event.preventDefault();
-            event.stopPropagation();
-            themeSwitcher.classList.toggle('visible');
-            const effects = document.getElementById('bg-effects-switcher');
-            if (effects) effects.classList.remove('visible');
-        });
-
-        // Только затемнение/осветление в течение суток. Тема от времени не переключается.
-        setInterval(() => applyTheme(currentThemeIndex), 60000);
-    } catch (error) {
-        console.error('Ошибка инициализации тем:', error);
     }
+
+    themeBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const open = !themeSwitcher.classList.contains('visible');
+        themeSwitcher.classList.toggle('visible', open);
+        themeSwitcher.setAttribute('aria-hidden', String(!open));
+        const effectsPanel = document.getElementById('bg-effects-switcher');
+        if (effectsPanel) effectsPanel.classList.remove('visible');
+    });
+
+    applyTheme(currentThemeIndex);
+    render();
+    setInterval(() => applyTheme(currentThemeIndex), 60000);
 }
+
 
 // ==========================================
 // === СИСТЕМА ЭФФЕКТОВ ФОНА ===
@@ -529,7 +481,8 @@ function initBackgroundEffects() {
             btn.addEventListener('click', (e) => {
                 e.stopPropagation();
                 panel.classList.toggle('visible');
-                document.getElementById('theme-switcher').classList.remove('visible');
+                const themePanel = document.getElementById('theme-switcher');
+                if (themePanel) themePanel.classList.remove('visible');
             });
         }
 
