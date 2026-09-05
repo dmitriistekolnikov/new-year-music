@@ -116,7 +116,15 @@
         <div class="gift-box"></div>
     </div>
     <div class="prediction-toast" id="prediction-toast"></div>
-
+<!-- Canvas для фейерверка -->
+    <canvas id="fireworks-canvas" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 9999;"></canvas>
+    
+    <!-- Оверлей обратного отсчёта -->
+    <div id="countdown-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 10000; justify-content: center; align-items: center; flex-direction: column;">
+        <div id="countdown-number" style="font-size: 20vw; font-weight: bold; color: #fff; text-shadow: 0 0 50px #FFD700, 0 0 100px #FF6B6B; transition: transform 0.2s;">30</div>
+        <div style="font-size: 3vw; color: #FFD700; margin-top: 20px;">До Нового Года осталось...</div>
+    </div>
+    
     <!-- Скрипты -->
     <script src="js/config.js"></script>
     <script src="js/antimat.js"></script>
@@ -125,6 +133,7 @@
     <script src="js/snow.js"></script>
     <script src="js/player.js"></script>
     <script src="js/effects.js"></script>
+    <script src="js/fireworks.js"></script>
     <script src="js/main.js"></script>
 <!-- Переключатель тем -->
 <!-- Переключатель тем -->
