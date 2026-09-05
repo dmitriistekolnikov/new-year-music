@@ -1,9 +1,11 @@
-// === ТОЧКА ВХОДА ===
 // === ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ===
 let bgEffectInterval = null;
 let currentBgEffect = 'none';
+
+// === ТОЧКА ВХОДА ===
+
 document.addEventListener('DOMContentLoaded', async () => {
-    console.log('🎄 НовыйГодЧат загружается...');
+    console.log(' НовыйГодЧат загружается...');
     
     try {
         // === БАЗОВЫЕ ЭФФЕКТЫ ===
@@ -26,6 +28,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         // === ФЕЙЕРВЕРК ===
         if (typeof initFireworks === 'function') initFireworks();
         
+        // === ЭФФЕКТЫ ФОНА ===
+        if (typeof initBackgroundEffects === 'function') initBackgroundEffects();
+        
         // === ДОПОЛНИТЕЛЬНЫЕ ЭФФЕКТЫ ===
         if (typeof initCustomCursor === 'function') initCustomCursor();
         if (typeof initParallax === 'function') initParallax();
@@ -33,6 +38,37 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (typeof initSparkWaterfall === 'function') initSparkWaterfall();
         if (typeof initElementTransforms === 'function') initElementTransforms();
         if (typeof initNameFirework === 'function') initNameFirework();
+        
+        // === ОБРАБОТЧИК КНОПКИ ВХОД В ШАПКЕ ===
+        const headerLoginBtn = document.getElementById('header-login-btn');
+        if (headerLoginBtn) {
+            headerLoginBtn.addEventListener('click', () => {
+                console.log('🔑 Клик по входу в шапке');
+                const chatLoginBtn = document.getElementById('chat-login-btn');
+                if (chatLoginBtn) {
+                    chatLoginBtn.click();
+                } else {
+                    alert('Нажмите кнопку "🔑 Войти в чат"');
+                }
+            });
+        }
+        
+        // === КНОПКА ЭФФЕКТОВ ФОНА ===
+        const bgEffectsBtn = document.getElementById('bg-effects-btn');
+        const bgEffectsSwitcher = document.getElementById('bg-effects-switcher');
+        
+        if (bgEffectsBtn && bgEffectsSwitcher) {
+            bgEffectsBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                bgEffectsSwitcher.classList.toggle('visible');
+            });
+            
+            document.addEventListener('click', (e) => {
+                if (!bgEffectsSwitcher.contains(e.target) && e.target !== bgEffectsBtn) {
+                    bgEffectsSwitcher.classList.remove('visible');
+                }
+            });
+        }
         
         // === ПРОВЕРКА БД ===
         if (typeof db !== 'undefined') {
@@ -51,22 +87,15 @@ document.addEventListener('DOMContentLoaded', async () => {
                     if (letterArea) letterArea.style.display = 'flex';
                 }
             } else {
-                console.log('⚠️ База данных недоступна. Чат работает в офлайн-режиме.');
+                console.log('️ База данных недоступна. Чат работает в офлайн-режиме.');
             }
         }
         
         // === ЗАГЛУШКИ ===
-        const headerLoginBtn = document.getElementById('header-login-btn');
-        if (headerLoginBtn) {
-            headerLoginBtn.addEventListener('click', () => {
-                console.log(' Клик по входу в шапке');
-            });
-        }
-        
         const photoUpload = document.getElementById('photo-upload');
         if (photoUpload) {
             photoUpload.addEventListener('click', () => {
-                console.log(' Загрузка фото');
+                console.log('📸 Загрузка фото');
             });
         }
         
@@ -76,61 +105,20 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 });
 
-// === ТЕМЫ ФОНА (группы по 4 цвета из твоего списка) ===
+// === ТЕМЫ ФОНА ===
 const themes = [
-    // 🎄 Классика и Елка
-    { 
-        name: '🎄 Классика и Елка', 
-        colors: ['#0A3D2E', '#14532D', '#A7F3D0', '#4D5E37'],
-        text: '#fff'
-    },
-    // 🌌 Ночная зимняя магия
-    { 
-        name: '🌌 Ночная магия', 
-        colors: ['#0F172A', '#1E3A8A', '#2E1065', '#312E81'],
-        text: '#fff'
-    },
-    // 🔥 Уют и Тепло
-    { 
-        name: '🔥 Уют и Тепло', 
-        colors: ['#3E2723', '#4E342E', '#78350F', '#FEF3C7'],
-        text: '#fff'
-    },
-    // 🎅 Праздничный Красно-Бордовый
-    { 
-        name: '🎅 Праздничный', 
-        colors: ['#4C0519', '#7F1D1D', '#881337', '#DC2626'],
-        text: '#fff'
-    },
-    // 💜 Неон и Футуризм
-    { 
-        name: ' Неон', 
-        colors: ['#4C1D95', '#14532D', '#0284C7', '#0E7490'],
-        text: '#fff'
-    },
-    // ✨ Волшебные и Нежные
-    { 
-        name: '✨ Нежные', 
-        colors: ['#DDD6FE', '#E0F2FE', '#FBCFE8', '#64748B'],
-        text: '#1a1a1a'
-    },
-    // 🌊 Морские оттенки
-    { 
-        name: '🌊 Морские', 
-        colors: ['#2E4F4F', '#134E4A', '#0284C7', '#0E7490'],
-        text: '#fff'
-    },
-    // 🌙 Глубокая ночь
-    { 
-        name: '🌙 Глубокая ночь', 
-        colors: ['#020617', '#0F172A', '#1F2937', '#1E293B'],
-        text: '#fff'
-    },
+    { name: '🎄 Классика и Елка', colors: ['#0A3D2E', '#14532D', '#A7F3D0', '#4D5E37'], text: '#fff' },
+    { name: '🌌 Ночная магия', colors: ['#0F172A', '#1E3A8A', '#2E1065', '#312E81'], text: '#fff' },
+    { name: ' Уют и Тепло', colors: ['#3E2723', '#4E342E', '#78350F', '#FEF3C7'], text: '#fff' },
+    { name: '🎅 Праздничный', colors: ['#4C0519', '#7F1D1D', '#881337', '#DC2626'], text: '#fff' },
+    { name: '💜 Неон', colors: ['#4C1D95', '#14532D', '#0284C7', '#0E7490'], text: '#fff' },
+    { name: '✨ Нежные', colors: ['#DDD6FE', '#E0F2FE', '#FBCFE8', '#64748B'], text: '#1a1a1a' },
+    { name: '🌊 Морские', colors: ['#2E4F4F', '#134E4A', '#0284C7', '#0E7490'], text: '#fff' },
+    { name: '🌙 Глубокая ночь', colors: ['#020617', '#0F172A', '#1F2937', '#1E293B'], text: '#fff' },
 ];
 
 let currentThemeIndex = 0;
 
-// Интерполяция между двумя HEX-цветами
 function lerpColor(colorA, colorB, t) {
     const ah = parseInt(colorA.replace(/#/g, ''), 16);
     const ar = ah >> 16, ag = (ah >> 8) & 0xff, ab = ah & 0xff;
@@ -142,12 +130,10 @@ function lerpColor(colorA, colorB, t) {
     return '#' + ((1 << 24) + (Math.round(rr) << 16) + (Math.round(rg) << 8) + Math.round(rb)).toString(16).slice(1);
 }
 
-// Затемнение цвета (mix с чёрным)
 function darkenColor(hex, amount) {
     return lerpColor(hex, '#000000', amount);
 }
 
-// Вычисление яркости времени суток (0 = ночь, 1 = день)
 function getTimeBrightness() {
     const now = new Date();
     const h = now.getHours();
@@ -166,7 +152,6 @@ function getTimeBrightness() {
     return Math.max(0, Math.min(1, brightness));
 }
 
-// Применение темы с учётом времени суток
 function applyTheme(index) {
     try {
         const theme = themes[index];
@@ -242,29 +227,7 @@ function initThemeSwitcher() {
         console.error('Ошибка инициализации переключателя тем:', error);
     }
 }
-// === ОБРАБОТЧИК КНОПКИ ВХОД ===
-        const headerLoginBtn = document.getElementById('header-login-btn');
-        if (headerLoginBtn) {
-            headerLoginBtn.addEventListener('click', () => {
-                console.log('🔑 Клик по входу в шапке');
-                // Открываем форму входа через существующую кнопку
-                const chatLoginBtn = document.getElementById('chat-login-btn');
-                if (chatLoginBtn) {
-                    chatLoginBtn.click();
-                } else {
-                    // Если кнопки нет, показываем алерт
-                    alert('Нажмите кнопку "🔑 Войти в чат" в разделе чата');
-                }
-            });
-        }
-// === ОБРАБОТКА ОШИБОК ===
-window.addEventListener('error', (e) => {
-    console.error('Глобальная ошибка:', e.error);
-});
 
-window.addEventListener('unhandledrejection', (e) => {
-    console.error('Необработанная ошибка Promise:', e.reason);
-});
 // === ЭФФЕКТЫ ФОНА ===
 
 class BackgroundEffects {
@@ -289,7 +252,6 @@ class BackgroundEffects {
         }
     }
     
-    // Эффект 1: Неоновые линии
     startLines() {
         this.lines = [];
         const lineCount = 5;
@@ -300,7 +262,7 @@ class BackgroundEffects {
                 y1: Math.random() * this.canvas.height,
                 x2: Math.random() * this.canvas.width,
                 y2: Math.random() * this.canvas.height,
-                color: `hsl(${Math.random() * 60 + 240}, 100%, 50%)`, // Сине-фиолетовые
+                color: `hsl(${Math.random() * 60 + 240}, 100%, 50%)`,
                 speed: 0.5 + Math.random() * 0.5,
                 angle: Math.random() * Math.PI * 2
             });
@@ -317,17 +279,14 @@ class BackgroundEffects {
         this.ctx.lineJoin = 'round';
         
         this.lines.forEach(line => {
-            // Двигаем линию
             line.x1 += Math.cos(line.angle) * line.speed;
             line.y1 += Math.sin(line.angle) * line.speed;
             line.x2 += Math.cos(line.angle + 0.5) * line.speed;
             line.y2 += Math.sin(line.angle + 0.5) * line.speed;
             
-            // Отражаем от границ
             if (line.x1 < 0 || line.x1 > this.canvas.width) line.angle = Math.PI - line.angle;
             if (line.y1 < 0 || line.y1 > this.canvas.height) line.angle = -line.angle;
             
-            // Рисуем линию с glow эффектом
             this.ctx.shadowBlur = 20;
             this.ctx.shadowColor = line.color;
             this.ctx.strokeStyle = line.color;
@@ -342,7 +301,6 @@ class BackgroundEffects {
         this.animationId = requestAnimationFrame(() => this.animateLines());
     }
     
-    // Эффект 2: Летающие шары
     startBalls() {
         this.balls = [];
         const ballCount = 20;
@@ -367,18 +325,15 @@ class BackgroundEffects {
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
         
         this.balls.forEach(ball => {
-            // Двигаем вверх
             ball.y -= ball.speed;
             ball.wobble += 0.02;
             ball.x += Math.sin(ball.wobble) * 0.5;
             
-            // Возвращаем вниз если улетел
             if (ball.y < -50) {
                 ball.y = this.canvas.height + 50;
                 ball.x = Math.random() * this.canvas.width;
             }
             
-            // Рисуем шар с glow
             this.ctx.shadowBlur = 30;
             this.ctx.shadowColor = ball.color;
             this.ctx.fillStyle = ball.color;
@@ -391,7 +346,6 @@ class BackgroundEffects {
         this.animationId = requestAnimationFrame(() => this.animateBalls());
     }
     
-    // Эффект 3: Пульсирующие частицы
     startParticles() {
         this.particles = [];
         const particleCount = 50;
@@ -401,7 +355,7 @@ class BackgroundEffects {
                 x: Math.random() * this.canvas.width,
                 y: Math.random() * this.canvas.height,
                 size: 2 + Math.random() * 5,
-                color: `hsla(${Math.random() * 60 + 180}, 100%, 70%, 0.8)`, // Голубые-бирюзовые
+                color: `hsla(${Math.random() * 60 + 180}, 100%, 70%, 0.8)`,
                 pulseSpeed: 0.02 + Math.random() * 0.03,
                 pulsePhase: Math.random() * Math.PI * 2
             });
@@ -416,11 +370,9 @@ class BackgroundEffects {
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
         
         this.particles.forEach(particle => {
-            // Пульсация
             particle.pulsePhase += particle.pulseSpeed;
             const pulseSize = particle.size * (1 + Math.sin(particle.pulsePhase) * 0.5);
             
-            // Рисуем частицу с glow
             this.ctx.shadowBlur = 15;
             this.ctx.shadowColor = particle.color;
             this.ctx.fillStyle = particle.color;
@@ -449,7 +401,6 @@ function initBackgroundEffects() {
     const switcher = document.getElementById('bg-effects-switcher');
     const options = document.querySelectorAll('.effect-option');
     
-    // Загружаем сохраненный эффект
     const savedEffect = localStorage.getItem('bgEffect');
     if (savedEffect) {
         currentBgEffect = savedEffect;
@@ -495,3 +446,12 @@ function initBackgroundEffects() {
         });
     }
 }
+
+// === ОБРАБОТКА ОШИБОК ===
+window.addEventListener('error', (e) => {
+    console.error('Глобальная ошибка:', e.error);
+});
+
+window.addEventListener('unhandledrejection', (e) => {
+    console.error('Необработанная ошибка Promise:', e.reason);
+});
