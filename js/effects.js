@@ -999,3 +999,67 @@ style.textContent = `
     }
 `;
 document.head.appendChild(style);
+// === НОВОЕ: ИНИЦИАЛИЗАЦИЯ СТИКЕРОВ ===
+function initStickers() {
+    const stickerBtn = document.getElementById('sticker-btn');
+    const stickerPanel = document.getElementById('sticker-panel');
+    
+    // Если элементов нет в HTML, тихо выходим, чтобы не ломать остальной код
+    if (!stickerBtn || !stickerPanel) {
+        console.warn('Элементы стикеров (sticker-btn или sticker-panel) не найдены в DOM');
+        return;
+    }
+
+    // Список стикеров (адаптируй пути под реальные файлы в твоей папке /stickers/)
+    const stickers = [
+        { id: 'cats/1.png', name: 'Кот 1' },
+        { id: 'cats/2.png', name: 'Кот 2' },
+        { id: 'memes/1.png', name: 'Мем 1' },
+        { id: 'memes/2.png', name: 'Мем 2' }
+    ];
+
+    // Очищаем и заполняем панель
+    stickerPanel.innerHTML = '';
+    stickers.forEach(sticker => {
+        const stickerEl = document.createElement('div');
+        stickerEl.className = 'sticker-item';
+        // Добавлен onerror, чтобы не было битых картинок, если файла временно нет
+        stickerEl.innerHTML = `<img src="/stickers/${sticker.id}" alt="${sticker.name}" title="${sticker.name}" onerror="this.style.display='none'; this.parentElement.innerText='🎄'">`;
+        
+        stickerEl.addEventListener('click', async () => {
+            if (typeof db !== 'undefined' && db.currentNick) {
+                const result = await db.sendMessage(db.currentNick, '', sticker.id);
+                if (result) {
+                    if (typeof appendMessageToChat === 'function') {
+                        appendMessageToChat({
+                            nick: db.currentNick,
+                            text: '',
+                            sticker: sticker.id,
+                            system: 0,
+                            time: Date.now()
+                        });
+                    }
+                    stickerPanel.classList.remove('visible');
+                } else {
+                    alert('Ошибка отправки стикера. Проверь консоль (F12).');
+                }
+            } else {
+                alert('Сначала войдите в чат, чтобы отправлять стикеры!');
+            }
+        });
+        stickerPanel.appendChild(stickerEl);
+    });
+
+    // Открытие/закрытие панели по клику на кнопку
+    stickerBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        stickerPanel.classList.toggle('visible');
+    });
+
+    // Закрытие панели при клике в любое другое место экрана
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('.sticker-panel') && !e.target.closest('#sticker-btn')) {
+            stickerPanel.classList.remove('visible');
+        }
+    });
+}
