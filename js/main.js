@@ -1,5 +1,7 @@
 // === ТОЧКА ВХОДА ===
-
+// === ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ===
+let bgEffectInterval = null;
+let currentBgEffect = 'none';
 document.addEventListener('DOMContentLoaded', async () => {
     console.log('🎄 НовыйГодЧат загружается...');
     
