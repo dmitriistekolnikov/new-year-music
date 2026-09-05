@@ -5,20 +5,32 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>🎄 НовыйГодЧат</title>
     <link rel="stylesheet" href="css/styles.css">
-    <!-- Библиотека для чтения метаданных из полного ArrayBuffer (работает стабильно, раз играет музыка) -->
     <script src="https://cdn.jsdelivr.net/npm/music-metadata-browser@2.5.10/lib/index.min.js"></script>
 </head>
 <body>
+    <!-- Фоновые элементы (задний план) -->
     <div class="bg-orb orb-1"></div>
     <div class="bg-orb orb-2"></div>
     <div class="snowflakes" id="snow-container"></div>
+    
+    <!-- Свечки на заднем фоне -->
     <div id="candles-bg"></div>
+    
+    <!-- Часы с кукушкой на заднем фоне -->
     <div id="clock-bg"></div>
+
+    <!-- Гирлянда сверху -->
     <div class="garland" id="garland"></div>
+
+    <!-- Северное сияние (появляется ночью) -->
+    <div class="aurora" id="aurora">
+        <div class="aurora-layer"></div>
+        <div class="aurora-layer"></div>
+        <div class="aurora-layer"></div>
+    </div>
 
     <!-- ЧЕЛКА (плеер сверху) -->
     <div class="player-bangs" id="player-bangs">
-        <!-- ДОБАВЛЕНЫ СТИЛИ ДЛЯ ГАРАНТИРОВАННОГО КЛИКА -->
         <div class="player-bangs-header" id="player-bangs-header" style="cursor: pointer; position: relative; z-index: 10000; pointer-events: auto;">
             <div class="now-playing-mini">
                 <div style="display: flex; align-items: center; gap: 8px;">
@@ -58,6 +70,7 @@
         </header>
 
         <main>
+            <!-- Таймер -->
             <section class="glass-card freeze-target">
                 <h2 style="text-align: center; margin-bottom: 8px;">🎄 До Нового Года 🎄</h2>
                 <p style="text-align: center; color: var(--text-secondary); margin-bottom: 20px; font-size: 0.9rem;">Волшебство совсем близко...</p>
@@ -69,6 +82,7 @@
                 </div>
             </section>
 
+            <!-- Чат -->
             <section class="glass-card freeze-target">
                 <h2 style="text-align: center; margin-bottom: 16px;">🎉 С Новым Годом! 🎉</h2>
                 <div class="chat-status">
@@ -86,10 +100,12 @@
                 
                 <div class="chat-input-area" id="chat-input-area">
                     <div class="locked-message" id="locked-msg">🔒 Войди, чтобы писать в чат</div>
+                    
                     <div class="letter-input-area" id="letter-area" style="display: none;">
                         <input type="text" class="letter-input" id="letter-text" placeholder="Напиши сообщение или желание...">
                         <button class="btn" id="send-letter-btn">✉️</button>
                     </div>
+                    
                     <button class="btn" id="chat-login-btn" style="width: 100%; justify-content: center; margin-top: 10px;">🔑 Войти в чат</button>
                     <div class="photo-upload" id="photo-upload">📸 Нажми, чтобы отправить фото</div>
                 </div>
@@ -101,12 +117,14 @@
         </footer>
     </div>
 
+    <!-- Волшебный подарок -->
     <div class="magic-gift" id="magic-gift">
         <div class="gift-lid"></div>
         <div class="gift-box"></div>
     </div>
     <div class="prediction-toast" id="prediction-toast"></div>
 
+    <!-- Скрипты -->
     <script src="js/config.js"></script>
     <script src="js/antimat.js"></script>
     <script src="js/database.js"></script>
