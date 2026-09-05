@@ -1922,3 +1922,63 @@ body {
     }
 }
 
+
+
+/* === V6: аккуратная композиция шапки и плеера === */
+.site-header {
+    position: relative;
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+    padding: 18px 0 26px;
+}
+.title-wrap { min-width: 0; }
+.title-kicker { font-size: .68rem; letter-spacing: .24em; color: rgba(255,255,255,.55); margin-bottom: 4px; }
+.title-subtitle { margin-top: 4px; font-size: .76rem; color: rgba(255,255,255,.58); letter-spacing: .04em; }
+.header-actions { display: flex; align-items: center; gap: 8px; padding: 7px; border: 1px solid rgba(255,255,255,.13); background: rgba(8,12,18,.28); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border-radius: 17px; box-shadow: 0 10px 30px rgba(0,0,0,.18); }
+.header-action { width: 44px; height: 44px; padding: 0; justify-content: center; border-radius: 12px; font-size: 1.15rem; }
+.header-action.login-action { width: auto; padding: 0 14px; font-size: .86rem; }
+.player-bangs { top: 8px; width: min(620px, calc(100vw - 32px)); z-index: 1000; }
+body { padding-top: 104px; }
+#theme-switcher, #bg-effects-switcher { top: 96px; bottom: auto; right: 24px; }
+#theme-switcher { right: 138px; }
+.switcher-panel { max-height: 68vh; }
+#bg-effects-canvas { z-index: 1; }
+@media (max-width: 768px) {
+    body { padding-top: 92px; }
+    .site-header { align-items: flex-start; padding-top: 12px; }
+    .title-kicker { font-size: .56rem; }
+    .title-subtitle { font-size: .68rem; }
+    .header-actions { gap: 5px; padding: 5px; }
+    .header-action { width: 40px; height: 40px; }
+    .header-action.login-action { width: 40px; padding: 0; font-size: 0; }
+    .header-action.login-action::before { content: '🔑'; font-size: 1rem; }
+    .player-bangs { top: 5px; width: calc(100vw - 12px); }
+    #theme-switcher { right: 112px; top: 82px; }
+    #bg-effects-switcher { right: 10px; top: 82px; }
+}
+@media (max-width: 480px) {
+    body { padding-top: 88px; }
+    .site-header { gap: 8px; }
+    .main-title { font-size: 1.35rem; }
+    .title-subtitle { display: none; }
+    .header-action { width: 37px; height: 37px; }
+    .player-bangs { width: calc(100vw - 8px); }
+}
+
+/* Новый сложный эффект: лёгкое свечение интерфейса при включённом canvas */
+.glass-card {
+    isolation: isolate;
+}
+.glass-card::after {
+    content: '';
+    position: absolute;
+    inset: -1px;
+    pointer-events: none;
+    border-radius: inherit;
+    background: radial-gradient(circle at 50% -10%, rgba(255,255,255,.10), transparent 45%);
+    opacity: .8;
+    z-index: -1;
+}
