@@ -1835,22 +1835,28 @@ body {
 }
 /* === ПАНЕЛЬ СТИКЕРОВ === */
 .sticker-panel {
-    position: absolute;
-    bottom: 60px;
+    position: fixed;
     left: 10px;
-    background: rgba(10, 10, 15, 0.95);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 12px;
+    top: 10px;
+    width: min(284px, calc(100vw - 20px));
+    max-height: 72vh;
+    overflow-y: auto;
+    overflow-x: hidden;
     padding: 10px;
+    background: rgba(10, 10, 15, 0.96);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 14px;
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(4, minmax(50px, 1fr));
     gap: 8px;
     opacity: 0;
     visibility: hidden;
     transform: translateY(10px);
-    transition: all 0.2s ease;
-    z-index: 100;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s ease;
+    z-index: 10005;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
 }
 
 .sticker-panel.visible {
@@ -1860,24 +1866,36 @@ body {
 }
 
 .sticker-item {
-    width: 50px;
-    height: 50px;
+    width: 100%;
+    min-width: 0;
+    aspect-ratio: 1;
     display: flex;
     align-items: center;
     justify-content: center;
+    padding: 4px;
     background: rgba(255, 255, 255, 0.05);
+    border: 0;
     border-radius: 8px;
     cursor: pointer;
     transition: transform 0.1s, background 0.2s;
-    font-size: 24px;
+    color: inherit;
+    font: inherit;
 }
 
 .sticker-item:hover {
     background: rgba(255, 255, 255, 0.15);
-    transform: scale(1.1);
+    transform: scale(1.06);
+}
+
+.sticker-item:disabled {
+    opacity: 0.55;
+    cursor: wait;
 }
 
 .sticker-item img {
+    display: block;
+    width: 100%;
+    height: 100%;
     max-width: 100%;
     max-height: 100%;
     object-fit: contain;
@@ -1888,6 +1906,19 @@ body {
 #theme-switcher, #bg-effects-switcher { z-index: 10001; }
 #theme-switcher { bottom: 150px; right: 30px; }
 #bg-effects-switcher { bottom: 85px; right: 30px; }
-#sticker-panel { z-index: 10002; }
-.sticker-item { border: 0; color: inherit; font: inherit; }
-.sticker-item img { display: block; }
+#sticker-panel { z-index: 10005; }
+
+@media (max-width: 600px) {
+    .sticker-panel {
+        width: min(272px, calc(100vw - 20px));
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 6px;
+        padding: 8px;
+        max-height: 68vh;
+    }
+
+    .sticker-item {
+        min-height: 48px;
+    }
+}
+
