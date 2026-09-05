@@ -3,65 +3,69 @@
 document.addEventListener('DOMContentLoaded', async () => {
     console.log('🎄 НовыйГодЧат загружается...');
     
-    // === ИНИЦИАЛИЗАЦИЯ ТЕМ ===
-    initThemeSwitcher();
-    
-    // === БАЗОВЫЕ ЭФФЕКТЫ ===
-    initSnow();
-    initGarland();
-    initTimer();
-    
-    // === ПЛЕЕР ===
-    initPlayer();
-    
-    // === ИНТЕРАКТИВНЫЕ ЭФФЕКТЫ ===
-    initFreeze();
-    initGift();
-    initLetter();
-    
-    // === ДОПОЛНИТЕЛЬНЫЕ ЭФФЕКТЫ ===
-    initCustomCursor();
-    initParallax();
-    initTreeCounter();
-    initSparkWaterfall();
-    initElementTransforms();
-    initNameFirework();
-    
-    // === ПРОВЕРКА БД ===
-    const isConnected = await db.checkConnection();
-    if (isConnected) {
-        console.log('✅ База данных подключена');
+    try {
+        // === БАЗОВЫЕ ЭФФЕКТЫ ===
+        if (typeof initSnow === 'function') initSnow();
+        if (typeof initGarland === 'function') initGarland();
+        if (typeof initTimer === 'function') initTimer();
         
-        const hasSession = await db.checkSession();
-        if (hasSession) {
-            console.log('✅ Сессия активна:', db.currentNick);
-            const loginBtn = document.getElementById('chat-login-btn');
-            const lockedMsg = document.getElementById('locked-msg');
-            const letterArea = document.getElementById('letter-area');
-            if (loginBtn) loginBtn.style.display = 'none';
-            if (lockedMsg) lockedMsg.style.display = 'none';
-            if (letterArea) letterArea.style.display = 'flex';
+        // === ПЛЕЕР ===
+        if (typeof initPlayer === 'function') initPlayer();
+        
+        // === ИНТЕРАКТИВНЫЕ ЭФФЕКТЫ ===
+        if (typeof initFreeze === 'function') initFreeze();
+        if (typeof initGift === 'function') initGift();
+        if (typeof initLetter === 'function') initLetter();
+        if (typeof initThemeSwitcher === 'function') initThemeSwitcher();
+        
+        // === ДОПОЛНИТЕЛЬНЫЕ ЭФФЕКТЫ ===
+        if (typeof initCustomCursor === 'function') initCustomCursor();
+        if (typeof initParallax === 'function') initParallax();
+        if (typeof initTreeCounter === 'function') initTreeCounter();
+        if (typeof initSparkWaterfall === 'function') initSparkWaterfall();
+        if (typeof initElementTransforms === 'function') initElementTransforms();
+        if (typeof initNameFirework === 'function') initNameFirework();
+        
+        // === ПРОВЕРКА БД ===
+        if (typeof db !== 'undefined') {
+            const isConnected = await db.checkConnection();
+            if (isConnected) {
+                console.log('✅ База данных подключена');
+                
+                const hasSession = await db.checkSession();
+                if (hasSession) {
+                    console.log('✅ Сессия активна:', db.currentNick);
+                    const loginBtn = document.getElementById('chat-login-btn');
+                    const lockedMsg = document.getElementById('locked-msg');
+                    const letterArea = document.getElementById('letter-area');
+                    if (loginBtn) loginBtn.style.display = 'none';
+                    if (lockedMsg) lockedMsg.style.display = 'none';
+                    if (letterArea) letterArea.style.display = 'flex';
+                }
+            } else {
+                console.log('⚠️ База данных недоступна. Чат работает в офлайн-режиме.');
+            }
         }
-    } else {
-        console.log('⚠️ База данных недоступна. Чат работает в офлайн-режиме.');
+        
+        // === ЗАГЛУШКИ ===
+        const headerLoginBtn = document.getElementById('header-login-btn');
+        if (headerLoginBtn) {
+            headerLoginBtn.addEventListener('click', () => {
+                console.log(' Клик по входу в шапке');
+            });
+        }
+        
+        const photoUpload = document.getElementById('photo-upload');
+        if (photoUpload) {
+            photoUpload.addEventListener('click', () => {
+                console.log(' Загрузка фото');
+            });
+        }
+        
+        console.log('✨ Все системы активны!');
+    } catch (error) {
+        console.error('❌ Ошибка инициализации:', error);
     }
-    
-    // === ЗАГЛУШКИ ===
-    const headerLoginBtn = document.getElementById('header-login-btn');
-    if (headerLoginBtn) {
-        headerLoginBtn.addEventListener('click', () => {
-            console.log(' Клик по входу в шапке');
-        });
-    }
-    
-    const photoUpload = document.getElementById('photo-upload');
-    if (photoUpload) {
-        photoUpload.addEventListener('click', () => {
-            console.log('📸 Загрузка фото');
-        });
-    }
-    
-    console.log('✨ Все системы активны!');
 });
 
 // === ТЕМЫ ФОНА (группы по 4 цвета из твоего списка) ===
@@ -72,9 +76,9 @@ const themes = [
         colors: ['#0A3D2E', '#14532D', '#A7F3D0', '#4D5E37'],
         text: '#fff'
     },
-    // 🌌 Ночная зимняя магия
+    //  Ночная зимняя магия
     { 
-        name: ' Ночная магия', 
+        name: '🌌 Ночная магия', 
         colors: ['#0F172A', '#1E3A8A', '#2E1065', '#312E81'],
         text: '#fff'
     },
@@ -96,7 +100,7 @@ const themes = [
         colors: ['#4C1D95', '#14532D', '#0284C7', '#0E7490'],
         text: '#fff'
     },
-    // ✨ Волшебные и Нежные
+    //  Волшебные и Нежные
     { 
         name: '✨ Нежные', 
         colors: ['#DDD6FE', '#E0F2FE', '#FBCFE8', '#64748B'],
@@ -132,7 +136,6 @@ function lerpColor(colorA, colorB, t) {
 
 // Затемнение цвета (mix с чёрным)
 function darkenColor(hex, amount) {
-    // amount: 0 = оригинал, 1 = полностью чёрный
     return lerpColor(hex, '#000000', amount);
 }
 
@@ -157,81 +160,79 @@ function getTimeBrightness() {
 
 // Применение темы с учётом времени суток
 function applyTheme(index) {
-    const theme = themes[index];
-    const brightness = getTimeBrightness();
-    
-    // Ночью затемняем цвета (brightness=0 → mix с чёрным на 70%)
-    // Днём оставляем оригинальные (brightness=1 → mix с чёрным на 0%)
-    const darkening = 1 - brightness; // 1 ночью, 0 днём
-    const nightDarkenAmount = 0.7; // Насколько сильно затемнять ночью (0.7 = 70% чёрного)
-    const actualDarken = darkening * nightDarkenAmount;
-    
-    const darkenedColors = theme.colors.map(color => darkenColor(color, actualDarken));
-    const gradient = `linear-gradient(135deg, ${darkenedColors[0]}, ${darkenedColors[1]}, ${darkenedColors[2]}, ${darkenedColors[3]})`;
-    
-    document.body.style.background = gradient;
-    
-    // Цвет текста: ночью всегда светлый, днём зависит от темы
-    const textColor = brightness < 0.5 ? '#e0e0e0' : theme.text;
-    document.body.style.color = textColor;
-    document.documentElement.style.setProperty('--text-color', textColor);
-    
-    // Сохраняем выбор
-    localStorage.setItem('selectedTheme', index);
-    currentThemeIndex = index;
+    try {
+        const theme = themes[index];
+        const brightness = getTimeBrightness();
+        
+        const darkening = 1 - brightness;
+        const nightDarkenAmount = 0.7;
+        const actualDarken = darkening * nightDarkenAmount;
+        
+        const darkenedColors = theme.colors.map(color => darkenColor(color, actualDarken));
+        const gradient = `linear-gradient(135deg, ${darkenedColors[0]}, ${darkenedColors[1]}, ${darkenedColors[2]}, ${darkenedColors[3]})`;
+        
+        document.body.style.background = gradient;
+        
+        const textColor = brightness < 0.5 ? '#e0e0e0' : theme.text;
+        document.body.style.color = textColor;
+        document.documentElement.style.setProperty('--text-color', textColor);
+        
+        localStorage.setItem('selectedTheme', index);
+        currentThemeIndex = index;
+    } catch (error) {
+        console.error('Ошибка применения темы:', error);
+    }
 }
 
 function initThemeSwitcher() {
-    const themeBtn = document.getElementById('theme-btn');
-    const themeSwitcher = document.getElementById('theme-switcher');
-    const themeList = document.getElementById('theme-list');
-    
-    // Загружаем сохраненную тему
-    const savedTheme = localStorage.getItem('selectedTheme');
-    if (savedTheme !== null) {
-        currentThemeIndex = parseInt(savedTheme);
-    }
-    
-    // Применяем тему (с учётом времени суток)
-    applyTheme(currentThemeIndex);
-    
-    // Обновляем фон каждую минуту (для плавной смены дня/ночи)
-    setInterval(() => {
-        applyTheme(currentThemeIndex);
-    }, 60000);
-    
-    // Создаем список тем
-    if (themeList) {
-        themeList.innerHTML = '';
-        themes.forEach((theme, index) => {
-            const option = document.createElement('div');
-            option.className = 'theme-option';
-            option.innerHTML = `
-                <div class="theme-preview" style="background: linear-gradient(135deg, ${theme.colors[0]}, ${theme.colors[3]})"></div>
-                <span>${theme.name}</span>
-            `;
-            option.addEventListener('click', () => {
-                applyTheme(index);
-                themeSwitcher.classList.remove('visible');
-            });
-            themeList.appendChild(option);
-        });
-    }
-    
-    // Клик по кнопке 🎨
-    if (themeBtn) {
-        themeBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            themeSwitcher.classList.toggle('visible');
-        });
-    }
-    
-    // Закрытие при клике вне переключателя
-    document.addEventListener('click', (e) => {
-        if (themeSwitcher && !themeSwitcher.contains(e.target) && e.target !== themeBtn) {
-            themeSwitcher.classList.remove('visible');
+    try {
+        const themeBtn = document.getElementById('theme-btn');
+        const themeSwitcher = document.getElementById('theme-switcher');
+        const themeList = document.getElementById('theme-list');
+        
+        const savedTheme = localStorage.getItem('selectedTheme');
+        if (savedTheme !== null) {
+            currentThemeIndex = parseInt(savedTheme);
         }
-    });
+        
+        applyTheme(currentThemeIndex);
+        
+        setInterval(() => {
+            applyTheme(currentThemeIndex);
+        }, 60000);
+        
+        if (themeList) {
+            themeList.innerHTML = '';
+            themes.forEach((theme, index) => {
+                const option = document.createElement('div');
+                option.className = 'theme-option';
+                option.innerHTML = `
+                    <div class="theme-preview" style="background: linear-gradient(135deg, ${theme.colors[0]}, ${theme.colors[3]})"></div>
+                    <span>${theme.name}</span>
+                `;
+                option.addEventListener('click', () => {
+                    applyTheme(index);
+                    if (themeSwitcher) themeSwitcher.classList.remove('visible');
+                });
+                themeList.appendChild(option);
+            });
+        }
+        
+        if (themeBtn) {
+            themeBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (themeSwitcher) themeSwitcher.classList.toggle('visible');
+            });
+        }
+        
+        document.addEventListener('click', (e) => {
+            if (themeSwitcher && !themeSwitcher.contains(e.target) && e.target !== themeBtn) {
+                themeSwitcher.classList.remove('visible');
+            }
+        });
+    } catch (error) {
+        console.error('Ошибка инициализации переключателя тем:', error);
+    }
 }
 
 // === ОБРАБОТКА ОШИБОК ===
