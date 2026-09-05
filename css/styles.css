@@ -814,3 +814,67 @@ header {
     .glass-card { padding: 16px; }
     .chat-messages { height: 250px; }
     }
+/* === СЕВЕРНОЕ СИЯНИЕ === */
+.aurora {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 1;
+    opacity: 0;
+    transition: opacity 2s ease;
+    mix-blend-mode: screen;
+}
+
+.aurora.visible {
+    opacity: 0.6;
+}
+
+.aurora-layer {
+    position: absolute;
+    width: 200%;
+    height: 200%;
+    top: -50%;
+    left: -50%;
+    background: radial-gradient(ellipse at 50% 50%, 
+        rgba(0, 255, 150, 0.3) 0%, 
+        rgba(100, 0, 255, 0.2) 30%, 
+        transparent 70%);
+    filter: blur(80px);
+    animation: aurora-drift 15s ease-in-out infinite;
+}
+
+.aurora-layer:nth-child(2) {
+    background: radial-gradient(ellipse at 30% 40%, 
+        rgba(0, 200, 255, 0.25) 0%, 
+        rgba(150, 0, 200, 0.15) 40%, 
+        transparent 70%);
+    animation: aurora-drift 20s ease-in-out infinite reverse;
+    animation-delay: -5s;
+}
+
+.aurora-layer:nth-child(3) {
+    background: radial-gradient(ellipse at 70% 60%, 
+        rgba(100, 255, 200, 0.2) 0%, 
+        rgba(200, 50, 255, 0.1) 50%, 
+        transparent 70%);
+    animation: aurora-drift 25s ease-in-out infinite;
+    animation-delay: -10s;
+}
+
+@keyframes aurora-drift {
+    0%, 100% {
+        transform: translate(0, 0) rotate(0deg) scale(1);
+    }
+    25% {
+        transform: translate(10%, -5%) rotate(5deg) scale(1.1);
+    }
+    50% {
+        transform: translate(-5%, 10%) rotate(-3deg) scale(0.95);
+    }
+    75% {
+        transform: translate(-10%, -10%) rotate(7deg) scale(1.05);
+    }
+}
