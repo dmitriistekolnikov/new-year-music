@@ -19,24 +19,22 @@ export default {
             return handleApi(request, env, path, corsHeaders);
         }
 
-        // Статика (HTML, CSS, JS, MP3)
+        // Статика (HTML, CSS, JS, MP3, изображения стикеров)
         const response = await env.ASSETS.fetch(request);
-        
-        // Для MP3 добавляем CORS и Range headers (критично для jsmediatags!)
-        if (path.endsWith('.mp3')) {
-            const newHeaders = new Headers(response.headers);
+        const newHeaders = new Headers(response.headers);
+        const isAudio = /\.mp3$/i.test(path);
+        const isSticker = /^\/stickers\//i.test(path);
+
+        if (isAudio || isSticker) {
             newHeaders.set('Access-Control-Allow-Origin', '*');
-            newHeaders.set('Access-Control-Allow-Headers', 'Range');
+            newHeaders.set('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS');
+            newHeaders.set('Access-Control-Allow-Headers', 'Range, Content-Type');
+            newHeaders.set('Access-Control-Expose-Headers', 'Content-Range, Accept-Ranges, Content-Length, Content-Type');
             newHeaders.set('Accept-Ranges', 'bytes');
-            newHeaders.set('Content-Type', 'audio/mpeg');
-            
-            return new Response(response.body, {
-                status: response.status,
-                headers: newHeaders
-            });
+            if (isAudio) newHeaders.set('Content-Type', 'audio/mpeg');
         }
-        
-        return response;
+
+        return new Response(response.body, { status: response.status, headers: newHeaders });
     }
 };
 

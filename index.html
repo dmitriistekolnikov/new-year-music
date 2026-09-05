@@ -59,11 +59,16 @@
     </div>
 
     <div class="container">
-        <header>
-            <h1 class="main-title">🎄 НовыйГодЧат</h1>
-            <div style="display: flex; gap: 10px;">
-                <button class="btn" id="theme-btn" type="button" title="Сменить тему">🎨</button>
-                <button class="btn" id="header-login-btn">🔑 Вход</button>
+        <header class="site-header">
+            <div class="title-wrap">
+                <div class="title-kicker">✦ ЗИМНЯЯ КОМНАТА ✦</div>
+                <h1 class="main-title">🎄 НовыйГодЧат</h1>
+                <div class="title-subtitle">музыка • чат • праздничная атмосфера</div>
+            </div>
+            <div class="header-actions" aria-label="Управление сайтом">
+                <button class="btn header-action" id="theme-btn" type="button" title="Сменить тему" aria-label="Сменить тему">🎨</button>
+                <button class="btn header-action" id="bg-effects-btn" type="button" title="Эффекты фона" aria-label="Эффекты фона">✨</button>
+                <button class="btn header-action login-action" id="header-login-btn" type="button">🔑 Вход</button>
             </div>
         </header>
 
@@ -131,9 +136,6 @@
         <div class="switcher-header">🎨 Темы оформления</div>
         <div class="switcher-list" id="theme-list"></div>
     </div>
-
-    <!-- Кнопка эффектов фона -->
-    <button class="floating-btn" id="bg-effects-btn" title="Эффекты фона">✨</button>
 
     <!-- Панель переключения эффектов фона -->
     <div class="switcher-panel" id="bg-effects-switcher">
