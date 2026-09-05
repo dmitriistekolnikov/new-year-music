@@ -19,7 +19,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (typeof initFreeze === 'function') initFreeze();
         if (typeof initGift === 'function') initGift();
         if (typeof initLetter === 'function') initLetter();
-        if (typeof initPhotoFrame === 'function') initPhotoFrame(); // ИСПРАВЛЕНО: добавлена инициализация фото-рамки
+        if (typeof initPhotoFrame === 'function') initPhotoFrame();// ИСПРАВЛЕНО: добавлена инициализация фото-рамки
+        if (typeof initStickers === 'function') initStikers();
+        if (typeof initThemeSwitcher === 'function') initThemeSwitcher();
 
         // === КАСТОМНЫЙ КУРСОР ===
         if (typeof initCustomCursor === 'function') initCustomCursor();
