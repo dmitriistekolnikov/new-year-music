@@ -374,121 +374,34 @@ function initLetter() {
 
 // === ПАНЕЛЬ СТИКЕРОВ ===
 function initStickerPanel() {
-    const stickerBtn = document.getElementById('sticker-btn');
     const stickerPanel = document.getElementById('sticker-panel');
-
-    if (!stickerBtn || !stickerPanel) {
-        console.warn(
-            'Элементы стикеров (sticker-btn или sticker-panel) не найдены в DOM'
-        );
-        return;
-    }
-
-    // Реальные файлы из папки /stickers/ текущего репозитория.
+    if (!stickerPanel) return;
+    
     const stickers = [
-        { id: 'cats/1-66959-256b.png', name: 'Кот 1' },
-        { id: 'cats/1-66960-256b.png', name: 'Кот 2' },
-        { id: 'cats/1-66962-256b.png', name: 'Кот 3' },
-        { id: 'cats/1-66963-256b.png', name: 'Кот 4' },
-        { id: 'cats/1-66964-256b.png', name: 'Кот 5' },
-        { id: 'cats/1-66965-256b.png', name: 'Кот 6' },
-        { id: 'cats/1-66966-256b.png', name: 'Кот 7' },
-        { id: 'cats/1-66967-256b.png', name: 'Кот 8' },
-        { id: 'cats/1-66968-256b.png', name: 'Кот 9' },
-        { id: 'cats/1-66969-256b.png', name: 'Кот 10' },
-        { id: 'cats/1-66970-256b.png', name: 'Кот 11' },
-        { id: 'cats/1-66971-256b.png', name: 'Кот 12' },
-        { id: 'cats/1-66972-256b.png', name: 'Кот 13' },
-        { id: 'cats/1-66973-256b.png', name: 'Кот 14' },
-        { id: 'cats/1-66974-256b.png', name: 'Кот 15' },
-        { id: 'cats/1-66975-256b.png', name: 'Кот 16' },
-        { id: 'cats/1-66976-256b.png', name: 'Кот 17' },
-        { id: 'cats/1-66977-256b.png', name: 'Кот 18' },
-        { id: 'cats/1-66978-256b.png', name: 'Кот 19' },
-        { id: 'cats/1-66979-256b.png', name: 'Кот 20' },
-        { id: 'cats/1-66980-256b.png', name: 'Кот 21' },
-        { id: 'cats/1-66981-256b.png', name: 'Кот 22' },
-        { id: 'cats/1-66982-256b.png', name: 'Кот 23' },
-        { id: 'cats/1-66983-256b.png', name: 'Кот 24' },
-        { id: 'cats/1-66984-256b.png', name: 'Кот 25' },
-        { id: 'cats/1-66985-256b.png', name: 'Кот 26' },
-        { id: 'cats/1-66986-256b.png', name: 'Кот 27' },
-        { id: 'cats/1-66987-256b.png', name: 'Кот 28' },
-        { id: 'cats/1-66988-256b.png', name: 'Кот 29' },
-        { id: 'cats/1-66989-256b.png', name: 'Кот 30' },
-        { id: 'cats/1-66990-256b.png', name: 'Кот 31' },
-        { id: 'cats/1-66991-256b.png', name: 'Кот 32' },
-        { id: 'cats/1-66992-256b.png', name: 'Кот 33' },
-        { id: 'cats/1-66993-256b.png', name: 'Кот 34' },
-        { id: 'cats/1-66994-256b.png', name: 'Кот 35' },
-        { id: 'cats/1-66995-256b.png', name: 'Кот 36' },
-        { id: 'cats/1-66996-256b.png', name: 'Кот 37' },
-        { id: 'cats/1-66997-256b.png', name: 'Кот 38' },
-        { id: 'cats/1-66998-256b.png', name: 'Кот 39' },
-        { id: 'cats/1-66999-256b.png', name: 'Кот 40' },
-        { id: 'cats/1-67000-256b.png', name: 'Кот 41' },
-        { id: 'cats/1-67001-256b.png', name: 'Кот 42' },
-        { id: 'cats/1-67002-256b.png', name: 'Кот 43' },
-        { id: 'cats/1-67003-256b.png', name: 'Кот 44' },
-        { id: 'cats/1-67004-256b.png', name: 'Кот 45' },
-        { id: 'cats/1-67005-256b.png', name: 'Кот 46' },
-        { id: 'cats/1-67006-256b.png', name: 'Кот 47' },
-
-        { id: 'memes/IMG_20260620_104705.jpg', name: 'Мем 1' },
-        { id: 'memes/IMG_20260620_104806.jpg', name: 'Мем 2' },
-        { id: 'memes/IMG_20260620_104912.jpg', name: 'Мем 3' },
-        { id: 'memes/IMG_20260620_105004.jpg', name: 'Мем 4' },
-        { id: 'memes/Lol', name: 'LOL' }
+        { id: 'santa.png', name: 'Санта' },
+        { id: 'tree.png', name: 'Елка' },
+        { id: 'gift.png', name: 'Подарок' },
+        { id: 'snowman.png', name: 'Снеговик' },
+        { id: 'reindeer.png', name: 'Олень' },
+        { id: 'bell.png', name: 'Колокольчик' }
     ];
-
+    
     stickerPanel.innerHTML = '';
-
+    
     stickers.forEach(sticker => {
-        const stickerEl = document.createElement('button');
-        stickerEl.type = 'button';
+        const stickerEl = document.createElement('div');
         stickerEl.className = 'sticker-item';
-        stickerEl.title = sticker.name;
-
-        const img = document.createElement('img');
-        img.src = `stickers/${sticker.id}`;
-        img.alt = sticker.name;
-        img.loading = 'lazy';
-
-        img.addEventListener('error', () => {
-            stickerEl.remove();
-        });
-
-        stickerEl.appendChild(img);
-
-        stickerEl.addEventListener('click', async (event) => {
-            event.preventDefault();
-            event.stopPropagation();
-
+        stickerEl.innerHTML = `<img src="/stickers/${sticker.id}" alt="${sticker.name}" title="${sticker.name}">`;
+        
+        stickerEl.addEventListener('click', async () => {
             if (!db.currentNick) {
-                toast.show(
-                    'Доступ запрещен',
-                    'Войдите в чат, чтобы отправлять стикеры',
-                    'warning'
-                );
+                toast.show('Доступ запрещен', 'Войдите в чат, чтобы отправлять стикеры', 'warning');
                 return;
             }
-
-            try {
-                const result = await db.sendMessage(
-                    db.currentNick,
-                    '',
-                    sticker.id
-                );
-
-                if (!result) {
-                    toast.show(
-                        'Ошибка',
-                        'Не удалось отправить стикер',
-                        'error'
-                    );
-                    return;
-                }
-
+            
+            const result = await db.sendMessage(db.currentNick, '', sticker.id);
+            
+            if (result) {
                 appendMessageToChat({
                     nick: db.currentNick,
                     text: '',
@@ -496,51 +409,15 @@ function initStickerPanel() {
                     system: 0,
                     time: Date.now()
                 });
-
+                
                 stickerPanel.classList.remove('visible');
-
-                toast.show(
-                    'Стикер отправлен!',
-                    `${sticker.name} добавлен в чат`,
-                    'success',
-                    2000
-                );
-            } catch (error) {
-                console.error('Ошибка отправки стикера:', error);
-
-                toast.show(
-                    'Ошибка',
-                    'Не удалось отправить стикер',
-                    'error'
-                );
+                toast.show('Стикер отправлен!', `${sticker.name} добавлен в чат`, 'success', 2000);
+            } else {
+                toast.show('Ошибка', 'Не удалось отправить стикер', 'error');
             }
         });
-
+        
         stickerPanel.appendChild(stickerEl);
-    });
-
-    stickerBtn.addEventListener('click', (event) => {
-        event.preventDefault();
-        event.stopPropagation();
-
-        stickerPanel.classList.toggle('visible');
-
-        document
-            .getElementById('theme-switcher')
-            ?.classList.remove('visible');
-
-        document
-            .getElementById('bg-effects-switcher')
-            ?.classList.remove('visible');
-    });
-
-    document.addEventListener('click', (event) => {
-        if (
-            !event.target.closest('#sticker-panel') &&
-            !event.target.closest('#sticker-btn')
-        ) {
-            stickerPanel.classList.remove('visible');
-        }
     });
 }
 
@@ -1123,3 +1000,87 @@ style.textContent = `
 `;
 document.head.appendChild(style);
 // === НОВОЕ: ИНИЦИАЛИЗАЦИЯ СТИКЕРОВ ===
+function initStickers() {
+    const stickerBtn = document.getElementById('sticker-btn');
+    const stickerPanel = document.getElementById('sticker-panel');
+
+    if (!stickerBtn || !stickerPanel) return;
+
+    const stickers = [];
+
+    if (typeof STICKERS_CATS_RANGE !== 'undefined') {
+        for (let n = STICKERS_CATS_RANGE.start; n <= STICKERS_CATS_RANGE.end; n++) {
+            stickers.push({ id: `cats/1-${n}-256b.png`, name: `Кот ${n - STICKERS_CATS_RANGE.start + 1}` });
+        }
+    }
+
+    if (typeof STICKERS_MEMES !== 'undefined') {
+        STICKERS_MEMES.forEach((name, index) => {
+            stickers.push({ id: `memes/${name}`, name: `Мем ${index + 1}` });
+        });
+    }
+
+    stickerPanel.innerHTML = '';
+
+    stickers.forEach(sticker => {
+        const el = document.createElement('button');
+        el.type = 'button';
+        el.className = 'sticker-item';
+        el.title = sticker.name;
+
+        const img = document.createElement('img');
+        img.src = `stickers/${sticker.id}`;
+        img.alt = sticker.name;
+        img.loading = 'lazy';
+        img.addEventListener('error', () => el.remove());
+        el.appendChild(img);
+
+        el.addEventListener('click', async event => {
+            event.preventDefault();
+            event.stopPropagation();
+
+            if (typeof db === 'undefined' || !db.currentNick) {
+                alert('Сначала войдите в чат, чтобы отправлять стикеры!');
+                return;
+            }
+
+            try {
+                const result = await db.sendMessage(db.currentNick, '', sticker.id);
+                if (!result) {
+                    alert('Ошибка отправки стикера.');
+                    return;
+                }
+
+                if (typeof appendMessageToChat === 'function') {
+                    appendMessageToChat({
+                        nick: db.currentNick, text: '', sticker: sticker.id,
+                        system: 0, time: Date.now()
+                    });
+                }
+                stickerPanel.classList.remove('visible');
+            } catch (error) {
+                console.error('Ошибка отправки стикера:', error);
+                alert('Не удалось отправить стикер.');
+            }
+        });
+
+        stickerPanel.appendChild(el);
+    });
+
+    stickerBtn.addEventListener('click', event => {
+        event.preventDefault();
+        event.stopPropagation();
+        stickerPanel.classList.toggle('visible');
+
+        const themePanel = document.getElementById('theme-switcher');
+        const effectsPanel = document.getElementById('bg-effects-switcher');
+        if (themePanel) themePanel.classList.remove('visible');
+        if (effectsPanel) effectsPanel.classList.remove('visible');
+    });
+
+    document.addEventListener('click', event => {
+        if (!event.target.closest('#sticker-panel') && !event.target.closest('#sticker-btn')) {
+            stickerPanel.classList.remove('visible');
+        }
+    });
+}
