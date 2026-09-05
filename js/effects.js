@@ -1,5 +1,189 @@
 // === ВСЕ ЭФФЕКТЫ (КРОМЕ ЧАСОВ И СВЕЧЕЙ) ===
 
+// === TOAST УВЕДОМЛЕНИЯ ===
+class ToastManager {
+    constructor() {
+        this.container = document.createElement('div');
+        this.container.className = 'toast-container';
+        document.body.appendChild(this.container);
+        this.addStyles();
+    }
+
+    addStyles() {
+        const style = document.createElement('style');
+        style.textContent = `
+            .toast-container {
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                z-index: 10000;
+                display: flex;
+                flex-direction: column;
+                gap: 10px;
+                pointer-events: none;
+            }
+
+            .toast {
+                background: rgba(255, 255, 255, 0.1);
+                backdrop-filter: blur(20px);
+                -webkit-backdrop-filter: blur(20px);
+                border: 1px solid rgba(255, 255, 255, 0.2);
+                border-radius: 12px;
+                padding: 15px 20px;
+                min-width: 280px;
+                max-width: 400px;
+                box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                animation: toastSlideIn 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+                pointer-events: auto;
+                position: relative;
+                overflow: hidden;
+            }
+
+            .toast::before {
+                content: '';
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 4px;
+                height: 100%;
+                background: linear-gradient(180deg, #c9a227, #2d5a27);
+            }
+
+            .toast.success::before { background: linear-gradient(180deg, #2d5a27, #4ade80); }
+            .toast.error::before { background: linear-gradient(180deg, #8b0000, #ef4444); }
+            .toast.warning::before { background: linear-gradient(180deg, #c9a227, #fbbf24); }
+            .toast.info::before { background: linear-gradient(180deg, #1e3a5f, #3b82f6); }
+
+            .toast-icon {
+                font-size: 1.5rem;
+                flex-shrink: 0;
+            }
+
+            .toast-content {
+                flex: 1;
+                color: #fff;
+                font-size: 0.95rem;
+                line-height: 1.4;
+            }
+
+            .toast-title {
+                font-weight: 600;
+                margin-bottom: 2px;
+                color: #c9a227;
+            }
+
+            .toast-message {
+                color: rgba(255, 255, 255, 0.9);
+            }
+
+            .toast-close {
+                background: rgba(255, 255, 255, 0.1);
+                border: none;
+                color: #fff;
+                width: 24px;
+                height: 24px;
+                border-radius: 50%;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 1rem;
+                transition: all 0.2s;
+                flex-shrink: 0;
+            }
+
+            .toast-close:hover {
+                background: rgba(255, 255, 255, 0.2);
+                transform: scale(1.1);
+            }
+
+            .toast-progress {
+                position: absolute;
+                bottom: 0;
+                left: 0;
+                height: 3px;
+                background: linear-gradient(90deg, #c9a227, #2d5a27);
+                animation: toastProgress linear forwards;
+            }
+
+            @keyframes toastSlideIn {
+                from {
+                    transform: translateX(400px);
+                    opacity: 0;
+                }
+                to {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+            }
+
+            @keyframes toastSlideOut {
+                from {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+                to {
+                    transform: translateX(400px);
+                    opacity: 0;
+                }
+            }
+
+            @keyframes toastProgress {
+                from { width: 100%; }
+                to { width: 0%; }
+            }
+        `;
+        document.head.appendChild(style);
+    }
+
+    show(title, message, type = 'info', duration = 4000) {
+        const icons = {
+            success: '✅',
+            error: '❌',
+            warning: '⚠️',
+            info: 'ℹ️'
+        };
+
+        const toast = document.createElement('div');
+        toast.className = `toast ${type}`;
+        
+        const progress = document.createElement('div');
+        progress.className = 'toast-progress';
+        progress.style.animationDuration = `${duration}ms`;
+
+        toast.innerHTML = `
+            <div class="toast-icon">${icons[type]}</div>
+            <div class="toast-content">
+                <div class="toast-title">${title}</div>
+                <div class="toast-message">${message}</div>
+            </div>
+            <button class="toast-close">×</button>
+        `;
+
+        toast.appendChild(progress);
+        this.container.appendChild(toast);
+
+        const closeBtn = toast.querySelector('.toast-close');
+        closeBtn.addEventListener('click', () => this.removeToast(toast));
+
+        setTimeout(() => this.removeToast(toast), duration);
+    }
+
+    removeToast(toast) {
+        toast.style.animation = 'toastSlideOut 0.3s ease forwards';
+        setTimeout(() => {
+            if (toast.parentNode) {
+                toast.parentNode.removeChild(toast);
+            }
+        }, 300);
+    }
+}
+
+const toast = new ToastManager();
+
 // === 10. ГИРЛЯНДА ===
 function initGarland() {
     const garland = document.getElementById('garland');
@@ -29,8 +213,8 @@ function initFreeze() {
 // === 5. ВОЛШЕБНЫЙ ПОДАРОК ===
 function initGift() {
     const gift = document.getElementById('magic-gift');
-    const toast = document.getElementById('prediction-toast');
-    if (!gift || !toast) return;
+    const toastEl = document.getElementById('prediction-toast');
+    if (!gift || !toastEl) return;
     
     gift.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -42,86 +226,101 @@ function initGift() {
         
         createClickParticles(centerX, centerY, 30, ['#c9a227', '#8b0000', '#ffffff']);
         
-        toast.textContent = PREDICTIONS[Math.floor(Math.random() * PREDICTIONS.length)];
-        toast.classList.add('show');
+        const prediction = PREDICTIONS[Math.floor(Math.random() * PREDICTIONS.length)];
+        toastEl.textContent = prediction;
+        toastEl.classList.add('show');
         
         setTimeout(() => {
             gift.classList.remove('opened');
-            toast.classList.remove('show');
+            toastEl.classList.remove('show');
         }, 3000);
     });
 }
 
-// === 7. ПИСЬМО / ЧАТ С АНТИ-МАТОМ ===
+// === 7. ПИСЬМО / ЧАТ С АНТИ-МАТОМ И СТИКЕРАМИ ===
 function initLetter() {
     let isLoggedIn = false;
     const chatInput = document.getElementById('letter-text');
     const sendBtn = document.getElementById('send-letter-btn');
     const chatContainer = document.getElementById('chat-messages');
+    const stickerBtn = document.getElementById('sticker-btn');
+    const stickerPanel = document.getElementById('sticker-panel');
     
     if (!chatInput || !sendBtn || !chatContainer) return;
     
     loadChatMessages();
+    initStickerPanel();
     
     // Кнопка входа
-    document.getElementById('chat-login-btn').addEventListener('click', async function() {
-        const nick = prompt('Введи свой ник (минимум 2 символа):');
-        if (!nick || nick.trim().length < 2) {
-            alert('Ник должен быть минимум 2 символа!');
-            return;
-        }
-        
-        const nickCheck = antiMat.check(nick);
-        if (nickCheck.isBanned) {
-            alert('Ник содержит запрещенные слова!');
-            return;
-        }
-        
-        console.log('Попытка входа под ником:', nick.trim());
-        
-        try {
-            const result = await db.login(nick.trim());
-            console.log('Результат логина:', result);
-            
-            if (result) {
-                isLoggedIn = true;
-                this.style.display = 'none';
-                document.getElementById('locked-msg').style.display = 'none';
-                document.getElementById('letter-area').style.display = 'flex';
-                
-                const statusBadge = document.getElementById('chat-status-badge');
-                if (statusBadge) {
-                    statusBadge.className = 'status-badge';
-                    statusBadge.style.background = 'rgba(45, 90, 39, 0.2)';
-                    statusBadge.style.color = '#2d5a27';
-                    statusBadge.innerHTML = '<span class="status-dot" style="background: #2d5a27;"></span> online';
-                }
-                
-                appendMessageToChat({
-                    nick: '🎅 Система',
-                    text: `${nick} присоединился к чату!`,
-                    system: 1,
-                    time: Date.now()
-                });
-            } else {
-                alert('Ошибка входа: сервер не вернул данные. Проверь консоль (F12) для деталей.');
+    const chatLoginBtn = document.getElementById('chat-login-btn');
+    if (chatLoginBtn) {
+        chatLoginBtn.addEventListener('click', async function() {
+            const nick = prompt('Введи свой ник (минимум 2 символа):');
+            if (!nick || nick.trim().length < 2) {
+                toast.show('Ошибка', 'Ник должен быть минимум 2 символа!', 'error');
+                return;
             }
-        } catch (error) {
-            console.error('КРИТИЧЕСКАЯ ОШИБКА ЛОГИНА:', error);
-            alert('Ошибка входа: ' + error.message + '\n\nПроверь консоль браузера (F12) для полной информации.');
-        }
-    });
+            
+            const nickCheck = antiMat.check(nick);
+            if (nickCheck.isBanned) {
+                toast.show('Ошибка', 'Ник содержит запрещенные слова!', 'error');
+                return;
+            }
+            
+            console.log('Попытка входа под ником:', nick.trim());
+            
+            try {
+                const result = await db.login(nick.trim());
+                console.log('Результат логина:', result);
+                
+                if (result) {
+                    isLoggedIn = true;
+                    this.style.display = 'none';
+                    document.getElementById('locked-msg').style.display = 'none';
+                    document.getElementById('letter-area').style.display = 'flex';
+                    
+                    const statusBadge = document.getElementById('chat-status-badge');
+                    if (statusBadge) {
+                        statusBadge.className = 'status-badge';
+                        statusBadge.style.background = 'rgba(45, 90, 39, 0.2)';
+                        statusBadge.style.color = '#2d5a27';
+                        statusBadge.innerHTML = '<span class="status-dot" style="background: #2d5a27;"></span> online';
+                    }
+                    
+                    appendMessageToChat({
+                        nick: '🎅 Система',
+                        text: `${nick} присоединился к чату!`,
+                        system: 1,
+                        time: Date.now()
+                    });
+                    
+                    toast.show('Добро пожаловать!', `Вы вошли как ${nick}`, 'success');
+                } else {
+                    toast.show('Ошибка входа', 'Сервер не вернул данные. Проверь консоль (F12) для деталей.', 'error');
+                }
+            } catch (error) {
+                console.error('КРИТИЧЕСКАЯ ОШИБКА ЛОГИНА:', error);
+                toast.show('Критическая ошибка', 'Ошибка входа: ' + error.message, 'error');
+            }
+        });
+    }
     
     // Отправка сообщения
     sendBtn.addEventListener('click', async function() {
-        if (!isLoggedIn) return;
+        if (!isLoggedIn) {
+            toast.show('Доступ запрещен', 'Войдите в чат, чтобы отправлять сообщения', 'warning');
+            return;
+        }
         
         const text = chatInput.value.trim();
-        if (!text) return;
+        if (!text) {
+            toast.show('Пустое сообщение', 'Напишите что-нибудь перед отправкой', 'warning');
+            return;
+        }
         
         const check = antiMat.check(text);
         if (check.isBanned) {
-            alert('Сообщение содержит запрещенное слово!');
+            toast.show('Модерация', 'Сообщение содержит запрещенное слово!', 'error');
             chatInput.value = '';
             return;
         }
@@ -145,8 +344,10 @@ function initLetter() {
                 15,
                 ['#2d5a27', '#c9a227']
             );
+            
+            toast.show('Отправлено!', 'Сообщение успешно отправлено в чат', 'success', 2000);
         } else {
-            alert('Ошибка отправки сообщения');
+            toast.show('Ошибка', 'Не удалось отправить сообщение', 'error');
         }
     });
     
@@ -154,6 +355,69 @@ function initLetter() {
         if (e.key === 'Enter') {
             sendBtn.click();
         }
+    });
+    
+    // Панель стикеров
+    if (stickerBtn && stickerPanel) {
+        stickerBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            stickerPanel.classList.toggle('visible');
+        });
+        
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.sticker-panel') && !e.target.closest('#sticker-btn')) {
+                stickerPanel.classList.remove('visible');
+            }
+        });
+    }
+}
+
+// === ПАНЕЛЬ СТИКЕРОВ ===
+function initStickerPanel() {
+    const stickerPanel = document.getElementById('sticker-panel');
+    if (!stickerPanel) return;
+    
+    const stickers = [
+        { id: 'santa.png', name: 'Санта' },
+        { id: 'tree.png', name: 'Елка' },
+        { id: 'gift.png', name: 'Подарок' },
+        { id: 'snowman.png', name: 'Снеговик' },
+        { id: 'reindeer.png', name: 'Олень' },
+        { id: 'bell.png', name: 'Колокольчик' }
+    ];
+    
+    stickerPanel.innerHTML = '';
+    
+    stickers.forEach(sticker => {
+        const stickerEl = document.createElement('div');
+        stickerEl.className = 'sticker-item';
+        stickerEl.innerHTML = `<img src="/stickers/${sticker.id}" alt="${sticker.name}" title="${sticker.name}">`;
+        
+        stickerEl.addEventListener('click', async () => {
+            if (!db.currentNick) {
+                toast.show('Доступ запрещен', 'Войдите в чат, чтобы отправлять стикеры', 'warning');
+                return;
+            }
+            
+            const result = await db.sendMessage(db.currentNick, '', sticker.id);
+            
+            if (result) {
+                appendMessageToChat({
+                    nick: db.currentNick,
+                    text: '',
+                    sticker: sticker.id,
+                    system: 0,
+                    time: Date.now()
+                });
+                
+                stickerPanel.classList.remove('visible');
+                toast.show('Стикер отправлен!', `${sticker.name} добавлен в чат`, 'success', 2000);
+            } else {
+                toast.show('Ошибка', 'Не удалось отправить стикер', 'error');
+            }
+        });
+        
+        stickerPanel.appendChild(stickerEl);
     });
 }
 
@@ -197,8 +461,11 @@ function appendMessageToChat(msg) {
                 ${time}
             </span>
         </div>
-        <div style="color: var(--text-primary); word-wrap: break-word;">${msg.text}</div>
     `;
+    
+    if (msg.text) {
+        content += `<div style="color: var(--text-primary); word-wrap: break-word;">${msg.text}</div>`;
+    }
     
     if (msg.sticker) {
         const stickerUrl = `/stickers/${msg.sticker}`;
@@ -214,16 +481,133 @@ function appendMessageToChat(msg) {
     chatContainer.scrollTop = chatContainer.scrollHeight;
 }
 
+// === 19. ФОТО-ЗОНА С РАМКОЙ ===
+function initPhotoFrame() {
+    const photoUploadBtn = document.getElementById('photo-upload');
+    if (!photoUploadBtn) return;
+
+    const frame = document.createElement('div');
+    frame.id = 'photo-frame';
+    frame.style.cssText = `
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 300px;
+        height: 300px;
+        border: 15px solid transparent;
+        border-image: repeating-linear-gradient(45deg, #8b0000, #2d5a27, #1e3a5f, #c9a227) 30;
+        background: rgba(0,0,0,0.8);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+        cursor: pointer;
+    `;
+    
+    const closeBtn = document.createElement('button');
+    closeBtn.textContent = '✕';
+    closeBtn.style.cssText = `
+        position: absolute;
+        top: -40px;
+        right: 0;
+        background: #8b0000;
+        color: white;
+        border: none;
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        cursor: pointer;
+        font-size: 1.2rem;
+    `;
+    closeBtn.onclick = (e) => {
+        e.stopPropagation();
+        frame.style.display = 'none';
+    };
+    frame.appendChild(closeBtn);
+    
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.style.display = 'none';
+    
+    input.addEventListener('change', async function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        
+        if (file.size > 5 * 1024 * 1024) {
+            toast.show('Файл слишком большой', 'Максимальный размер: 5MB', 'error');
+            return;
+        }
+        
+        const reader = new FileReader();
+        reader.onload = async (ev) => {
+            const photoData = ev.target.result;
+            
+            frame.innerHTML = '';
+            frame.appendChild(closeBtn);
+            
+            const img = document.createElement('img');
+            img.src = photoData;
+            img.style.cssText = `
+                max-width: 100%;
+                max-height: 100%;
+                object-fit: contain;
+            `;
+            frame.appendChild(img);
+            frame.style.display = 'flex';
+            
+            if (db.currentNick) {
+                const result = await db.sendMessage(db.currentNick, '', null, photoData);
+                
+                if (result) {
+                    appendMessageToChat({
+                        nick: db.currentNick,
+                        text: '',
+                        photo: photoData,
+                        system: 0,
+                        time: Date.now()
+                    });
+                    
+                    toast.show('Фото отправлено!', 'Ваше фото добавлено в чат', 'success');
+                } else {
+                    toast.show('Ошибка', 'Не удалось отправить фото', 'error');
+                }
+            } else {
+                toast.show('Доступ запрещен', 'Войдите в чат, чтобы отправлять фото', 'warning');
+            }
+        };
+        reader.readAsDataURL(file);
+    });
+    
+    frame.addEventListener('click', (e) => {
+        if (e.target === frame) input.click();
+    });
+    
+    document.body.appendChild(frame);
+    
+    photoUploadBtn.addEventListener('click', () => {
+        if (!db.currentNick) {
+            toast.show('Доступ запрещен', 'Войдите в чат, чтобы загружать фото', 'warning');
+            return;
+        }
+        input.click();
+    });
+}
+
 // === 15. ПЕРЕКЛЮЧАТЕЛЬ ТЕМ ===
 function initThemeSwitcher() {
     let currentTheme = 0;
-    document.getElementById('theme-btn').addEventListener('click', () => {
-        currentTheme = (currentTheme + 1) % THEMES.length;
-        document.body.className = THEMES[currentTheme];
-        localStorage.setItem('theme', THEMES[currentTheme]);
-    });
+    const themeBtn = document.getElementById('theme-btn');
+    if (themeBtn) {
+        themeBtn.addEventListener('click', () => {
+            currentTheme = (currentTheme + 1) % THEMES.length;
+            document.body.className = THEMES[currentTheme];
+            localStorage.setItem('theme', THEMES[currentTheme]);
+            toast.show('Тема изменена', `Применена тема: ${THEMES[currentTheme]}`, 'info', 2000);
+        });
+    }
     
-    // Восстановление темы
     const saved = localStorage.getItem('theme');
     if (saved) {
         document.body.className = saved;
@@ -423,90 +807,6 @@ function initNameFirework() {
     });
 }
 
-// === 19. ФОТО-ЗОНА С РАМКОЙ (ИСПРАВЛЕНО) ===
-function initPhotoFrame() {
-    const photoUploadBtn = document.getElementById('photo-upload');
-    if (!photoUploadBtn) return;
-
-    const frame = document.createElement('div');
-    frame.id = 'photo-frame';
-    frame.style.cssText = `
-        position: fixed;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        width: 300px;
-        height: 300px;
-        border: 15px solid transparent;
-        border-image: repeating-linear-gradient(45deg, #8b0000, #2d5a27, #1e3a5f, #c9a227) 30;
-        background: rgba(0,0,0,0.8);
-        display: none;
-        align-items: center;
-        justify-content: center;
-        z-index: 1000;
-        cursor: pointer;
-    `;
-    
-    const closeBtn = document.createElement('button');
-    closeBtn.textContent = '✕';
-    closeBtn.style.cssText = `
-        position: absolute;
-        top: -40px;
-        right: 0;
-        background: #8b0000;
-        color: white;
-        border: none;
-        width: 30px;
-        height: 30px;
-        border-radius: 50%;
-        cursor: pointer;
-        font-size: 1.2rem;
-    `;
-    closeBtn.onclick = (e) => {
-        e.stopPropagation();
-        frame.style.display = 'none';
-    };
-    frame.appendChild(closeBtn);
-    
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = 'image/*';
-    input.style.display = 'none';
-    
-    input.addEventListener('change', function(e) {
-        const file = e.target.files[0];
-        if (!file) return;
-        
-        const reader = new FileReader();
-        reader.onload = (ev) => {
-            frame.innerHTML = '';
-            frame.appendChild(closeBtn);
-            
-            const img = document.createElement('img');
-            img.src = ev.target.result;
-            img.style.cssText = `
-                max-width: 100%;
-                max-height: 100%;
-                object-fit: contain;
-            `;
-            frame.appendChild(img);
-            frame.style.display = 'flex';
-        };
-        reader.readAsDataURL(file);
-    });
-    
-    frame.addEventListener('click', (e) => {
-        if (e.target === frame) input.click();
-    });
-    
-    document.body.appendChild(frame);
-    
-    // ИСПРАВЛЕНО: Привязываем к существующей кнопке #photo-upload вместо создания новой плавающей кнопки
-    photoUploadBtn.addEventListener('click', () => {
-        input.click();
-    });
-}
-
 // === 21. ЗЕРКАЛЬНОЕ ОТРАЖЕНИЕ ===
 function initReflection() {
     const player = document.querySelector('.music-section');
@@ -615,7 +915,6 @@ function initPuzzle() {
         }
     }
     
-    // Перемешиваем
     pieces.forEach(piece => {
         const randomRow = Math.floor(Math.random() * 3);
         const randomCol = Math.floor(Math.random() * 3);
@@ -643,6 +942,53 @@ function initPuzzle() {
     btn.onclick = () => puzzleContainer.style.display = 'flex';
     document.body.appendChild(btn);
 }
+
+// === СТИЛИ ДЛЯ СТИКЕРОВ ===
+const stickerStyle = document.createElement('style');
+stickerStyle.textContent = `
+    .sticker-panel {
+        position: absolute;
+        bottom: 100%;
+        left: 0;
+        right: 0;
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 12px;
+        padding: 15px;
+        display: none;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+        margin-bottom: 10px;
+        max-height: 300px;
+        overflow-y: auto;
+    }
+    
+    .sticker-panel.visible {
+        display: grid;
+    }
+    
+    .sticker-item {
+        cursor: pointer;
+        transition: all 0.2s;
+        border-radius: 8px;
+        padding: 5px;
+        background: rgba(255, 255, 255, 0.05);
+    }
+    
+    .sticker-item:hover {
+        transform: scale(1.1);
+        background: rgba(255, 255, 255, 0.15);
+    }
+    
+    .sticker-item img {
+        width: 100%;
+        height: auto;
+        border-radius: 4px;
+    }
+`;
+document.head.appendChild(stickerStyle);
 
 // === СТИЛИ ДЛЯ АНИМАЦИЙ ===
 const style = document.createElement('style');
