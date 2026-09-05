@@ -77,27 +77,25 @@ function lerpColor(colorA, colorB, t) {
     return '#' + ((1 << 24) + (Math.round(rr) << 16) + (Math.round(rg) << 8) + Math.round(rb)).toString(16).slice(1);
 }
 
-// === ФОН ОТ ВРЕМЕНИ ПОЛЬЗОВАТЕЛЯ ===
 function updateBackgroundByTime() {
     const now = new Date();
     const h = now.getHours();
     const m = now.getMinutes();
     const mins = h * 60 + m;
     
-    // Сдвиг: минимум в 1:00 (60 мин), максимум в 14:00 (840 мин)
     const shifted = (mins - 60 + 1440) % 1440;
     let brightness = 0;
     
     if (shifted <= 780) {
-        brightness = shifted / 780; // Растёт от 0 до 1
+        brightness = shifted / 780;
     } else {
-        brightness = 1 - ((shifted - 780) / 660); // Падает от 1 до 0
+        brightness = 1 - ((shifted - 780) / 660);
     }
     
-    // Ограничиваем яркость от 0 до 1
     brightness = Math.max(0, Math.min(1, brightness));
     
-    const nightColors = ['#000000', '#0a0a2e', '#1a0525', '#05001a'];
+    // НОЧНЫЕ ЦВЕТА — ЕЩЁ ТЕМНЕЕ
+    const nightColors = ['#000000', '#050510', '#0a0015', '#020008'];
     const dayColors = ['#00ffff', '#00ff00', '#ff0000', '#ffff00'];
     
     const c1 = lerpColor(nightColors[0], dayColors[0], brightness);
@@ -107,7 +105,6 @@ function updateBackgroundByTime() {
     
     document.body.style.background = `linear-gradient(135deg, ${c1}, ${c2}, ${c3}, ${c4})`;
     
-    // Переключение цвета текста для контрастности
     const textColor = brightness > 0.6 ? '#111' : '#e0e0e0';
     document.body.style.color = textColor;
     document.documentElement.style.setProperty('--text-color', textColor);
@@ -115,7 +112,7 @@ function updateBackgroundByTime() {
     // === СЕВЕРНОЕ СИЯНИЕ ===
     const aurora = document.getElementById('aurora');
     if (aurora) {
-        if (brightness < 0.3) {
+        if (brightness < 0.4) { // Порог чуть выше, чтобы сияние появлялось раньше
             aurora.classList.add('visible');
         } else {
             aurora.classList.remove('visible');
