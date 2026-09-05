@@ -13,12 +13,9 @@
     <div class="bg-orb orb-2"></div>
     <div class="snowflakes" id="snow-container"></div>
     
-    <!-- Канвас для фоновых эффектов -->
-    <canvas id="bg-effects-canvas"></canvas>
-
     <!-- Свечки на заднем фоне -->
     <div id="candles-bg"></div>
-
+    
     <!-- Часы с кукушкой на заднем фоне -->
     <div id="clock-bg"></div>
 
@@ -87,17 +84,25 @@
                         <span class="status-dot"></span> offline
                     </span>
                 </div>
+                
                 <div class="chat-messages" id="chat-messages">
                     <p style="text-align: center; color: var(--text-secondary); margin-top: 100px; font-style: italic;">
                         Здесь будет новогоднее настроение...<br>Войди, чтобы начать общение!
                     </p>
                 </div>
+                
                 <div class="chat-input-area" id="chat-input-area">
                     <div class="locked-message" id="locked-msg">🔒 Войди, чтобы писать в чат</div>
+                    
+                    <!-- Панель стикеров -->
+                    <div class="sticker-panel" id="sticker-panel"></div>
+                    
                     <div class="letter-input-area" id="letter-area" style="display: none;">
                         <input type="text" class="letter-input" id="letter-text" placeholder="Напиши сообщение или желание...">
+                        <button class="btn" id="sticker-btn" title="Выбрать стикер">😀</button>
                         <button class="btn" id="send-letter-btn">✉️</button>
                     </div>
+                    
                     <button class="btn" id="chat-login-btn" style="width: 100%; justify-content: center; margin-top: 10px;">🔑 Войти в чат</button>
                     <div class="photo-upload" id="photo-upload">📸 Нажми, чтобы отправить фото</div>
                 </div>
@@ -105,7 +110,7 @@
         </main>
 
         <footer style="text-align: center; padding: 30px 20px; color: var(--text-secondary); font-size: 0.9rem; opacity: 0.7;">
-            <p>❅ ✼ ❆ ✻ ❄ С Новым 2027 Годом! ❄ ✻ ❆ ❅</p>
+            <p>❅ ✼ ❆ ✻ ❄ С Новым 2027 Годом! ❄ ✻ ❆  ❅</p>
         </footer>
     </div>
 
@@ -114,49 +119,16 @@
         <div class="gift-lid"></div>
         <div class="gift-box"></div>
     </div>
-
-    <!-- Старый тост предсказаний (оставлен для совместимости) -->
     <div class="prediction-toast" id="prediction-toast"></div>
-
-    <!-- Панель переключения тем -->
-    <div class="switcher-panel" id="theme-switcher">
-        <div class="switcher-header">🎨 Выбор темы</div>
-        <div class="switcher-list" id="theme-list"></div>
-    </div>
-
-    <!-- Кнопка эффектов фона -->
-    <button class="floating-btn" id="bg-effects-btn" title="Эффекты фона">✨</button>
-
-    <!-- Панель переключения эффектов фона -->
-    <div class="switcher-panel" id="bg-effects-switcher">
-        <div class="switcher-header">✨ Эффекты фона</div>
-        <div class="switcher-list">
-            <div class="switcher-option" data-effect="none">
-                <span>🚫 Без эффектов</span>
-            </div>
-            <div class="switcher-option" data-effect="lines">
-                <span>🌈 Неоновые линии</span>
-            </div>
-            <div class="switcher-option" data-effect="balls">
-                <span>🎈 Шары и звёзды</span>
-            </div>
-            <div class="switcher-option" data-effect="particles">
-                <span>✨ Пульсирующие частицы</span>
-            </div>
-        </div>
-    </div>
-
-    <!-- Контейнер для тост-уведомлений -->
-    <div id="toast-container"></div>
 
     <!-- Скрипты -->
     <script src="js/config.js"></script>
-    <script src="js/effects.js"></script>
-    <script src="js/player.js"></script>
-    <script src="js/main.js"></script>
     <script src="js/antimat.js"></script>
     <script src="js/database.js"></script>
     <script src="js/particles.js"></script>
     <script src="js/snow.js"></script>
+    <script src="js/player.js"></script>
+    <script src="js/effects.js"></script>
+    <script src="js/main.js"></script>
 </body>
 </html>
