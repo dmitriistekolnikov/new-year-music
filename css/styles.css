@@ -2047,3 +2047,26 @@ body.new-year-final .countdown-timer .number{animation:countdownFinal .5s ease-i
 /* V9: фон физически реагирует на басы текущего трека */
 body::before{content:'';position:fixed;inset:-15%;pointer-events:none;z-index:0;background:radial-gradient(circle at 50% 35%,var(--cover-glow,rgba(100,150,255,.25)),transparent 42%);opacity:calc(var(--music-bass,0) * .85);filter:blur(20px);transition:opacity .12s linear}
 body.music-night::before{filter:blur(34px);opacity:calc(var(--music-bass,0) * 1.05)}
+
+/* V10: слой эффектов не перекрывает интерфейс + стабильная мобильная ширина */
+html, body { min-width: 0; overflow-x: hidden; }
+.container { width: min(100%, 800px); box-sizing: border-box; z-index: 10; }
+#bg-effects-canvas, #holiday-fx-canvas, #ice-edges, #meteor-canvas { z-index: 0 !important; }
+#ice-edges { z-index: 1 !important; }
+#candles-bg, #clock-bg, .garland { z-index: 4; }
+.player-bangs { z-index: 1000; }
+@media (max-width: 768px) {
+  .container { width: 100%; padding-left: 12px; padding-right: 12px; }
+  .site-header { width: 100%; box-sizing: border-box; }
+  .glass-card { width: 100%; box-sizing: border-box; }
+  .header-actions { flex-shrink: 0; }
+}
+@media (max-width: 480px) {
+  .container { padding-left: 10px; padding-right: 10px; }
+  .header-actions { max-width: 48vw; overflow-x: auto; }
+}
+
+/* V10: рабочая модалка Стены славы */
+#wall-of-fame-modal .modal-card { width: min(760px, 96vw); }
+#wall-of-fame-modal[style*="display: none"] { display: none !important; }
+body.modal-open { overflow: hidden; }
