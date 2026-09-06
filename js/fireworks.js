@@ -3,6 +3,11 @@
 class Fireworks {
     constructor() {
         this.canvas = document.getElementById('fireworks-canvas');
+        if (!this.canvas) {
+            this.canvas = document.createElement('canvas');
+            this.canvas.id = 'fireworks-canvas';
+            document.body.appendChild(this.canvas);
+        }
         this.ctx = this.canvas.getContext('2d');
         this.particles = [];
         this.rockets = [];
@@ -76,6 +81,9 @@ class Fireworks {
                     callback();
                 }
             }, 1000);
+        } else {
+            // Не блокируем новогоднее шоу, если overlay не успел загрузиться.
+            setTimeout(callback, Math.max(0, seconds * 1000));
         }
     }
     
@@ -247,6 +255,7 @@ class Fireworks {
 
 // Глобальный экземпляр
 const fireworks = new Fireworks();
+window.fireworks = fireworks;
 
 // Проверка времени
 function checkFireworksTime() {
@@ -261,11 +270,6 @@ function checkFireworksTime() {
         fireworks.launchRegular();
     }
     
-    // Новый Год (1 января 2027, 00:00:00)
-    if (now.getFullYear() === 2027 && now.getMonth() === 0 && now.getDate() === 1 && hours === 0 && minutes === 0 && seconds === 0) {
-        console.log('🎆🎆 МЕГА-ШОУ НОВОГО ГОДА! 🎆🎆🎆');
-        fireworks.launchMegaShow();
-    }
 }
 
 // Инициализация
@@ -275,9 +279,4 @@ function initFireworks() {
     // Проверяем время каждую секунду
     setInterval(checkFireworksTime, 1000);
     
-    // Тестовый запуск через 3 секунды (для проверки)
-    setTimeout(() => {
-        console.log('🎆 Тестовый фейерверк!');
-        fireworks.launchRegular();
-    }, 3000);
 }

@@ -229,6 +229,7 @@ function initPlayer() {
             if (audio.duration) audio.currentTime = ((e.clientX - rect.left) / rect.width) * audio.duration;
         });
         initEqualizer();
+        initMusicVisualizer();
     });
 }
 
@@ -254,3 +255,53 @@ function initEqualizer() {
     };
     requestAnimationFrame(animate);
 }
+
+/* === V9 MUSIC VISUALIZER === */
+let musicAudioCtx = null, musicAnalyser = null, musicData = null, musicPaletteToken = 0;
+function initMusicVisualizer() {
+    const startAudioGraph = () => {
+        if (musicAudioCtx) return;
+        try {
+            musicAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            const source = musicAudioCtx.createMediaElementSource(audio);
+            musicAnalyser = musicAudioCtx.createAnalyser();
+            musicAnalyser.fftSize = 64;
+            source.connect(musicAnalyser); musicAnalyser.connect(musicAudioCtx.destination);
+            musicData = new Uint8Array(musicAnalyser.frequencyBinCount);
+            const loop=()=>{
+                if(!musicAnalyser){requestAnimationFrame(loop);return}
+                musicAnalyser.getByteFrequencyData(musicData);
+                const bass=musicData.slice(0,5).reduce((a,b)=>a+b,0)/5/255;
+                document.documentElement.style.setProperty('--music-bass', bass.toFixed(3));
+                document.body.style.setProperty('--music-glow', `${(bass*35).toFixed(1)}px`);
+                document.body.classList.toggle('music-bass-active', isPlaying && bass>.18);
+                requestAnimationFrame(loop);
+            }; loop();
+        } catch(e){console.warn('WebAudio недоступен',e)}
+    };
+    audio.addEventListener('play',()=>{startAudioGraph();musicAudioCtx?.resume?.();}, {once:false});
+}
+function rotateActiveCover(){
+    document.querySelectorAll('.playlist-bangs li').forEach((li,i)=>{
+      li.classList.toggle('cover-playing', i===currentTrackIndex && isPlaying);
+    });
+}
+function extractCoverPalette(src, token){
+    if(!src)return;
+    const img=new Image(); img.onload=()=>{
+      if(token!==musicPaletteToken)return;
+      try{
+        const c=document.createElement('canvas'),ctx=c.getContext('2d',{willReadFrequently:true});c.width=c.height=20;ctx.drawImage(img,0,0,20,20);
+        const data=ctx.getImageData(0,0,20,20).data;let r=0,g=0,b=0,n=0;
+        for(let i=0;i<data.length;i+=4){r+=data[i];g+=data[i+1];b+=data[i+2];n++}
+        r=Math.round(r/n);g=Math.round(g/n);b=Math.round(b/n);
+        const hex='#'+[r,g,b].map(x=>x.toString(16).padStart(2,'0')).join('');
+        document.documentElement.style.setProperty('--cover-color',hex);
+        document.body.style.setProperty('--cover-glow',`rgba(${r},${g},${b},.32)`);
+      }catch{}
+    };img.src=src;
+}
+const _updateMiniPlayer=updateMiniPlayer;
+updateMiniPlayer=function(index){_updateMiniPlayer(index);const t=tracks[index];if(t)extractCoverPalette(t.cover,++musicPaletteToken);rotateActiveCover();};
+const _updatePlayButton=updatePlayButton;
+updatePlayButton=function(){_updatePlayButton();rotateActiveCover();};
