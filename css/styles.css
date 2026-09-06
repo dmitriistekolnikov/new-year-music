@@ -88,8 +88,6 @@ body {
         var(--bg-gradient-2) 50%,
         var(--bg-gradient-3) 100%
     );
-    /* остальной код body... */
-}
     background-size: 300% 300%;
     animation: smoothGradient 30s ease-in-out infinite;
     color: var(--text-primary);
@@ -1998,3 +1996,54 @@ body { padding-top: 104px; }
 }
 #bg-effects-canvas { mix-blend-mode: screen; }
 @media (prefers-reduced-motion: reduce) { #bg-effects-canvas { opacity: .45; } }
+
+/* === V9 INTERACTIVE PACK === */
+#holiday-fx-canvas{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:2}
+#ice-edges{position:fixed;inset:0;pointer-events:none;z-index:3;overflow:hidden}
+#ice-edges i{position:absolute;display:block;opacity:.55;filter:drop-shadow(0 0 8px rgba(180,230,255,.8))}
+#ice-edges i:nth-child(1){top:0;left:0;right:0;height:65px;background:linear-gradient(180deg,rgba(190,235,255,.28),transparent);clip-path:polygon(0 0,100% 0,98% 50%,92% 30%,86% 62%,79% 28%,71% 55%,64% 22%,57% 63%,50% 30%,42% 57%,34% 20%,27% 60%,18% 30%,10% 62%,3% 28%)}
+#ice-edges i:nth-child(2){bottom:0;left:0;right:0;height:55px;background:linear-gradient(0deg,rgba(190,235,255,.25),transparent);clip-path:polygon(0 100%,100% 100%,98% 48%,91% 72%,83% 40%,76% 70%,67% 45%,58% 75%,49% 42%,39% 72%,30% 46%,20% 75%,10% 40%,3% 70%)}
+#ice-edges i:nth-child(3){left:0;top:0;bottom:0;width:42px;background:linear-gradient(90deg,rgba(190,235,255,.24),transparent);clip-path:polygon(0 0,100% 0,55% 9%,82% 19%,48% 29%,80% 40%,45% 52%,78% 65%,46% 77%,85% 88%,45% 100%,0 100%)}
+#ice-edges i:nth-child(4){right:0;top:0;bottom:0;width:42px;background:linear-gradient(270deg,rgba(190,235,255,.24),transparent);clip-path:polygon(100% 0,0 0,45% 9%,18% 19%,52% 29%,20% 40%,55% 52%,22% 65%,54% 77%,15% 88%,55% 100%,100% 100%)}
+.holiday-santa,.holiday-reindeer{position:fixed;top:18%;left:-20vw;z-index:10001;font-size:clamp(2rem,5vw,4rem);pointer-events:none;animation:flyHoliday 11s linear forwards;filter:drop-shadow(0 0 14px rgba(255,255,255,.5))}
+.holiday-reindeer{top:27%;font-size:clamp(1.5rem,4vw,3rem);animation-duration:9s}
+@keyframes flyHoliday{from{transform:translateX(0) rotate(-2deg)}to{transform:translateX(140vw) rotate(2deg)}}
+.secret-gift{position:fixed;right:24px;bottom:24px;width:58px;height:58px;border:0;border-radius:18px;background:rgba(20,20,30,.82);backdrop-filter:blur(12px);box-shadow:0 0 25px rgba(255,210,90,.35);font-size:30px;cursor:pointer;z-index:10010;animation:giftPulse 2s ease-in-out infinite}
+@keyframes giftPulse{50%{transform:translateY(-5px) rotate(3deg);box-shadow:0 0 38px rgba(255,210,90,.6)}}
+.ui-modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;padding:20px;background:rgba(0,0,0,.72);backdrop-filter:blur(12px);z-index:20000}
+.ui-modal.visible{display:flex}
+.modal-card,.lightbox-inner{position:relative;width:min(680px,96vw);max-height:90vh;overflow:auto;padding:30px;border:1px solid rgba(255,255,255,.18);border-radius:24px;background:linear-gradient(145deg,rgba(15,25,40,.96),rgba(25,15,35,.96));box-shadow:0 25px 90px rgba(0,0,0,.55);color:#fff}
+.modal-close{position:absolute;right:14px;top:12px;border:0;background:rgba(255,255,255,.1);color:#fff;border-radius:50%;width:34px;height:34px;cursor:pointer;font-size:18px;z-index:2}
+.lightbox-inner{width:auto;padding:12px;background:rgba(0,0,0,.9)}
+#photo-lightbox-img{display:block;max-width:90vw;max-height:82vh;object-fit:contain;border-radius:14px}
+.profile-card{text-align:center}
+.profile-avatar{width:86px;height:86px;margin:0 auto 12px;border-radius:50%;display:grid;place-items:center;font-size:38px;font-weight:900;background:linear-gradient(135deg,#c9a227,#7c3aed);box-shadow:0 0 30px rgba(201,162,39,.35)}
+.profile-grid{display:grid;grid-template-columns:1fr 1.4fr;gap:10px;margin:20px 0;text-align:left}
+.achievement-list{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}.achievement-list span{padding:8px 10px;border-radius:12px;background:rgba(255,255,255,.08)}
+.message-reaction-row{display:flex;align-items:center;gap:7px;margin-top:7px}.reaction-add,.reaction-pill{border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.06);color:#fff;border-radius:999px;padding:4px 8px;cursor:pointer}.reaction-pill{font-size:.8rem}
+.reaction-picker{position:fixed;display:flex;gap:4px;padding:8px;background:rgba(15,18,25,.98);border:1px solid rgba(255,255,255,.16);border-radius:14px;z-index:20010;box-shadow:0 10px 30px rgba(0,0,0,.45)}.reaction-picker button{border:0;background:transparent;font-size:22px;cursor:pointer;padding:4px}
+.chat-message-enhanced{transition:transform .18s ease,box-shadow .18s ease}.chat-message-enhanced:hover{transform:translateY(-1px);box-shadow:0 8px 25px rgba(0,0,0,.15)}
+.chat-photo{cursor:zoom-in;max-height:430px;object-fit:contain}
+.community-panel{overflow:visible}.community-head{display:flex;align-items:center;justify-content:space-between;gap:15px}.community-head p{margin:0;color:var(--text-secondary)}
+.tree-modal-card{text-align:center;min-height:500px}.tree-art{font-size:min(48vw,260px);line-height:1;filter:drop-shadow(0 0 28px rgba(40,180,100,.35));position:relative;z-index:1}.tree-stars{position:absolute;inset:90px 20% 100px;pointer-events:none}.tree-stars span{position:absolute;font-size:22px;filter:drop-shadow(0 0 8px gold);animation:starTwinkle 1.7s ease-in-out infinite alternate}.tree-count{margin:10px;color:var(--text-secondary)}@keyframes starTwinkle{to{transform:scale(1.18);opacity:.75}}
+.new-year-hero{font-size:clamp(3rem,12vw,7rem);text-align:center;animation:heroPulse 1.5s ease-in-out infinite alternate}@keyframes heroPulse{to{transform:scale(1.04);filter:drop-shadow(0 0 25px rgba(255,220,90,.65))}}
+.after-new-year .modal-card{text-align:center}.new-year-mode{animation:newYearGlow 5s ease-in-out infinite alternate}@keyframes newYearGlow{to{filter:saturate(1.15) brightness(1.05)}}
+.music-night .glass-card{box-shadow:0 0 35px rgba(100,80,255,.16),inset 0 0 25px rgba(30,20,80,.15)}.music-night #holiday-fx-canvas{opacity:.55}
+body.new-year-final .countdown-timer .number{animation:countdownFinal .5s ease-in-out infinite alternate;color:#fff;text-shadow:0 0 20px #ffd76a}@keyframes countdownFinal{to{transform:scale(1.16)}}
+@media(max-width:600px){.community-head{align-items:flex-start;flex-direction:column}.secret-gift{right:14px;bottom:14px}.modal-card{padding:24px 16px}.tree-stars{inset:90px 15% 100px}.holiday-santa{top:15%}}
+
+.music-bass-active .glass-card{box-shadow:0 0 var(--music-glow,12px) rgba(120,170,255,.18),inset 0 0 18px var(--cover-glow,rgba(255,255,255,.04));transform:translateZ(0)}
+.playlist-bangs li.cover-playing img{animation:coverSpin 7s linear infinite;border-radius:50%!important;box-shadow:0 0 16px var(--cover-glow,rgba(255,255,255,.2))}
+@keyframes coverSpin{to{transform:rotate(360deg)}}
+
+
+/* V9: фейерверк и финальный отсчёт */
+#fireworks-canvas{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:15000}
+#countdown-overlay{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.35);backdrop-filter:blur(5px);z-index:16000;pointer-events:none}
+#countdown-number{font-size:clamp(6rem,25vw,18rem);font-weight:900;color:#fff;text-shadow:0 0 35px rgba(255,215,106,.85),0 0 90px rgba(120,170,255,.65);transition:transform .2s ease}
+#new-message-notification{position:fixed;left:50%;top:92px;transform:translate(-50%,-18px);opacity:0;pointer-events:none;z-index:19000;padding:11px 16px;border-radius:999px;background:rgba(15,18,28,.88);border:1px solid rgba(255,255,255,.16);box-shadow:0 10px 35px rgba(0,0,0,.35);backdrop-filter:blur(12px);color:#fff;font-weight:700;transition:opacity .25s ease,transform .25s ease}
+#new-message-notification.visible{opacity:1;transform:translate(-50%,0)}
+
+/* V9: фон физически реагирует на басы текущего трека */
+body::before{content:'';position:fixed;inset:-15%;pointer-events:none;z-index:0;background:radial-gradient(circle at 50% 35%,var(--cover-glow,rgba(100,150,255,.25)),transparent 42%);opacity:calc(var(--music-bass,0) * .85);filter:blur(20px);transition:opacity .12s linear}
+body.music-night::before{filter:blur(34px);opacity:calc(var(--music-bass,0) * 1.05)}
