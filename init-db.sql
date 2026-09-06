@@ -32,6 +32,7 @@ CREATE TABLE IF NOT EXISTS reactions (
     UNIQUE(message_id, nick, emoji)
 );
 CREATE INDEX IF NOT EXISTS idx_reactions_message ON reactions(message_id);
+CREATE INDEX IF NOT EXISTS idx_reactions_message_nick ON reactions(message_id, nick);
 
 CREATE TABLE IF NOT EXISTS tree_stars (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -48,4 +49,26 @@ CREATE TABLE IF NOT EXISTS celebrations (
     year INTEGER PRIMARY KEY,
     event TEXT NOT NULL,
     time INTEGER NOT NULL
+);
+
+-- V12: администрация, права команд и YouTube Stream
+CREATE TABLE IF NOT EXISTS admin_users (
+    nick TEXT PRIMARY KEY,
+    password_hash TEXT NOT NULL,
+    role TEXT NOT NULL DEFAULT 'admin',
+    commands TEXT NOT NULL DEFAULT '[]',
+    enabled INTEGER NOT NULL DEFAULT 1,
+    created_at INTEGER NOT NULL
+);
+CREATE TABLE IF NOT EXISTS admin_sessions (
+    session_id TEXT PRIMARY KEY,
+    nick TEXT NOT NULL,
+    role TEXT NOT NULL,
+    expires_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_admin_sessions_expiry ON admin_sessions(expires_at);
+CREATE TABLE IF NOT EXISTS site_settings (
+    key TEXT PRIMARY KEY,
+    value TEXT,
+    updated_at INTEGER NOT NULL
 );

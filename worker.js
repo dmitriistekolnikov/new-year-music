@@ -6,7 +6,7 @@ export default {
         const corsHeaders = {
             'Access-Control-Allow-Origin': '*',
             'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-            'Access-Control-Allow-Headers': 'Content-Type, Range',
+            'Access-Control-Allow-Headers': 'Content-Type, Range, X-Admin-Session',
             'Access-Control-Expose-Headers': 'Content-Range, Accept-Ranges',
         };
 
@@ -44,6 +44,26 @@ export default {
     }
 };
 
+async function sha256Hex(value) {
+    const data = new TextEncoder().encode(String(value));
+    const digest = await crypto.subtle.digest('SHA-256', data);
+    return [...new Uint8Array(digest)].map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+const MASTER_NICK = 'Ключник';
+const MASTER_PASSWORD_HASH = '46d9a0648bba2cc5c9b1ac95585e82373346d5f36444b0fcbea6996e2939417c';
+const ALL_ADMIN_COMMANDS = ['/snowstorm','/fireworks','/predict','/aurora','/galaxy','/vortex','/meteor','/night','/gift','/tree'];
+
+async function getAdminSession(request, env) {
+    const token = request.headers.get('X-Admin-Session') || '';
+    if (!token) return null;
+    return await env.DB.prepare('SELECT session_id,nick,role,expires_at FROM admin_sessions WHERE session_id=? AND expires_at>?').bind(token, Date.now()).first();
+}
+
+function json(data, headers, status=200) {
+    return new Response(JSON.stringify(data), { status, headers: { ...headers, 'Content-Type': 'application/json' } });
+}
+
 async function handleApi(request, env, path, headers) {
     try {
         if (path === '/api/health') {
@@ -64,6 +84,11 @@ async function handleApi(request, env, path, headers) {
             }), { 
                 headers: { ...headers, 'Content-Type': 'application/json' } 
             });
+        }
+
+        if (path === '/api/stream' && request.method === 'GET') {
+            const row = await env.DB.prepare("SELECT value FROM site_settings WHERE key='youtube_stream'").first();
+            return json({ url: row?.value || '' }, headers);
         }
 
         if (path === '/api/messages' && request.method === 'GET') {
@@ -234,6 +259,90 @@ async function handleApi(request, env, path, headers) {
             return new Response(JSON.stringify({ valid: !!session }), { 
                 headers: { ...headers, 'Content-Type': 'application/json' } 
             });
+        }
+
+        /* === АДМИНИСТРАЦИЯ === */
+        if (path === '/api/admin/login' && request.method === 'POST') {
+            const body = await request.json();
+            const nick = String(body.nick || '').trim().slice(0, 40);
+            const password = String(body.password || '');
+            if (!nick || !password) return json({ error: 'Укажи ник и пароль' }, headers, 400);
+            const hash = await sha256Hex(password);
+            let role = null;
+            let commands = ALL_ADMIN_COMMANDS;
+            if (nick === MASTER_NICK && hash === (env.ADMIN_MASTER_PASSWORD_HASH || MASTER_PASSWORD_HASH)) {
+                role = 'master';
+            } else {
+                const row = await env.DB.prepare('SELECT nick,role,commands,enabled,password_hash FROM admin_users WHERE nick=?').bind(nick).first();
+                if (!row || !row.enabled || row.password_hash !== hash) return json({ error: 'Неверный ник или пароль' }, headers, 401);
+                role = row.role || 'admin';
+                try { commands = JSON.parse(row.commands || '[]'); } catch { commands = []; }
+            }
+            const sessionId = crypto.randomUUID();
+            await env.DB.prepare('INSERT INTO admin_sessions(session_id,nick,role,expires_at) VALUES(?,?,?,?)').bind(sessionId,nick,role,Date.now()+7*24*60*60*1000).run();
+            return json({ session_id: sessionId, nick, role, commands }, headers);
+        }
+
+        if (path === '/api/admin/me' && request.method === 'GET') {
+            const session = await getAdminSession(request, env);
+            if (!session) return json({ error:'Сессия администратора истекла' }, headers, 401);
+            let commands = ALL_ADMIN_COMMANDS;
+            if (session.role !== 'master') {
+                const row = await env.DB.prepare('SELECT commands,enabled FROM admin_users WHERE nick=?').bind(session.nick).first();
+                if (!row?.enabled) return json({ error:'Администратор отключён' }, headers, 403);
+                try { commands = JSON.parse(row.commands || '[]'); } catch { commands=[]; }
+            }
+            return json({ nick:session.nick, role:session.role, commands }, headers);
+        }
+
+        if (path === '/api/admin/me' && request.method === 'PATCH') {
+            const session = await getAdminSession(request, env);
+            if (!session) return json({ error:'Нет доступа' }, headers, 401);
+            const body=await request.json();
+            const commands=[...new Set(Array.isArray(body.commands)?body.commands.filter(c=>ALL_ADMIN_COMMANDS.includes(c)):[])];
+            if(session.role==='master') return json({nick:session.nick,role:session.role,commands:ALL_ADMIN_COMMANDS},headers);
+            await env.DB.prepare('UPDATE admin_users SET commands=? WHERE nick=?').bind(JSON.stringify(commands),session.nick).run();
+            return json({nick:session.nick,role:session.role,commands},headers);
+        }
+
+        if (path === '/api/admin/admins' && request.method === 'GET') {
+            const session=await getAdminSession(request,env);
+            if(!session || session.role!=='master') return json({error:'Только главный администратор'},headers,403);
+            const rows=await env.DB.prepare('SELECT nick,role,commands,enabled,created_at FROM admin_users ORDER BY created_at DESC').all();
+            return json({admins:(rows.results||[]).map(r=>({nick:r.nick,role:r.role,commands:JSON.parse(r.commands||'[]'),enabled:!!r.enabled,created_at:r.created_at}))},headers);
+        }
+
+        if (path === '/api/admin/admins' && request.method === 'POST') {
+            const session=await getAdminSession(request,env);
+            if(!session || session.role!=='master') return json({error:'Только главный администратор'},headers,403);
+            const body=await request.json(); const nick=String(body.nick||'').trim().slice(0,40); const password=String(body.password||'');
+            if(!nick||!password)return json({error:'Нужны ник и пароль'},headers,400);
+            if(nick===MASTER_NICK)return json({error:'Нельзя переопределить главного администратора'},headers,400);
+            const commands=[...new Set(Array.isArray(body.commands)?body.commands.filter(c=>ALL_ADMIN_COMMANDS.includes(c)):[])];
+            await env.DB.prepare('INSERT INTO admin_users(nick,password_hash,role,commands,enabled,created_at) VALUES(?,?,?,?,1,?) ON CONFLICT(nick) DO UPDATE SET password_hash=excluded.password_hash,commands=excluded.commands,enabled=1').bind(nick,await sha256Hex(password),'admin',JSON.stringify(commands),Date.now()).run();
+            return json({success:true},headers);
+        }
+
+        if (path === '/api/admin/admins' && request.method === 'DELETE') {
+            const session=await getAdminSession(request,env);
+            if(!session || session.role!=='master') return json({error:'Только главный администратор'},headers,403);
+            const body=await request.json(); const nick=String(body.nick||'').trim();
+            if(!nick || nick===MASTER_NICK)return json({error:'Нельзя удалить главного администратора'},headers,400);
+            await env.DB.prepare('DELETE FROM admin_users WHERE nick=?').bind(nick).run();
+            await env.DB.prepare('DELETE FROM admin_sessions WHERE nick=?').bind(nick).run();
+            return json({success:true},headers);
+        }
+
+        if (path === '/api/admin/stream' && request.method === 'POST') {
+            const session=await getAdminSession(request,env);
+            if(!session)return json({error:'Нет доступа'},headers,401);
+            const body=await request.json(); const url=String(body.url||'').trim();
+            if(url){
+                let u; try{u=new URL(url)}catch{return json({error:'Некорректная ссылка'},headers,400)}
+                if(!['youtube.com','www.youtube.com','m.youtube.com','youtu.be','www.youtube-nocookie.com'].includes(u.hostname)) return json({error:'Разрешены только ссылки YouTube'},headers,400);
+            }
+            await env.DB.prepare("INSERT INTO site_settings(key,value,updated_at) VALUES('youtube_stream',?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value,updated_at=excluded.updated_at").bind(url,Date.now()).run();
+            return json({success:true,url},headers);
         }
 
         return new Response(JSON.stringify({ error: 'Not found' }), { 
