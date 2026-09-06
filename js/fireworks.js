@@ -14,14 +14,20 @@ class Fireworks {
         this.confetti = [];
         this.isRunning = false;
         this.animationId = null;
+        this.countdownRunning = false;
+        this.lastHourlyKey = '';
         
         this.resize();
         window.addEventListener('resize', () => this.resize());
     }
     
     resize() {
-        this.canvas.width = window.innerWidth;
-        this.canvas.height = window.innerHeight;
+        const dpr = Math.min(window.devicePixelRatio || 1, 2);
+        this.canvas.width = Math.round(window.innerWidth * dpr);
+        this.canvas.height = Math.round(window.innerHeight * dpr);
+        this.canvas.style.width = window.innerWidth + 'px';
+        this.canvas.style.height = window.innerHeight + 'px';
+        this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     }
     
     // Обычный фейерверк (каждый час)
@@ -87,6 +93,15 @@ class Fireworks {
         }
     }
     
+    startFinalCountdown() {
+        if (this.countdownRunning) return;
+        this.countdownRunning = true;
+        this.showCountdown(10, () => {
+            this.countdownRunning = false;
+            this.megaFireworks();
+        });
+    }
+
     megaFireworks() {
         // Запускаем 100 ракет за 10 секунд
         for (let i = 0; i < 100; i++) {

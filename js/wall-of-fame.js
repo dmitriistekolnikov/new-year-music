@@ -275,6 +275,7 @@ class WallOfFame {
 }
 
 const wallOfFame = new WallOfFame();
+window.wallOfFame = wallOfFame;
 
 function initWallOfFame() {
     const btn = document.getElementById('wall-of-fame-btn');

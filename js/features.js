@@ -166,6 +166,9 @@
     input.addEventListener('keydown',e=>{
       if(e.key!=='Enter')return;
       const v=input.value.trim().toLowerCase();
+      if(!['/snowstorm','/fireworks','/predict'].includes(v))return;
+      e.preventDefault(); e.stopPropagation();
+      input.value='';
       if(v==='/snowstorm'){window.createClickParticles?.(innerWidth/2,innerHeight/2,120);toast('❄️ Снежный вихрь','Секретная команда активирована','info');}
       if(v==='/fireworks'){window.fireworks?.launchRegular?.();toast('🎆 Фейерверк','Команда принята','success');}
       if(v==='/predict'){toast('🔮 Предсказание',PREDICTIONS[Math.floor(Math.random()*PREDICTIONS.length)],'info');}
@@ -208,7 +211,7 @@
         const d=await api(`/celebration?year=${year}`);
         if(d.celebration && localStorage.getItem('ny-midnight')!==String(year)){
           localStorage.setItem('ny-midnight',String(year));
-          if(window.fireworks?.megaFireworks)window.fireworks.megaFireworks();
+          if(window.fireworks?.startFinalCountdown)window.fireworks.startFinalCountdown(); else if(window.fireworks?.megaFireworks)window.fireworks.megaFireworks();
         }
       }catch{}
     };
@@ -286,11 +289,11 @@
       new HolidayFX();
       initMeteorShower();
       initChatEnhancer();initProfiles();initMessageNotifications();dailyGift();secretCommands();initCommunityTree();musicNight();globalMidnight();
-      $$('.modal-close,[data-close-modal]').forEach(b=>b.onclick=()=>b.closest('.ui-modal')?.classList.remove('visible'));
+      $$('.modal-close,[data-close-modal]').forEach(b=>b.onclick=()=>{b.closest('.ui-modal')?.classList.remove('visible');document.body.classList.remove('modal-open')});
       $('#photo-lightbox')?.addEventListener('click',e=>{if(e.target.id==='photo-lightbox'||e.target.closest('.modal-close')){e.currentTarget.classList.remove('visible');document.body.classList.remove('modal-open')}});
       $('#profile-modal')?.addEventListener('click',e=>{if(e.target.id==='profile-modal'||e.target.closest('.modal-close')){e.currentTarget.classList.remove('visible');document.body.classList.remove('modal-open')}});
       $('#wall-of-fame-btn')?.addEventListener('click',()=>window.wallOfFame?.open?.());
-      $('#tree-open-btn')?.addEventListener('click',()=>$('#tree-modal')?.classList.add('visible'));
+      $('#tree-open-btn')?.addEventListener('click',async()=>{const m=$('#tree-modal');if(!m)return;m.classList.add('visible');document.body.classList.add('modal-open');await renderTree(await treeState());});
       $('#after-new-year-close')?.addEventListener('click',()=>$('#after-new-year')?.classList.remove('visible'));
       setInterval(midnightMode,1000);midnightMode();
     }catch(e){console.error('V9 init',e);}
