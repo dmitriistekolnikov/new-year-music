@@ -166,12 +166,22 @@
     input.addEventListener('keydown',e=>{
       if(e.key!=='Enter')return;
       const v=input.value.trim().toLowerCase();
-      if(!['/snowstorm','/fireworks','/predict'].includes(v))return;
-      e.preventDefault(); e.stopPropagation();
+      const commands=['/snowstorm','/fireworks','/predict','/aurora','/galaxy','/vortex','/meteor','/night','/gift','/tree'];
+      if(!commands.includes(v))return;
+      if(!window.adminState?.() || !window.adminAllowedCommand?.(v)){ toast('🛡️ Команда закрыта','Нужен доступ администратора','warning'); return; }
+      e.preventDefault(); e.stopImmediatePropagation();
       input.value='';
-      if(v==='/snowstorm'){window.createClickParticles?.(innerWidth/2,innerHeight/2,120);toast('❄️ Снежный вихрь','Секретная команда активирована','info');}
+      if(v==='/snowstorm'||v==='/vortex'){
+        localStorage.setItem('bgEffect','vortex'); document.querySelector('.switcher-option[data-effect="vortex"]')?.click();
+        setTimeout(()=>document.querySelector('.switcher-option[data-effect="none"]')?.click(),12000);
+        window.createClickParticles?.(innerWidth/2,innerHeight/2,160); toast('❄️ Снежный вихрь','Секретная команда активирована','info');
+      }
       if(v==='/fireworks'){window.fireworks?.launchRegular?.();toast('🎆 Фейерверк','Команда принята','success');}
       if(v==='/predict'){toast('🔮 Предсказание',PREDICTIONS[Math.floor(Math.random()*PREDICTIONS.length)],'info');}
+      if(v==='/aurora'||v==='/galaxy'||v==='/meteor'){document.querySelector(`.switcher-option[data-effect="${v.slice(1)}"]`)?.click();toast('✨ Эффект',v,'success');}
+      if(v==='/night')$('#music-night-btn')?.click();
+      if(v==='/gift'){const g=$('#magic-gift');g?.click();}
+      if(v==='/tree')$('#tree-open-btn')?.click();
     });
   }
 
