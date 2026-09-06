@@ -17,6 +17,10 @@
     
     <!-- Канвас для фоновых эффектов -->
     <canvas id="bg-effects-canvas"></canvas>
+    <canvas id="fireworks-canvas" aria-hidden="true"></canvas>
+    <div id="countdown-overlay" aria-hidden="true"><div id="countdown-number">10</div></div>
+    <div id="new-message-notification" aria-live="polite"></div>
+    <div id="after-new-year" class="ui-modal after-new-year"><div class="modal-card"><button class="modal-close" type="button">✕</button><div class="new-year-hero">🎆 2027 🎆</div><h2>Новый год наступил!</h2><p>Праздничный режим активирован. Пусть этот год будет волшебным ✨</p></div></div>
 
     <!-- Свечки на заднем фоне -->
     <div id="candles-bg"></div>
@@ -68,6 +72,8 @@
             <div class="header-actions" aria-label="Управление сайтом">
                 <button class="btn header-action" id="theme-btn" type="button" title="Сменить тему" aria-label="Сменить тему">🎨</button>
                 <button class="btn header-action" id="bg-effects-btn" type="button" title="Эффекты фона" aria-label="Эффекты фона">✨</button>
+                <button class="btn header-action" id="music-night-btn" type="button" title="Музыкальная ночь">🎧</button>
+                <button class="btn header-action" id="wall-of-fame-btn" type="button" title="Стена славы">🏆</button>
                 <button class="btn header-action login-action" id="header-login-btn" type="button">🔑 Вход</button>
             </div>
         </header>
@@ -117,9 +123,18 @@
                     <div class="photo-upload" id="photo-upload">📸 Нажми, чтобы отправить фото</div>
                 </div>
             </section>
+            <section class="glass-card community-panel">
+                <div class="community-head">
+                    <div><h2>🎄 Живая ёлка сообщества</h2><p>Каждый участник может добавить одну звезду в день.</p></div>
+                    <button class="btn" id="tree-open-btn" type="button">⭐ Открыть</button>
+                </div>
+            </section>
         </main>
 
-        <footer style="text-align: center; padding: 30px 20px; color: var(--text-secondary); font-size: 0.9rem; opacity: 0.7;">
+        <div class="ui-modal" id="photo-lightbox"><div class="lightbox-inner"><button class="modal-close" type="button">✕</button><img id="photo-lightbox-img" alt="Фото"></div></div>
+    <div class="ui-modal" id="profile-modal"><div class="modal-card profile-card"><button class="modal-close" type="button">✕</button><div id="profile-content"></div></div></div>
+    <div class="ui-modal" id="tree-modal"><div class="modal-card tree-modal-card"><button class="modal-close" type="button">✕</button><div id="community-tree"></div></div></div>
+    <footer style="text-align: center; padding: 30px 20px; color: var(--text-secondary); font-size: 0.9rem; opacity: 0.7;">
             <p>❅ ✼ ❆ ✻ ❄ С Новым 2027 Годом! ❄ ✻ ❆ ❅</p>
         </footer>
     </div>
@@ -162,6 +177,9 @@
             <div class="switcher-option" data-effect="vortex">
                 <span>❄️ Снежный вихрь</span>
             </div>
+            <div class="switcher-option" data-effect="meteor">
+                <span>🌠 Метеоритный дождь</span>
+            </div>
         </div>
     </div>
 
@@ -172,6 +190,8 @@
     <script defer src="js/particles.js"></script>
     <script defer src="js/snow.js"></script>
     <script defer src="js/player.js"></script>
+    <script defer src="js/fireworks.js"></script>
+    <script defer src="js/features.js"></script>
     <script defer src="js/effects.js"></script>
     <script defer src="js/main.js"></script>
 </body>
