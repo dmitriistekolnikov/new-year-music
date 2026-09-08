@@ -140,7 +140,7 @@
         <div class="modal-card stream-card">
             <button class="modal-close" type="button">✕</button>
             <div class="stream-head"><h2>📺 YouTube Stream</h2><span id="stream-status">Стрим не настроен</span></div>
-            <div class="stream-frame-wrap"><iframe id="youtube-stream-frame" title="YouTube Stream" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe></div>
+            <div class="stream-tabs" id="stream-tabs"></div><div class="stream-frame-wrap"><iframe id="youtube-stream-frame" title="YouTube Stream" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe></div>
             <p id="stream-empty" class="stream-empty">Главный администратор ещё не добавил ссылку на стрим.</p>
         </div>
     </div>
@@ -171,9 +171,10 @@
                     <div id="admin-list" class="admin-list"></div>
                 </section>
                 <section class="admin-section">
-                    <h3>📺 YouTube Stream</h3>
-                    <input class="admin-input" id="youtube-stream-url" placeholder="https://www.youtube.com/watch?v=...">
-                    <div class="admin-form-actions"><button class="btn admin-primary" id="save-stream-submit">Сохранить стрим</button><button class="btn" id="clear-stream-submit">Убрать стрим</button></div>
+                    <h3>📺 YouTube Stream — до 5 стримов</h3>
+                    <p class="admin-muted">Пользователи смогут выбирать активный стрим. Пустые слоты не показываются.</p>
+                    <div id="admin-stream-list" class="admin-stream-list"></div>
+                    <div class="admin-form-actions"><button class="btn admin-primary" id="save-stream-submit">Сохранить все стримы</button><button class="btn" id="clear-stream-submit">Очистить все</button></div>
                     <div id="stream-admin-message" class="admin-muted"></div>
                 </section>
             </div>

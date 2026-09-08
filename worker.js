@@ -44,6 +44,43 @@ export default {
     }
 };
 
+// === SERVER-SIDE ANTI-MAT MAX ===
+// Нельзя обойти клиентский фильтр прямым запросом к API.
+const ANTIMAT_PATTERNS = [
+    /хуй/i,/ху[её]в/i,/ху[йя]/i,/хуес/i,/хуйн/i,/пизд/i,/пизд[аоы]/i,
+    /еб[аоыуеё]/i,/ебл/i,/ебан/i,/ебуч/i,/бля[дт]/i,/бляд/i,/су[кк]а/i,
+    /сучк/i,/мудак/i,/мудил/i,/долбо[её]б/i,/долбое/i,/у[рp]од/i,/гандон/i,
+    /шлюх/i,/пидор/i,/пид[оа]р/i,/пид[ао]рас/i,/педик/i,/ниггер/i,
+    /порно/i,/porn/i,/sex/i,/xxx/i
+];
+const ANTIMAT_MAP = {
+    'а':'a','е':'e','ё':'e','о':'o','р':'p','с':'c','х':'x','у':'y',
+    '0':'o','1':'i','3':'e','4':'a','5':'s','6':'b','7':'t','8':'b','9':'g','@':'a','$':'s','!':'i'
+};
+function normalizeAntiMat(value) {
+    return String(value ?? '')
+        .normalize('NFKC')
+        .toLowerCase()
+        .replace(/[\u0000-\u001f\u007f\u00ad\u034f\u061c\u115f\u1160\u17b4\u17b5\u180b-\u180f\u200b-\u200f\u202a-\u202e\u2060-\u2064\u2066-\u206f\u2800\u3000\ufeff]/gu, '')
+        .replace(/[а-яёa-z0-9@$!]/gu, ch => ANTIMAT_MAP[ch] ?? ch)
+        .replace(/(.)\1{2,}/gu, '$1$1');
+}
+function antiMatCheck(value) {
+    const original = String(value ?? '');
+    if (!original.trim()) return { blocked:false };
+    const normalized = normalizeAntiMat(original);
+    const compact = normalized.replace(/[^a-zа-яё]/gi, '');
+    const separated = normalized.replace(/[\s._*\-+=:;,|/\\()[\]{}<>`~^]+/gu, '');
+    for (const re of ANTIMAT_PATTERNS) {
+        re.lastIndex = 0;
+        if (re.test(normalized) || re.test(compact) || re.test(separated)) {
+            re.lastIndex = 0;
+            return { blocked:true, code:re.source };
+        }
+    }
+    return { blocked:false };
+}
+
 async function sha256Hex(value) {
     const data = new TextEncoder().encode(String(value));
     const digest = await crypto.subtle.digest('SHA-256', data);
@@ -87,8 +124,19 @@ async function handleApi(request, env, path, headers) {
         }
 
         if (path === '/api/stream' && request.method === 'GET') {
-            const row = await env.DB.prepare("SELECT value FROM site_settings WHERE key='youtube_stream'").first();
-            return json({ url: row?.value || '' }, headers);
+            const rows = await env.DB.prepare("SELECT key,value FROM site_settings WHERE key LIKE 'youtube_stream_%' ORDER BY key").all();
+            let streams = (rows.results || []).map(r => {
+                const m = String(r.key).match(/^youtube_stream_(\d)$/);
+                const slot = m ? Number(m[1]) : 0;
+                let parsed = {}; try { parsed = JSON.parse(r.value || '{}'); } catch { parsed = { url: r.value || '' }; }
+                return { slot, name: parsed.name || `Стрим ${slot}`, url: parsed.url || '' };
+            }).filter(x => x.slot >= 1 && x.slot <= 5 && x.url);
+            // Совместимость со старой V12 записью.
+            if (!streams.length) {
+                const legacy = await env.DB.prepare("SELECT value FROM site_settings WHERE key='youtube_stream'").first();
+                if (legacy?.value) streams = [{slot:1,name:'Стрим 1',url:legacy.value}];
+            }
+            return json({ streams, url: streams[0]?.url || '' }, headers);
         }
 
         if (path === '/api/messages' && request.method === 'GET') {
@@ -114,6 +162,18 @@ async function handleApi(request, env, path, headers) {
                     status: 400,
                     headers: { ...headers, 'Content-Type': 'application/json' }
                 });
+            }
+
+            // Антимат проверяется на сервере до записи в D1.
+            if (text) {
+                const moderation = antiMatCheck(text);
+                if (moderation.blocked) {
+                    return json({
+                        success: false,
+                        error: 'Сообщение заблокировано антиматом',
+                        message: 'Обнаружено запрещённое слово или попытка обхода фильтра.'
+                    }, headers, 400);
+                }
             }
 
             // Пустой текст разрешён, если это стикер или фото.
@@ -336,13 +396,19 @@ async function handleApi(request, env, path, headers) {
         if (path === '/api/admin/stream' && request.method === 'POST') {
             const session=await getAdminSession(request,env);
             if(!session)return json({error:'Нет доступа'},headers,401);
-            const body=await request.json(); const url=String(body.url||'').trim();
+            const body=await request.json();
+            const slot=Number(body.slot);
+            const url=String(body.url||'').trim();
+            const name=String(body.name||`Стрим ${slot}`).trim().slice(0,60) || `Стрим ${slot}`;
+            if(!Number.isInteger(slot) || slot<1 || slot>5) return json({error:'Слот стрима должен быть от 1 до 5'},headers,400);
             if(url){
                 let u; try{u=new URL(url)}catch{return json({error:'Некорректная ссылка'},headers,400)}
                 if(!['youtube.com','www.youtube.com','m.youtube.com','youtu.be','www.youtube-nocookie.com'].includes(u.hostname)) return json({error:'Разрешены только ссылки YouTube'},headers,400);
             }
-            await env.DB.prepare("INSERT INTO site_settings(key,value,updated_at) VALUES('youtube_stream',?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value,updated_at=excluded.updated_at").bind(url,Date.now()).run();
-            return json({success:true,url},headers);
+            const key=`youtube_stream_${slot}`;
+            const value=JSON.stringify({name,url});
+            await env.DB.prepare("INSERT INTO site_settings(key,value,updated_at) VALUES(?,?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value,updated_at=excluded.updated_at").bind(key,value,Date.now()).run();
+            return json({success:true,slot,name,url},headers);
         }
 
         return new Response(JSON.stringify({ error: 'Not found' }), { 
