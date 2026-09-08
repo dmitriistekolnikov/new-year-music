@@ -45,9 +45,42 @@
     if(!state)return; const commands=selected('#admin-command-list');
     try{const d=await api('/admin/me',{method:'PATCH',headers:sessionHeaders(),body:JSON.stringify({commands})});state.commands=d.commands;save();$('#admin-action-message').textContent='Доступ к командам сохранён.';}catch(e){$('#admin-action-message').textContent=e.message;}
   }
-  async function loadStreamForAdmin(){try{const d=await api('/stream');$('#youtube-stream-url').value=d.url||'';}catch{}}
-  async function saveStream(){try{const url=$('#youtube-stream-url').value.trim();await api('/admin/stream',{method:'POST',headers:sessionHeaders(),body:JSON.stringify({url})});$('#stream-admin-message').textContent=url?'Стрим сохранён.':'Стрим отключён.';window.loadYouTubeStream?.();}catch(e){$('#stream-admin-message').textContent=e.message;}}
-  async function clearStream(){ $('#youtube-stream-url').value=''; await saveStream(); }
+  async function loadStreamForAdmin(){
+    try{
+      const d=await api('/stream');
+      const list=$('#admin-stream-list'); if(!list)return;
+      const arr=Array.isArray(d.streams)?d.streams:[];
+      list.innerHTML=Array.from({length:5},(_,i)=>{
+        const s=arr.find(x=>Number(x.slot)===i+1)||{};
+        return `<div class="admin-stream-row"><div class="admin-stream-title">📺 Стрим ${i+1}</div><input class="admin-input admin-stream-name" data-slot="${i+1}" value="${esc(s.name||`Стрим ${i+1}`)}" placeholder="Название"><input class="admin-input admin-stream-url" data-slot="${i+1}" value="${esc(s.url||'')}" placeholder="https://www.youtube.com/watch?v=..."></div>`;
+      }).join('');
+    }catch{}
+  }
+  async function saveStream(){
+    try{
+      const rows=[...document.querySelectorAll('.admin-stream-row')];
+      for(const row of rows){
+        const slot=Number(row.querySelector('.admin-stream-url')?.dataset.slot);
+        const url=row.querySelector('.admin-stream-url')?.value.trim()||'';
+        const name=row.querySelector('.admin-stream-name')?.value.trim()||`Стрим ${slot}`;
+        await api('/admin/stream',{method:'POST',headers:sessionHeaders(),body:JSON.stringify({slot,url,name})});
+      }
+      $('#stream-admin-message').textContent='Все 5 слотов сохранены.';
+      window.loadYouTubeStream?.();
+    }catch(e){$('#stream-admin-message').textContent=e.message;}
+  }
+  async function clearStream(){
+    try{
+      const rows=[...document.querySelectorAll('.admin-stream-row')];
+      for(const row of rows){
+        const slot=Number(row.querySelector('.admin-stream-url')?.dataset.slot);
+        await api('/admin/stream',{method:'POST',headers:sessionHeaders(),body:JSON.stringify({slot,url:'',name:`Стрим ${slot}`})});
+        const url=row.querySelector('.admin-stream-url'); if(url)url.value='';
+      }
+      $('#stream-admin-message').textContent='Все стримы очищены.';
+      window.loadYouTubeStream?.();
+    }catch(e){$('#stream-admin-message').textContent=e.message;}
+  }
   function init(){
     const btn=$('#admin-btn'), modal=$('#admin-modal'); if(!btn||!modal)return;
     btn.onclick=()=>{showPanel();modal.classList.add('visible');document.body.classList.add('modal-open');};
