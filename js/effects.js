@@ -906,134 +906,26 @@ function initReflection() {
     document.body.appendChild(reflection);
 }
 
-// === 32. НОВОГОДНИЙ ПАЗЛ ===
-function initPuzzle() {
-    const imageUrl = '/i-_1_.png';
-    
-    const puzzleContainer = document.createElement('div');
-    puzzleContainer.id = 'puzzle-container';
-    puzzleContainer.style.cssText = `
-        position: fixed;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        width: 300px;
-        background: rgba(10, 10, 15, 0.95);
-        border-radius: 16px;
-        padding: 20px;
-        display: none;
-        flex-direction: column;
-        align-items: center;
-        z-index: 1001;
-        border: 1px solid var(--glass-border);
-    `;
-    
-    const closeBtn = document.createElement('button');
-    closeBtn.textContent = '✕';
-    closeBtn.style.cssText = `
-        align-self: flex-end;
-        background: #8b0000;
-        color: white;
-        border: none;
-        width: 30px;
-        height: 30px;
-        border-radius: 50%;
-        cursor: pointer;
-        margin-bottom: 10px;
-    `;
-    closeBtn.onclick = () => puzzleContainer.style.display = 'none';
-    puzzleContainer.appendChild(closeBtn);
-    
-    const title = document.createElement('h3');
-    title.textContent = '🧩 Собери картинку!';
-    title.style.cssText = 'color: #c9a227; margin-bottom: 10px;';
-    puzzleContainer.appendChild(title);
-    
-    const grid = document.createElement('div');
-    grid.style.cssText = `
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 5px;
-        width: 270px;
-        height: 270px;
-    `;
-    
-    const pieces = [];
-    for (let r = 0; r < 3; r++) {
-        for (let c = 0; c < 3; c++) {
-            const piece = document.createElement('div');
-            piece.style.cssText = `
-                width: 90px;
-                height: 90px;
-                background-image: url(${imageUrl});
-                background-size: 270px 270px;
-                background-position: ${-c * 90}px ${-r * 90}px;
-                border: 2px solid #c9a227;
-                cursor: pointer;
-                transition: transform 0.2s;
-            `;
-            piece.dataset.row = r;
-            piece.dataset.col = c;
-            
-            piece.addEventListener('click', function() {
-                const idx = pieces.indexOf(this);
-                if (idx > 0 && Math.random() > 0.5) {
-                    const temp = pieces[idx - 1].style.backgroundPosition;
-                    pieces[idx - 1].style.backgroundPosition = this.style.backgroundPosition;
-                    this.style.backgroundPosition = temp;
-                }
-            });
-            
-            pieces.push(piece);
-            grid.appendChild(piece);
-        }
-    }
-    
-    pieces.forEach(piece => {
-        const randomRow = Math.floor(Math.random() * 3);
-        const randomCol = Math.floor(Math.random() * 3);
-        piece.style.backgroundPosition = `${-randomCol * 90}px ${-randomRow * 90}px`;
-    });
-    
-    puzzleContainer.appendChild(grid);
-    document.body.appendChild(puzzleContainer);
-    
-    const btn = document.createElement('button');
-    btn.textContent = '🧩 Пазл';
-    btn.style.cssText = `
-        position: fixed;
-        bottom: 140px;
-        right: 20px;
-        background: #1e3a5f;
-        color: white;
-        border: none;
-        padding: 10px 15px;
-        border-radius: 12px;
-        cursor: pointer;
-        font-weight: bold;
-        z-index: 100;
-    `;
-    btn.onclick = () => puzzleContainer.style.display = 'flex';
-    document.body.appendChild(btn);
-}
-
+// Пазл удалён: интерактивная головоломка больше не создаётся.
 
 // === ПОЛЁТ ДЕДА МОРОЗА: СПРАВА НАЛЕВО ===
 function initSantaFlight() {
     if (document.getElementById('santa-flight')) return;
 
-    const santa = document.createElement('div');
+    const santa = document.createElement('img');
     santa.id = 'santa-flight';
+    santa.src = '/santa-flight.png';
+    santa.alt = '';
     santa.setAttribute('aria-hidden', 'true');
-    santa.innerHTML = '🎅🛷';
     santa.style.cssText = `
         position: fixed;
-        right: -180px;
+        left: 100vw;
         top: 18%;
+        width: clamp(220px, 34vw, 460px);
+        height: auto;
         z-index: 9990;
         pointer-events: none;
-        font-size: clamp(42px, 6vw, 72px);
-        white-space: nowrap;
+        user-select: none;
         filter: drop-shadow(0 8px 14px rgba(0,0,0,.35));
         transform: translate3d(0,0,0);
         will-change: transform;
@@ -1044,8 +936,8 @@ function initSantaFlight() {
     style.textContent = `
         @keyframes santaFlightRightToLeft {
             from { transform: translate3d(0, 0, 0) rotate(-1deg); }
-            48% { transform: translate3d(-50vw, -12px, 0) rotate(1deg); }
-            to { transform: translate3d(calc(-100vw - 220px), 8px, 0) rotate(-1deg); }
+            50% { transform: translate3d(-55vw, -14px, 0) rotate(1deg); }
+            to { transform: translate3d(calc(-100vw - 520px), 10px, 0) rotate(-1deg); }
         }
         @media (prefers-reduced-motion: reduce) {
             #santa-flight { display: none !important; }

@@ -7,34 +7,40 @@ document.addEventListener('DOMContentLoaded', async () => {
     console.log('🎄 НовыйГодЧат загружается...');
 
     try {
+        // Каждый эффект запускаем изолированно: ошибка одного модуля больше не
+        // должна останавливать остальные эффекты, плеер или переключатель фона.
+        const safeInit = (name, fn) => {
+            try { if (typeof fn === 'function') fn(); }
+            catch (error) { console.warn(`Эффект ${name} не запустился:`, error); }
+        };
+
         // === БАЗОВЫЕ ЭФФЕКТЫ ===
-        if (typeof initSnow === 'function') initSnow();
-        if (typeof initGarland === 'function') initGarland();
-        if (typeof initTimer === 'function') initTimer();
+        safeInit('snow', initSnow);
+        safeInit('garland', initGarland);
+        safeInit('timer', initTimer);
 
         // === ПЛЕЕР ===
-        if (typeof initPlayer === 'function') initPlayer();
+        safeInit('player', initPlayer);
 
         // === ИНТЕРАКТИВНЫЕ ЭФФЕКТЫ ===
-        if (typeof initFreeze === 'function') initFreeze();
-        if (typeof initGift === 'function') initGift();
-        if (typeof initLetter === 'function') initLetter();
-        if (typeof initPhotoFrame === 'function') initPhotoFrame();
-        if (typeof initStickerPanel === 'function') initStickerPanel();
-        if (typeof initParallax === 'function') initParallax();
-        if (typeof initTreeCounter === 'function') initTreeCounter();
-        if (typeof initSparkWaterfall === 'function') initSparkWaterfall();
-        if (typeof initElementTransforms === 'function') initElementTransforms();
-        if (typeof initNameFirework === 'function') initNameFirework();
-        if (typeof initReflection === 'function') initReflection();
-        if (typeof initPuzzle === 'function') initPuzzle();
-        if (typeof initSantaFlight === 'function') initSantaFlight();
+        safeInit('freeze', initFreeze);
+        safeInit('gift', initGift);
+        safeInit('letter', initLetter);
+        safeInit('photo frame', initPhotoFrame);
+        safeInit('stickers', initStickerPanel);
+        safeInit('parallax', initParallax);
+        safeInit('tree counter', initTreeCounter);
+        safeInit('spark waterfall', initSparkWaterfall);
+        safeInit('element transforms', initElementTransforms);
+        safeInit('name firework', initNameFirework);
+        safeInit('reflection', initReflection);
+        safeInit('santa flight', initSantaFlight);
 
         // === КАСТОМНЫЙ КУРСОР ===
-        if (typeof initCustomCursor === 'function') initCustomCursor();
+        safeInit('custom cursor', initCustomCursor);
 
         // === ФЕЙЕРВЕРК И СТЕНА СЛАВЫ ===
-        if (typeof initFireworks === 'function') initFireworks();
+        safeInit('fireworks', initFireworks);
         if ('requestIdleCallback' in window) {
             requestIdleCallback(() => {
                 if (typeof initWallOfFame === 'function') initWallOfFame();
@@ -44,8 +50,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         // === ТЕМЫ И ЭФФЕКТЫ ФОНА ===
-        initThemeSwitcher();
-        initBackgroundEffects();
+        safeInit('themes', initThemeSwitcher);
+        safeInit('background effects', initBackgroundEffects);
 
         // === ОБРАБОТЧИК КНОПКИ ВХОДА В ШАПКЕ (ИСПРАВЛЕНО) ===
         const headerLoginBtn = document.getElementById('header-login-btn');
@@ -377,6 +383,26 @@ class BackgroundEffects {
         this.animate('vortex');
     }
 
+    // Эффект 7: настоящий метеоритный дождь — яркие метеоры сразу появляются
+    // сверху и летят по диагонали, поэтому эффект не зависит от редкого таймера.
+    startMeteorRain() {
+        this.items = [];
+        const count = Math.min(24, Math.max(12, Math.floor(window.innerWidth / 55)));
+        for (let i = 0; i < count; i++) {
+            this.items.push({
+                type: 'meteor',
+                x: Math.random() * (this.canvas.width + 500),
+                y: -Math.random() * this.canvas.height,
+                vx: -(5 + Math.random() * 7),
+                vy: 5 + Math.random() * 8,
+                length: 55 + Math.random() * 105,
+                width: 1 + Math.random() * 2.5,
+                alpha: 0.55 + Math.random() * 0.45
+            });
+        }
+        this.animate('meteor-rain');
+    }
+
     // Главный цикл анимации
     animate(type) {
         if (currentBgEffect !== type) return;
@@ -492,6 +518,42 @@ class BackgroundEffects {
                 ctx.arc(particle.x, particle.y, size, 0, Math.PI * 2);
                 ctx.fill();
             });
+        } else if (type === 'meteor-rain') {
+            ctx.save();
+            ctx.lineCap = 'round';
+            this.items.forEach(m => {
+                m.x += m.vx;
+                m.y += m.vy;
+
+                if (m.x < -m.length - 80 || m.y > h + m.length) {
+                    m.x = w + 40 + Math.random() * 260;
+                    m.y = -40 - Math.random() * h * 0.7;
+                    m.vx = -(5 + Math.random() * 7);
+                    m.vy = 5 + Math.random() * 8;
+                }
+
+                const tailX = m.x - m.vx * (m.length / 10);
+                const tailY = m.y - m.vy * (m.length / 10);
+                const grad = ctx.createLinearGradient(m.x, m.y, tailX, tailY);
+                grad.addColorStop(0, `rgba(255,255,255,${m.alpha})`);
+                grad.addColorStop(0.2, `rgba(190,235,255,${m.alpha * 0.85})`);
+                grad.addColorStop(1, 'rgba(100,180,255,0)');
+                ctx.strokeStyle = grad;
+                ctx.lineWidth = m.width;
+                ctx.shadowBlur = 16;
+                ctx.shadowColor = 'rgba(180,230,255,.8)';
+                ctx.beginPath();
+                ctx.moveTo(m.x, m.y);
+                ctx.lineTo(tailX, tailY);
+                ctx.stroke();
+
+                ctx.fillStyle = `rgba(255,255,255,${Math.min(1, m.alpha + 0.1)})`;
+                ctx.shadowBlur = 20;
+                ctx.beginPath();
+                ctx.arc(m.x, m.y, 2 + m.width * 0.7, 0, Math.PI * 2);
+                ctx.fill();
+            });
+            ctx.restore();
         } else if (type === 'aurora') {
             const t = performance.now() * 0.00018;
 
@@ -710,6 +772,7 @@ function initBackgroundEffects() {
             else if (effect === 'aurora') bgEffects.startAurora();
             else if (effect === 'galaxy') bgEffects.startGalaxy();
             else if (effect === 'vortex') bgEffects.startVortex();
+            else if (effect === 'meteor-rain') bgEffects.startMeteorRain();
         }
 
         function updateActiveOption(activeEffect) {
