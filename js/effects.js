@@ -919,25 +919,34 @@ function initSantaFlight() {
     santa.setAttribute('aria-hidden', 'true');
     santa.style.cssText = `
         position: fixed;
-        left: 100vw;
-        top: 18%;
+        left: 0;
+        top: 0;
         width: clamp(220px, 34vw, 460px);
         height: auto;
         z-index: 9990;
         pointer-events: none;
         user-select: none;
         filter: drop-shadow(0 8px 14px rgba(0,0,0,.35));
-        transform: translate3d(0,0,0);
         will-change: transform;
+        transform-origin: center center;
     `;
     document.body.appendChild(santa);
 
     const style = document.createElement('style');
     style.textContent = `
+        @keyframes santaFlightLeftToRight {
+            0%   { transform: translate3d(-42vw, 0, 0) rotate(var(--santa-r0)); }
+            25%  { transform: translate3d(10vw, var(--santa-y1), 0) rotate(var(--santa-r1)); }
+            50%  { transform: translate3d(48vw, var(--santa-y2), 0) rotate(var(--santa-r2)); }
+            75%  { transform: translate3d(82vw, var(--santa-y3), 0) rotate(var(--santa-r3)); }
+            100% { transform: translate3d(110vw, var(--santa-y4), 0) rotate(var(--santa-r4)); }
+        }
         @keyframes santaFlightRightToLeft {
-            from { transform: translate3d(0, 0, 0) rotate(-1deg); }
-            50% { transform: translate3d(-55vw, -14px, 0) rotate(1deg); }
-            to { transform: translate3d(calc(-100vw - 520px), 10px, 0) rotate(-1deg); }
+            0%   { transform: translate3d(110vw, 0, 0) scaleX(-1) rotate(var(--santa-r0)); }
+            25%  { transform: translate3d(82vw, var(--santa-y1), 0) scaleX(-1) rotate(var(--santa-r1)); }
+            50%  { transform: translate3d(48vw, var(--santa-y2), 0) scaleX(-1) rotate(var(--santa-r2)); }
+            75%  { transform: translate3d(10vw, var(--santa-y3), 0) scaleX(-1) rotate(var(--santa-r3)); }
+            100% { transform: translate3d(-42vw, var(--santa-y4), 0) scaleX(-1) rotate(var(--santa-r4)); }
         }
         @media (prefers-reduced-motion: reduce) {
             #santa-flight { display: none !important; }
@@ -946,16 +955,25 @@ function initSantaFlight() {
     document.head.appendChild(style);
 
     const fly = () => {
-        santa.style.top = `${12 + Math.random() * 35}%`;
+        const rightToLeft = Math.random() < 0.5;
+        const baseY = 10 + Math.random() * 62;
+        const y = () => `${Math.round((Math.random() - 0.5) * 90)}px`;
+        const rotations = Array.from({length: 5}, () => `${(-2 + Math.random() * 4).toFixed(2)}deg`);
+
+        santa.style.top = `${baseY}%`;
+        santa.style.setProperty('--santa-y1', y());
+        santa.style.setProperty('--santa-y2', y());
+        santa.style.setProperty('--santa-y3', y());
+        santa.style.setProperty('--santa-y4', y());
+        rotations.forEach((value, i) => santa.style.setProperty(`--santa-r${i}`, value));
         santa.style.animation = 'none';
-        // Force a clean restart so every flight always begins off-screen on the RIGHT.
         void santa.offsetWidth;
-        const duration = 11500 + Math.random() * 3500;
-        santa.style.animation = `santaFlightRightToLeft ${duration}ms linear forwards`;
-        window.setTimeout(fly, duration + 30000 + Math.random() * 30000);
+
+        const duration = 10000 + Math.random() * 5000;
+        santa.style.animation = `${rightToLeft ? 'santaFlightRightToLeft' : 'santaFlightLeftToRight'} ${duration}ms cubic-bezier(.2,.72,.25,1) forwards`;
+        window.setTimeout(fly, duration + 28000 + Math.random() * 32000);
     };
 
-    // Первый пролёт после небольшой паузы, затем повторяем редко.
     window.setTimeout(fly, 3500);
 }
 

@@ -792,7 +792,7 @@ function initBackgroundEffects() {
 
         document.addEventListener('click', (e) => {
             const isPanel = e.target.closest('.switcher-panel');
-            const isButton = e.target.closest('.floating-btn');
+            const isButton = e.target.closest('#theme-btn, #bg-effects-btn, .floating-btn, .header-action');
             if (!isPanel && !isButton) {
                 document.querySelectorAll('.switcher-panel').forEach(p => p.classList.remove('visible'));
             }
