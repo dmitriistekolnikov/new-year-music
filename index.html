@@ -17,6 +17,10 @@
     
     <!-- Канвас для фоновых эффектов -->
     <canvas id="bg-effects-canvas"></canvas>
+    <canvas id="fireworks-canvas" aria-hidden="true"></canvas>
+    <div id="countdown-overlay" aria-hidden="true"><div id="countdown-number">10</div></div>
+    <div id="new-message-notification" aria-live="polite"></div>
+    <div id="after-new-year" class="ui-modal after-new-year"><div class="modal-card"><button class="modal-close" type="button">✕</button><div class="new-year-hero">🎆 2027 🎆</div><h2>Новый год наступил!</h2><p>Праздничный режим активирован. Пусть этот год будет волшебным ✨</p></div></div>
 
     <!-- Свечки на заднем фоне -->
     <div id="candles-bg"></div>
@@ -68,6 +72,10 @@
             <div class="header-actions" aria-label="Управление сайтом">
                 <button class="btn header-action" id="theme-btn" type="button" title="Сменить тему" aria-label="Сменить тему">🎨</button>
                 <button class="btn header-action" id="bg-effects-btn" type="button" title="Эффекты фона" aria-label="Эффекты фона">✨</button>
+                <button class="btn header-action" id="music-night-btn" type="button" title="Музыкальная ночь">🎧</button>
+                <button class="btn header-action" id="wall-of-fame-btn" type="button" title="Стена славы">🏆</button>
+                <button class="btn header-action" id="youtube-stream-btn" type="button" title="YouTube стрим">📺</button>
+                <button class="btn header-action" id="admin-btn" type="button" title="Администрация" aria-label="Администрация">🛡️</button>
                 <button class="btn header-action login-action" id="header-login-btn" type="button">🔑 Вход</button>
             </div>
         </header>
@@ -117,9 +125,69 @@
                     <div class="photo-upload" id="photo-upload">📸 Нажми, чтобы отправить фото</div>
                 </div>
             </section>
+            <section class="glass-card community-panel">
+                <div class="community-head">
+                    <div><h2>🎄 Живая ёлка сообщества</h2><p>Каждый участник может добавить одну звезду в день.</p></div>
+                    <button class="btn" id="tree-open-btn" type="button">⭐ Открыть</button>
+                </div>
+            </section>
         </main>
 
-        <footer style="text-align: center; padding: 30px 20px; color: var(--text-secondary); font-size: 0.9rem; opacity: 0.7;">
+        <div class="ui-modal" id="photo-lightbox"><div class="lightbox-inner"><button class="modal-close" type="button">✕</button><img id="photo-lightbox-img" alt="Фото"></div></div>
+    <div class="ui-modal" id="profile-modal"><div class="modal-card profile-card"><button class="modal-close" type="button">✕</button><div id="profile-content"></div></div></div>
+    <div class="ui-modal" id="tree-modal"><div class="modal-card tree-modal-card"><button class="modal-close" type="button">✕</button><div id="community-tree"></div></div></div>
+    <div class="ui-modal" id="youtube-stream-modal">
+        <div class="modal-card stream-card">
+            <button class="modal-close" type="button">✕</button>
+            <div class="stream-head"><h2>📺 YouTube Stream</h2><span id="stream-status">Стрим не настроен</span></div>
+            <div class="stream-tabs" id="stream-tabs"></div><div class="stream-frame-wrap"><iframe id="youtube-stream-frame" title="YouTube Stream" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe></div>
+            <p id="stream-empty" class="stream-empty">Главный администратор ещё не добавил ссылку на стрим.</p>
+        </div>
+    </div>
+
+    <div class="ui-modal" id="admin-modal">
+        <div class="modal-card admin-card">
+            <button class="modal-close" type="button">✕</button>
+            <div id="admin-login-view">
+                <h2>🛡️ Администрация</h2>
+                <p class="admin-muted">Вход только для главного администратора и назначенных админов.</p>
+                <input class="admin-input" id="admin-nick" placeholder="Ник" autocomplete="username">
+                <input class="admin-input" id="admin-password" type="password" placeholder="Пароль" autocomplete="current-password">
+                <button class="btn admin-primary" id="admin-login-submit">Войти</button>
+                <div id="admin-login-error" class="admin-error"></div>
+            </div>
+            <div id="admin-panel-view" hidden>
+                <div class="admin-top"><div><h2>🛡️ Панель администрации</h2><p id="admin-role-label" class="admin-muted"></p></div><button class="btn" id="admin-logout">Выйти</button></div>
+                <section class="admin-section">
+                    <h3>🧙 Команды</h3>
+                    <div id="admin-command-list" class="admin-command-list"></div>
+                </section>
+                <section class="admin-section" id="admin-manage-section">
+                    <h3>👑 Назначить администратора</h3>
+                    <div class="admin-form-grid"><input class="admin-input" id="new-admin-nick" placeholder="Ник админа"><input class="admin-input" id="new-admin-password" type="password" placeholder="Пароль админа"></div>
+                    <div id="new-admin-commands" class="admin-command-list compact"></div>
+                    <button class="btn admin-primary" id="add-admin-submit">Назначить админа</button>
+                    <div id="admin-action-message" class="admin-muted"></div>
+                    <div id="admin-list" class="admin-list"></div>
+                </section>
+                <section class="admin-section">
+                    <h3>📺 YouTube Stream — до 5 стримов</h3>
+                    <p class="admin-muted">Пользователи смогут выбирать активный стрим. Пустые слоты не показываются.</p>
+                    <div id="admin-stream-list" class="admin-stream-list"></div>
+                    <div class="admin-form-actions"><button class="btn admin-primary" id="save-stream-submit">Сохранить все стримы</button><button class="btn" id="clear-stream-submit">Очистить все</button></div>
+                    <div id="stream-admin-message" class="admin-muted"></div>
+                </section>
+            </div>
+        </div>
+    </div>
+
+    <div class="ui-modal" id="wall-of-fame-modal">
+        <div class="modal-card" style="max-width:760px;">
+            <button class="modal-close" type="button" aria-label="Закрыть">✕</button>
+            <div id="wall-of-fame-content"></div>
+        </div>
+    </div>
+    <footer style="text-align: center; padding: 30px 20px; color: var(--text-secondary); font-size: 0.9rem; opacity: 0.7;">
             <p>❅ ✼ ❆ ✻ ❄ С Новым 2027 Годом! ❄ ✻ ❆ ❅</p>
         </footer>
     </div>
@@ -175,6 +243,11 @@
     <script defer src="js/particles.js"></script>
     <script defer src="js/snow.js"></script>
     <script defer src="js/player.js"></script>
+    <script defer src="js/fireworks.js"></script>
+    <script defer src="js/wall-of-fame.js"></script>
+    <script defer src="js/features.js"></script>
+    <script defer src="js/stream.js"></script>
+    <script defer src="js/admin.js"></script>
     <script defer src="js/effects.js"></script>
     <script defer src="js/main.js"></script>
 </body>
