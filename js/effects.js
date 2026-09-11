@@ -330,6 +330,7 @@ function initLetter() {
         
         if (result) {
             appendMessageToChat({
+                id: result.id,
                 nick: nick,
                 text: text,
                 system: 0,
@@ -473,6 +474,7 @@ function initStickerPanel() {
                 }
 
                 appendMessageToChat({
+                    id: result.id,
                     nick: db.currentNick,
                     text: '',
                     sticker: sticker.id,
@@ -569,6 +571,8 @@ function appendMessageToChat(msg) {
         minute: '2-digit' 
     });
     
+    msgDiv.dataset.messageId = msg.id ?? '';
+    msgDiv.className = 'chat-message-enhanced';
     msgDiv.style.cssText = `
         padding: 10px;
         margin-bottom: 8px;
@@ -581,7 +585,7 @@ function appendMessageToChat(msg) {
     let content = `
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
             <span style="font-weight: bold; color: ${isSystem ? '#c9a227' : '#2d5a27'};">
-                ${msg.nick}
+                ${escapeHtml(msg.nick)}
             </span>
             <span style="font-size: 0.75rem; color: var(--text-secondary);">
                 ${time}
@@ -590,7 +594,7 @@ function appendMessageToChat(msg) {
     `;
     
     if (msg.text) {
-        content += `<div style="color: var(--text-primary); word-wrap: break-word;">${msg.text}</div>`;
+        content += `<div style="color: var(--text-primary); word-wrap: break-word;">${escapeHtml(msg.text)}</div>`;
     }
     
     if (msg.sticker) {
@@ -603,6 +607,10 @@ function appendMessageToChat(msg) {
     }
     
     msgDiv.innerHTML = content;
+    if (!isSystem) {
+        const nameEl = msgDiv.querySelector('span[style*="font-weight"]');
+        if (nameEl) { nameEl.dataset.profileNick = msg.nick || ''; nameEl.style.cursor = 'pointer'; nameEl.title = 'Открыть карточку'; }
+    }
     chatContainer.appendChild(msgDiv);
     chatContainer.scrollTop = chatContainer.scrollHeight;
 }
@@ -669,6 +677,7 @@ function initPhotoFrame() {
             }
 
             appendMessageToChat({
+                id: result.id,
                 nick: db.currentNick,
                 text: '📸 Фото',
                 photo: photoData,
@@ -906,9 +915,10 @@ function initReflection() {
     document.body.appendChild(reflection);
 }
 
-// Пазл удалён: интерактивная головоломка больше не создаётся.
+// Пазл заменён на картинку с летящим Дедом Морозом.
+// Чёрный фон исходной картинки убираем визуально через mix-blend-mode: screen.
 
-// === ПОЛЁТ ДЕДА МОРОЗА: СПРАВА НАЛЕВО ===
+// === ПОЛЁТ ДЕДА МОРОЗА ===
 function initSantaFlight() {
     if (document.getElementById('santa-flight')) return;
 
@@ -923,9 +933,10 @@ function initSantaFlight() {
         top: 0;
         width: clamp(220px, 34vw, 460px);
         height: auto;
-        z-index: 9990;
+        z-index: 2;
         pointer-events: none;
         user-select: none;
+        mix-blend-mode: screen;
         filter: drop-shadow(0 8px 14px rgba(0,0,0,.35));
         will-change: transform;
         transform-origin: center center;

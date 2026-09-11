@@ -772,7 +772,7 @@ function initBackgroundEffects() {
             else if (effect === 'aurora') bgEffects.startAurora();
             else if (effect === 'galaxy') bgEffects.startGalaxy();
             else if (effect === 'vortex') bgEffects.startVortex();
-            else if (effect === 'meteor-rain') bgEffects.startMeteorRain();
+            else if (effect === 'meteor-rain' || effect === 'meteor') bgEffects.startMeteorRain();
         }
 
         function updateActiveOption(activeEffect) {
