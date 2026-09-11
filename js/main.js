@@ -19,7 +19,17 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (typeof initFreeze === 'function') initFreeze();
         if (typeof initGift === 'function') initGift();
         if (typeof initLetter === 'function') initLetter();
-        if (typeof initPhotoFrame === 'function') initPhotoFrame();// ИСПРАВЛЕНО: добавлена инициализация фото-рамки
+        if (typeof initPhotoFrame === 'function') initPhotoFrame();
+        if (typeof initStickerPanel === 'function') initStickerPanel();
+        if (typeof initParallax === 'function') initParallax();
+        if (typeof initTreeCounter === 'function') initTreeCounter();
+        if (typeof initSparkWaterfall === 'function') initSparkWaterfall();
+        if (typeof initElementTransforms === 'function') initElementTransforms();
+        if (typeof initNameFirework === 'function') initNameFirework();
+        if (typeof initReflection === 'function') initReflection();
+        if (typeof initPuzzle === 'function') initPuzzle();
+        if (typeof initSantaFlight === 'function') initSantaFlight();
+
         // === КАСТОМНЫЙ КУРСОР ===
         if (typeof initCustomCursor === 'function') initCustomCursor();
 
@@ -700,7 +710,6 @@ function initBackgroundEffects() {
             else if (effect === 'aurora') bgEffects.startAurora();
             else if (effect === 'galaxy') bgEffects.startGalaxy();
             else if (effect === 'vortex') bgEffects.startVortex();
-            if (window.setMeteorEnabled) window.setMeteorEnabled(effect === 'meteor');
         }
 
         function updateActiveOption(activeEffect) {

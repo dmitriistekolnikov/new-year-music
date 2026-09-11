@@ -330,7 +330,6 @@ function initLetter() {
         
         if (result) {
             appendMessageToChat({
-                id: result.id,
                 nick: nick,
                 text: text,
                 system: 0,
@@ -474,7 +473,6 @@ function initStickerPanel() {
                 }
 
                 appendMessageToChat({
-                    id: result.id,
                     nick: db.currentNick,
                     text: '',
                     sticker: sticker.id,
@@ -571,8 +569,6 @@ function appendMessageToChat(msg) {
         minute: '2-digit' 
     });
     
-    msgDiv.dataset.messageId = msg.id ?? '';
-    msgDiv.className = 'chat-message-enhanced';
     msgDiv.style.cssText = `
         padding: 10px;
         margin-bottom: 8px;
@@ -585,7 +581,7 @@ function appendMessageToChat(msg) {
     let content = `
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
             <span style="font-weight: bold; color: ${isSystem ? '#c9a227' : '#2d5a27'};">
-                ${escapeHtml(msg.nick)}
+                ${msg.nick}
             </span>
             <span style="font-size: 0.75rem; color: var(--text-secondary);">
                 ${time}
@@ -594,7 +590,7 @@ function appendMessageToChat(msg) {
     `;
     
     if (msg.text) {
-        content += `<div style="color: var(--text-primary); word-wrap: break-word;">${escapeHtml(msg.text)}</div>`;
+        content += `<div style="color: var(--text-primary); word-wrap: break-word;">${msg.text}</div>`;
     }
     
     if (msg.sticker) {
@@ -607,10 +603,6 @@ function appendMessageToChat(msg) {
     }
     
     msgDiv.innerHTML = content;
-    if (!isSystem) {
-        const nameEl = msgDiv.querySelector('span[style*="font-weight"]');
-        if (nameEl) { nameEl.dataset.profileNick = msg.nick || ''; nameEl.style.cursor = 'pointer'; nameEl.title = 'Открыть карточку'; }
-    }
     chatContainer.appendChild(msgDiv);
     chatContainer.scrollTop = chatContainer.scrollHeight;
 }
@@ -677,7 +669,6 @@ function initPhotoFrame() {
             }
 
             appendMessageToChat({
-                id: result.id,
                 nick: db.currentNick,
                 text: '📸 Фото',
                 photo: photoData,
@@ -1024,6 +1015,56 @@ function initPuzzle() {
     `;
     btn.onclick = () => puzzleContainer.style.display = 'flex';
     document.body.appendChild(btn);
+}
+
+
+// === ПОЛЁТ ДЕДА МОРОЗА: СПРАВА НАЛЕВО ===
+function initSantaFlight() {
+    if (document.getElementById('santa-flight')) return;
+
+    const santa = document.createElement('div');
+    santa.id = 'santa-flight';
+    santa.setAttribute('aria-hidden', 'true');
+    santa.innerHTML = '🎅🛷';
+    santa.style.cssText = `
+        position: fixed;
+        right: -180px;
+        top: 18%;
+        z-index: 9990;
+        pointer-events: none;
+        font-size: clamp(42px, 6vw, 72px);
+        white-space: nowrap;
+        filter: drop-shadow(0 8px 14px rgba(0,0,0,.35));
+        transform: translate3d(0,0,0);
+        will-change: transform;
+    `;
+    document.body.appendChild(santa);
+
+    const style = document.createElement('style');
+    style.textContent = `
+        @keyframes santaFlightRightToLeft {
+            from { transform: translate3d(0, 0, 0) rotate(-1deg); }
+            48% { transform: translate3d(-50vw, -12px, 0) rotate(1deg); }
+            to { transform: translate3d(calc(-100vw - 220px), 8px, 0) rotate(-1deg); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            #santa-flight { display: none !important; }
+        }
+    `;
+    document.head.appendChild(style);
+
+    const fly = () => {
+        santa.style.top = `${12 + Math.random() * 35}%`;
+        santa.style.animation = 'none';
+        // Force a clean restart so every flight always begins off-screen on the RIGHT.
+        void santa.offsetWidth;
+        const duration = 11500 + Math.random() * 3500;
+        santa.style.animation = `santaFlightRightToLeft ${duration}ms linear forwards`;
+        window.setTimeout(fly, duration + 30000 + Math.random() * 30000);
+    };
+
+    // Первый пролёт после небольшой паузы, затем повторяем редко.
+    window.setTimeout(fly, 3500);
 }
 
 // === СТИЛИ ДЛЯ СТИКЕРОВ ===
