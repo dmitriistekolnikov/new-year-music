@@ -1,4 +1,37 @@
 // === КОНФИГУРАЦИЯ ПРОЕКТА ===
+const API_BASE_URL = 'https://new-year-music.novogodniysait.workers.dev/api';
+
+// Все старые вызовы fetch('/api/...') автоматически направляются
+// на действующий Cloudflare Worker. Остальные запросы не меняются.
+(() => {
+    const originalFetch = window.fetch.bind(window);
+    window.fetch = (input, init) => {
+        let target = input;
+        if (typeof input === 'string' && input.startsWith('/api')) {
+            target = API_BASE_URL + input.slice(4);
+        } else if (input instanceof URL && input.pathname.startsWith('/api')) {
+            target = new URL(input.pathname.slice(4) + input.search + input.hash, API_BASE_URL).href;
+        }
+        return originalFetch(target, init);
+    };
+
+    // Абсолютный путь к этому изображению не работает на project GitHub Pages.
+    const srcDescriptor = Object.getOwnPropertyDescriptor(HTMLImageElement.prototype, 'src');
+    if (srcDescriptor && srcDescriptor.set && srcDescriptor.get) {
+        Object.defineProperty(HTMLImageElement.prototype, 'src', {
+            configurable: true,
+            enumerable: srcDescriptor.enumerable,
+            get() { return srcDescriptor.get.call(this); },
+            set(value) {
+                if (value === '/santa-flight.png') {
+                    value = new URL('santa-flight.png', document.baseURI).href;
+                }
+                return srcDescriptor.set.call(this, value);
+            }
+        });
+    }
+})();
+
 const TRACKS_COUNT = 12;
 
 const PREDICTIONS = [
@@ -20,5 +53,5 @@ const BULB_COLORS = ['#8b0000', '#2d5a27', '#1e3a5f', '#c9a227', '#9333ea'];
 const STICKERS_CATS_RANGE = { start: 66959, end: 67006 };
 
 function getTrackUrl(trackNumber) {
-    return `/music/${trackNumber}.mp3`;
+    return new URL(`music/${trackNumber}.mp3`, document.baseURI).href;
 }
