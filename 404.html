@@ -1,0 +1,347 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#081426">
+  <meta name="robots" content="noindex,follow">
+  <title>404 — Страница не найдена | НовыйГодЧат</title>
+  <link rel="icon" type="image/png" href="/favicon.png">
+  <link rel="stylesheet" href="/css/styles.css">
+  <style>
+    :root {
+      color-scheme: dark;
+      --nf-ice: #a9e7ff;
+      --nf-gold: #f0ca75;
+      --nf-muted: rgba(225, 239, 255, .72);
+    }
+
+    html, body { min-width: 0; min-height: 100%; }
+
+    body.nf-page {
+      margin: 0;
+      padding: 0 !important;
+      min-height: 100vh;
+      min-height: 100svh;
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+      isolation: isolate;
+      color: #f4f8ff;
+      background:
+        radial-gradient(ellipse at 18% 18%, rgba(32, 116, 171, .25), transparent 38%),
+        radial-gradient(ellipse at 82% 82%, rgba(39, 75, 146, .25), transparent 40%),
+        linear-gradient(145deg, #050b16 0%, #0a1b31 48%, #07101f 100%) !important;
+      animation: none !important;
+    }
+
+    body.nf-page::before,
+    body.nf-page::after {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: -1;
+    }
+
+    body.nf-page::before {
+      opacity: .4;
+      background-image: radial-gradient(rgba(205, 235, 255, .45) .8px, transparent .8px);
+      background-size: 42px 42px;
+      mask-image: linear-gradient(to bottom, black, transparent 88%);
+    }
+
+    body.nf-page::after {
+      background: radial-gradient(ellipse at center, transparent 35%, rgba(0, 0, 0, .35) 100%);
+    }
+
+    .nf-snow {
+      position: fixed;
+      inset: 0;
+      overflow: hidden;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .nf-flake {
+      position: absolute;
+      top: -24px;
+      left: var(--nf-left);
+      opacity: var(--nf-opacity);
+      color: #e9f7ff;
+      font-size: var(--nf-size);
+      line-height: 1;
+      text-shadow: 0 0 10px rgba(174, 226, 255, .7);
+      animation: nf-fall var(--nf-duration) linear var(--nf-delay) infinite;
+      will-change: transform;
+    }
+
+    @keyframes nf-fall {
+      0% { transform: translate3d(0, -5vh, 0) rotate(0deg); }
+      100% { transform: translate3d(var(--nf-drift), 112vh, 0) rotate(300deg); }
+    }
+
+    .nf-orb {
+      position: fixed;
+      width: min(42vw, 390px);
+      aspect-ratio: 1;
+      border-radius: 50%;
+      filter: blur(85px);
+      opacity: .18;
+      pointer-events: none;
+      z-index: 0;
+      animation: nf-orb-float 18s ease-in-out infinite alternate;
+    }
+
+    .nf-orb-left { left: -170px; top: 12%; background: #1e9acb; }
+    .nf-orb-right { right: -180px; bottom: 4%; background: #7359cb; animation-delay: -7s; }
+
+    @keyframes nf-orb-float {
+      from { transform: translate3d(0, 0, 0) scale(.94); }
+      to { transform: translate3d(42px, -24px, 0) scale(1.08); }
+    }
+
+    .nf-shell {
+      width: min(100% - 32px, 760px);
+      margin: auto;
+      padding: 28px 0;
+      position: relative;
+      z-index: 2;
+    }
+
+    .nf-card {
+      position: relative;
+      overflow: hidden;
+      isolation: isolate;
+      text-align: center;
+      padding: clamp(26px, 6vw, 58px) clamp(20px, 6vw, 58px) 34px;
+      border: 1px solid rgba(204, 234, 255, .17);
+      border-top-color: rgba(255, 255, 255, .3);
+      border-radius: 30px;
+      background: linear-gradient(145deg, rgba(19, 42, 69, .78), rgba(7, 19, 36, .82));
+      box-shadow: 0 28px 90px rgba(0, 0, 0, .42), inset 0 1px rgba(255,255,255,.05), 0 0 55px rgba(74, 160, 220, .08);
+      -webkit-backdrop-filter: blur(18px);
+      backdrop-filter: blur(18px);
+    }
+
+    .nf-card::before {
+      content: "";
+      position: absolute;
+      inset: 0 12% auto;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(187, 230, 255, .7), transparent);
+      z-index: -1;
+    }
+
+    .nf-lights {
+      position: absolute;
+      inset: 0 8% auto;
+      height: 18px;
+      display: flex;
+      justify-content: space-between;
+      pointer-events: none;
+    }
+
+    .nf-lights span {
+      width: 8px;
+      height: 12px;
+      border-radius: 50% 50% 45% 45%;
+      background: var(--nf-light);
+      box-shadow: 0 0 9px var(--nf-light), 0 0 20px color-mix(in srgb, var(--nf-light) 65%, transparent);
+      animation: nf-twinkle 1.8s ease-in-out infinite alternate;
+      animation-delay: var(--nf-delay-light);
+    }
+
+    @keyframes nf-twinkle {
+      from { opacity: .45; transform: scale(.82); }
+      to { opacity: 1; transform: scale(1.08); }
+    }
+
+    .nf-kicker {
+      margin: 0 0 10px;
+      color: rgba(196, 226, 249, .7);
+      font-size: .72rem;
+      font-weight: 700;
+      letter-spacing: .25em;
+      text-transform: uppercase;
+    }
+
+    .nf-art {
+      width: min(100%, 250px);
+      height: auto;
+      display: block;
+      margin: 0 auto 8px;
+      filter: drop-shadow(0 12px 24px rgba(0,0,0,.22));
+    }
+
+    .nf-code {
+      margin: 0;
+      font-size: clamp(5.3rem, 20vw, 9rem);
+      line-height: .88;
+      font-weight: 900;
+      letter-spacing: -.075em;
+      color: #d9f3ff;
+      background: linear-gradient(180deg, #fff 0%, #b8eaff 46%, #78bde8 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-shadow: 0 12px 42px rgba(72, 169, 225, .12);
+    }
+
+    .nf-title {
+      margin: 18px 0 10px;
+      font-size: clamp(1.35rem, 4vw, 2rem);
+      line-height: 1.2;
+      font-weight: 800;
+      color: #f7fbff;
+    }
+
+    .nf-copy {
+      max-width: 470px;
+      margin: 0 auto;
+      color: var(--nf-muted);
+      font-size: clamp(.94rem, 2.5vw, 1.05rem);
+      line-height: 1.7;
+    }
+
+    .nf-home {
+      display: inline-flex;
+      justify-content: center;
+      align-items: center;
+      gap: 10px;
+      min-height: 50px;
+      margin-top: 28px;
+      padding: 0 25px;
+      border: 1px solid rgba(255, 234, 181, .55);
+      border-radius: 14px;
+      color: #182237 !important;
+      background: linear-gradient(135deg, #ffe5a1, #d6aa51);
+      box-shadow: 0 9px 28px rgba(218, 174, 82, .2);
+      text-decoration: none !important;
+      font-size: .98rem;
+      font-weight: 800;
+      transition: transform .2s ease, box-shadow .2s ease, filter .2s ease;
+    }
+
+    .nf-home:hover {
+      transform: translateY(-3px);
+      filter: brightness(1.06);
+      box-shadow: 0 13px 34px rgba(218, 174, 82, .3);
+    }
+
+    .nf-home:focus-visible {
+      outline: 3px solid #fff;
+      outline-offset: 4px;
+    }
+
+    .nf-home-icon { font-size: 1.2rem; }
+
+    .nf-footer {
+      margin: 22px 0 0;
+      color: rgba(213, 232, 248, .48);
+      font-size: .76rem;
+      letter-spacing: .08em;
+    }
+
+    @media (max-width: 520px) {
+      .nf-shell { width: min(100% - 22px, 760px); padding: 14px 0; }
+      .nf-card { border-radius: 23px; padding: 30px 18px 25px; }
+      .nf-art { width: min(70%, 205px); }
+      .nf-title { margin-top: 15px; }
+      .nf-home { width: 100%; max-width: 270px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: .01ms !important;
+        animation-iteration-count: 1 !important;
+        scroll-behavior: auto !important;
+        transition-duration: .01ms !important;
+      }
+      .nf-snow { display: none; }
+    }
+  </style>
+</head>
+<body class="nf-page">
+  <div class="nf-orb nf-orb-left" aria-hidden="true"></div>
+  <div class="nf-orb nf-orb-right" aria-hidden="true"></div>
+  <div class="nf-snow" aria-hidden="true"></div>
+
+  <main class="nf-shell">
+    <section class="nf-card" aria-labelledby="nf-title">
+      <div class="nf-lights" aria-hidden="true">
+        <span style="--nf-light:#8ee5ff;--nf-delay-light:-.2s"></span>
+        <span style="--nf-light:#ffe39a;--nf-delay-light:-1.1s"></span>
+        <span style="--nf-light:#ff9eae;--nf-delay-light:-.7s"></span>
+        <span style="--nf-light:#9dffc8;--nf-delay-light:-1.5s"></span>
+        <span style="--nf-light:#b8a6ff;--nf-delay-light:-.4s"></span>
+        <span style="--nf-light:#ffe39a;--nf-delay-light:-1.8s"></span>
+      </div>
+
+      <p class="nf-kicker">✦ Зимняя комната ✦</p>
+
+      <svg class="nf-art" viewBox="0 0 260 156" role="img" aria-label="Заснеженная ёлка под звёздным небом">
+        <defs>
+          <linearGradient id="nf-globe" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#c9f1ff" stop-opacity=".24"/>
+            <stop offset="1" stop-color="#5aa7d7" stop-opacity=".06"/>
+          </linearGradient>
+          <linearGradient id="nf-tree" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#60c9b1"/>
+            <stop offset="1" stop-color="#176b75"/>
+          </linearGradient>
+        </defs>
+        <circle cx="130" cy="73" r="68" fill="url(#nf-globe)" stroke="#bdeaff" stroke-opacity=".42" stroke-width="1.4"/>
+        <path d="M72 103 Q130 78 188 103 L194 117 Q130 139 66 117Z" fill="#dff6ff" fill-opacity=".88"/>
+        <path d="M130 25 L108 62 H119 L96 91 H116 L101 111 H159 L144 91 H164 L141 62 H152Z" fill="url(#nf-tree)" stroke="#c5f4e8" stroke-opacity=".5" stroke-width="1.3"/>
+        <path d="M130 25 L130 111" stroke="#b8ffe8" stroke-opacity=".2" stroke-width="2"/>
+        <path d="M125 111 H135 L137 124 H123Z" fill="#b88755"/>
+        <path d="M130 16 L133 22 L140 23 L135 28 L136 35 L130 31 L124 35 L125 28 L120 23 L127 22Z" fill="#ffe5a1" stroke="#fff3c9" stroke-width=".8"/>
+        <circle cx="105" cy="70" r="2.5" fill="#ffe5a1"/>
+        <circle cx="151" cy="82" r="2.5" fill="#ffb8c7"/>
+        <circle cx="130" cy="57" r="2.3" fill="#a7e7ff"/>
+        <circle cx="91" cy="48" r="1.7" fill="#fff"/>
+        <circle cx="171" cy="48" r="1.8" fill="#fff"/>
+        <circle cx="165" cy="93" r="1.4" fill="#fff"/>
+        <circle cx="94" cy="91" r="1.4" fill="#fff"/>
+        <path d="M93 120 Q130 132 167 120" fill="none" stroke="#fff" stroke-opacity=".5" stroke-width="2" stroke-linecap="round"/>
+        <path d="M111 137 H149" stroke="#bdeaff" stroke-opacity=".5" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+
+      <p class="nf-code" aria-label="Ошибка 404">404</p>
+      <h1 class="nf-title" id="nf-title">Кажется, ты заблудился в зимнем лесу!</h1>
+      <p class="nf-copy">Такой страницы здесь нет — похоже, она затерялась среди снежинок. Но новогодняя комната на месте, возвращайся!</p>
+
+      <a class="nf-home" href="/">
+        <span class="nf-home-icon" aria-hidden="true">⌂</span>
+        <span>На главную</span>
+      </a>
+
+      <p class="nf-footer">🎄 НОВЫЙГОДЧАТ · МУЗЫКА · ЧАТ · ПРАЗДНИЧНОЕ НАСТРОЕНИЕ</p>
+    </section>
+  </main>
+
+  <script>
+    (() => {
+      const holder = document.querySelector('.nf-snow');
+      if (!holder || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+      const symbols = ['❄', '❅', '✦', '·'];
+      const fragment = document.createDocumentFragment();
+      for (let i = 0; i < 54; i += 1) {
+        const flake = document.createElement('span');
+        flake.className = 'nf-flake';
+        flake.textContent = symbols[Math.floor(Math.random() * symbols.length)];
+        flake.style.setProperty('--nf-left', `${Math.random() * 100}%`);
+        flake.style.setProperty('--nf-size', `${8 + Math.random() * 13}px`);
+        flake.style.setProperty('--nf-opacity', `${0.2 + Math.random() * 0.65}`);
+        flake.style.setProperty('--nf-duration', `${9 + Math.random() * 12}s`);
+        flake.style.setProperty('--nf-delay', `${-Math.random() * 18}s`);
+        flake.style.setProperty('--nf-drift', `${-45 + Math.random() * 90}px`);
+        fragment.appendChild(flake);
+      }
+      holder.appendChild(fragment);
+    })();
+  </script>
+</body>
+</html>
