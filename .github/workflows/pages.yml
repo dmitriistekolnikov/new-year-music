@@ -32,6 +32,19 @@ jobs:
           cp index.html _site/
           cp -R css js music _site/
 
+          # Copy public site metadata, search-engine files, and the custom 404 page.
+          # Keep this allowlist explicit: do not publish Worker, database, or private sticker files.
+          for file in sitemap.xml robots.txt 404.html yandex_0c28c99d887767fd.html; do
+            if [ -f "$file" ]; then
+              cp "$file" _site/
+            fi
+          done
+
+          # Fail the build if the sitemap or custom error page was accidentally omitted.
+          test -s _site/sitemap.xml
+          test -s _site/robots.txt
+          test -s _site/404.html
+
           # Copy only approved public image assets when present.
           for asset in favicon.png santa-flight.png "i (1).jpeg" i-_1_.png; do
             if [ -f "$asset" ]; then cp "$asset" _site/; fi
