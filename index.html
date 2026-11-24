@@ -4,7 +4,35 @@
     <meta name="yandex-verification" content="0c28c99d887767fd" />
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🎄 НовыйГодЧат</title>
+    <title>НовыйГодЧат — новогодний онлайн-чат, музыка и общение</title>
+    <meta name="description" content="НовыйГодЧат — новогодний онлайн-чат для общения, праздничной музыки и зимнего настроения. Заходи, общайся и встречай Новый год вместе!">
+    <meta name="robots" content="index, follow, max-image-preview:large">
+    <meta name="googlebot" content="index, follow">
+    <meta name="theme-color" content="#102b45">
+    <link rel="canonical" href="https://novogodniysait-zloy201107.apruxdomain.lol/">
+
+    <meta property="og:type" content="website">
+    <meta property="og:locale" content="ru_RU">
+    <meta property="og:site_name" content="НовыйГодЧат">
+    <meta property="og:title" content="НовыйГодЧат — новогодний онлайн-чат">
+    <meta property="og:description" content="Общайся, слушай праздничную музыку и создавай новогоднее настроение в онлайн-чате.">
+    <meta property="og:url" content="https://novogodniysait-zloy201107.apruxdomain.lol/">
+
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="НовыйГодЧат — новогодний онлайн-чат">
+    <meta name="twitter:description" content="Новогоднее общение, музыка и зимнее настроение в одном месте.">
+
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "НовыйГодЧат",
+      "url": "https://novogodniysait-zloy201107.apruxdomain.lol/",
+      "inLanguage": "ru",
+      "description": "Новогодний онлайн-чат для общения и праздничного настроения."
+    }
+    </script>
+
     <link rel="icon" type="image/png" href="favicon.png">
     <link rel="apple-touch-icon" href="favicon.png">
     <link rel="stylesheet" href="css/styles.css">
@@ -15,7 +43,7 @@
     <div class="bg-orb orb-1"></div>
     <div class="bg-orb orb-2"></div>
     <div class="snowflakes" id="snow-container"></div>
-    
+
     <!-- Канвас для фоновых эффектов -->
     <canvas id="bg-effects-canvas"></canvas>
     <canvas id="fireworks-canvas" aria-hidden="true"></canvas>
@@ -25,7 +53,7 @@
 
     <!-- Свечки на заднем фоне -->
     <div id="candles-bg"></div>
-    
+
     <!-- Часы с кукушкой на заднем фоне -->
     <div id="clock-bg"></div>
 
@@ -103,25 +131,25 @@
                         <span class="status-dot"></span> offline
                     </span>
                 </div>
-                
+
                 <div class="chat-messages" id="chat-messages">
                     <p style="text-align: center; color: var(--text-secondary); margin-top: 100px; font-style: italic;">
                         Здесь будет новогоднее настроение...<br>Войди, чтобы начать общение!
                     </p>
                 </div>
-                
+
                 <div class="chat-input-area" id="chat-input-area">
                     <div class="locked-message" id="locked-msg">🔒 Войди, чтобы писать в чат</div>
-                    
+
                     <!-- Панель стикеров -->
                     <div class="sticker-panel" id="sticker-panel"></div>
-                    
+
                     <div class="letter-input-area" id="letter-area" style="display: none;">
                         <input type="text" class="letter-input" id="letter-text" placeholder="Напиши сообщение или желание...">
                         <button class="btn" id="sticker-btn" title="Выбрать стикер">😀</button>
                         <button class="btn" id="send-letter-btn">✉️</button>
                     </div>
-                    
+
                     <button class="btn" id="chat-login-btn" style="width: 100%; justify-content: center; margin-top: 10px;">🔑 Войти в чат</button>
                     <div class="photo-upload" id="photo-upload">📸 Нажми, чтобы отправить фото</div>
                 </div>
